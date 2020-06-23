@@ -89,30 +89,29 @@ class Runner:
 
     def train_epoch(self):
         train_batch = self.train.batch(self.args.batch_size)
-        total_loss = np.zeros(1)    # tf.keras.backend.constant(0.0)
-        counter = np.zeros(1)       # tf.keras.backend.constant(0.0)
+        total_loss = 0.
+        counter = 0
         start = time.perf_counter()
         for input_batch in train_batch:
-            counter += 1.0
+            counter += 1
             with tf.GradientTape() as tape:
                 loss = self.loss_fn.calculate_loss(self.model, input_batch)
 
             gradients = tape.gradient(loss, self.model.trainable_variables)
             self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
-            total_loss += loss.numpy()
+            total_loss += loss.numpy().item()
 
-        total_loss /= counter
         exec_time = time.perf_counter() - start
-        return total_loss, exec_time
+        return total_loss / counter, exec_time
 
     def validate(self):
         dev_batch = self.dev.batch(self.args.batch_size)
-        total_loss = np.zeros(1)  # tf.keras.backend.constant(0.0)
-        counter = np.zeros(1)  # tf.keras.backend.constant(0.0)
+        total_loss = 0.
+        counter = 0
         for input_batch in dev_batch:
-            counter += 1.0
+            counter += 1
             loss = self.loss_fn.calculate_loss(self.model, input_batch)
-            total_loss += loss.numpy()
+            total_loss += loss.numpy().item()
 
         return total_loss / counter
 
@@ -126,3 +125,10 @@ class Runner:
             ckpt.restore(manager.latest_checkpoint)
             logging.info(f'Restored from {manager.latest_checkpoint}')
         return manager
+
+    def reduce_lr(self):
+        old_lr = float(tf.keras.backend.get_value(self.optimizer.lr))
+        if old_lr > self.args.min_lr:
+            new_lr = old_lr * self.args.lr_decay
+            new_lr = max(new_lr, self.args.min_lr)
+            tf.keras.backend.set_value(self.optimizer.lr, new_lr)

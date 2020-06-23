@@ -135,13 +135,19 @@ class PairwiseHingeLoss(LossFunction):
                            zeros (zero indicates that the corresonding example
                            is masked).
         """
-        neg_sample_mask = tf.random.uniform(tf.shape(logits), dtype=logits.dtype)
-        neg_sample_mask = tf.cast(neg_sample_mask < self.gamma, logits.dtype)
-        neg_sample_mask = tf.maximum(neg_sample_mask, full_labels)  # this is like an "OR" operator
-        return neg_sample_mask
+        neg_mask = tf.zeros_like(logits)
+        n_users, n_items = tf.shape(logits)
+        for i in range(self.neg_sample_size):
+            idx = tf.random.uniform((n_users,), minval=0, maxval=n_items, dtype=tf.dtypes.int32)
+            current_mask = tf.one_hot(idx, depth=n_items, dtype=logits.dtype)
+            neg_mask = tf.maximum(neg_mask, current_mask)
+
+        neg_mask = tf.maximum(neg_mask, full_labels)        # "OR" operator
+        return neg_mask
 
     def loss_from_logits(self, logits, full_labels, labels):
-        signed_logits = (1.0 - 2.0 * full_labels) * logits  # makes "positive sample" loss positive but "neg sample" remains negative
+        # "positive sample" becomes positive, "neg sample" remains negative
+        signed_logits = (1.0 - 2.0 * full_labels) * logits
         return tf.reduce_mean(tf.nn.relu(self.margin + tf.reduce_sum(signed_logits, 1)))
 
     def calculate_loss(self, model, input_batch):
@@ -149,8 +155,6 @@ class PairwiseHingeLoss(LossFunction):
         logits = model(input_batch, eval_mode=True)
         full_labels = tf.one_hot(labels, depth=self.n_items, dtype=logits.dtype)
         if self.use_neg_sampling:
-            # mask some values for negative sampling
             neg_sample_mask = self.get_neg_sample_mask(logits, full_labels)
-            # mask logits to only keep target and negative examples' scores
-            logits = logits * neg_sample_mask
+            logits = logits * neg_sample_mask       # mask logits to only keep target and negative examples' scores
         return self.loss_from_logits(logits, full_labels, labels)

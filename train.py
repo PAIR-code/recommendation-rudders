@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 from rudders.config import CONFIG
-from rudders.utils import setup_logger
+from rudders.utils import set_seed, setup_logger
 from rudders.dataset import Dataset
 import rudders.models as models
 import rudders.losses as losses
@@ -70,9 +70,10 @@ def get_optimizer(args):
 
 
 def main(_):
+    set_seed(FLAGS.seed)
     logs_dir = Path(FLAGS.logs_dir)
-    setup_logger(FLAGS.save_logs, debug=FLAGS.debug)
-    tf.config.experimental_run_functions_eagerly(FLAGS.debug)  # see if this is necessary in tf2
+    setup_logger(FLAGS.print_logs, FLAGS.save_logs, logs_dir)
+    tf.config.experimental_run_functions_eagerly(FLAGS.debug)
 
     # save config
     save_config(logs_dir)

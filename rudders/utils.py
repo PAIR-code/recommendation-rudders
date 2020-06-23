@@ -5,11 +5,24 @@ import logging as native_logging
 from absl import logging, flags
 import tensorflow as tf
 import numpy as np
+import random
 
 FLAGS = flags.FLAGS
 
 
-def setup_logger(save_logs: bool, save_path: Path):
+def set_seed(seed):
+    if seed < 1:
+        seed = random.randint(1, 999999)
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+
+
+def setup_logger(print_logs: bool, save_logs: bool, save_path: Path):
+    native_logging.root.removeHandler(logging._absl_handler)
+    logging._warn_preinit_stderr = False
+    formatter = native_logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%Y-%d-%m %H:%M:%S')
+    handlers = []
     if save_logs:
         write_mode = 'a' if save_path.exists() else 'w'
         save_path.mkdir(parents=True, exist_ok=True)
@@ -17,13 +30,16 @@ def setup_logger(save_logs: bool, save_path: Path):
         stream = tf.io.gfile.GFile(str(log_file), write_mode)
         log_handler = native_logging.StreamHandler(stream)
         print('Saving logs in {}'.format(save_path))
-    else:
+        handlers.append(log_handler)
+    if print_logs or not save_logs:
         log_handler = native_logging.StreamHandler(sys.stdout)
-    formatter = native_logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%Y-%d-%m %H:%M:%S')
-    log_handler.setFormatter(formatter)
-    log_handler.setLevel(logging.INFO)
+        handlers.append(log_handler)
     logger = logging.get_absl_logger()
-    logger.addHandler(log_handler)
+    logger.propagate = False
+    for log_handler in handlers:
+        log_handler.setFormatter(formatter)
+        log_handler.setLevel(logging.INFO)
+        logger.addHandler(log_handler)
     return logger
 
 
