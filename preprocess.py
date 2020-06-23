@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
-from rudders import config
+from rudders.config import CONFIG
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string(
@@ -85,8 +85,9 @@ def main(_):
     splits = create_splits(sorted_samples)
 
     # creates directories to save preprocessed data
-    config.PREP_PATH.mkdir(parents=True, exist_ok=True)
-    to_save_dir = config.PREP_PATH / dataset_path.split("/")[-2]
+    prep_path = Path(CONFIG["string"]["prep_dir"][1])
+    prep_path.mkdir(parents=True, exist_ok=True)
+    to_save_dir = prep_path / dataset_path.split("/")[-2]
     to_save_dir.mkdir(parents=True, exist_ok=True)
 
     save_as_pickle(to_save_dir, splits)
