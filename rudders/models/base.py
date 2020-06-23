@@ -51,6 +51,14 @@ class CFModel(tf.keras.Model, abc.ABC):
         pass
 
     @abc.abstractmethod
+    def get_all_users(self):
+        """Get all user embeddings in a CF dataset.
+
+        Returns: Tensor of size n_users x embedding_dimension representing embeddings for all users in the CF
+        """
+        pass
+
+    @abc.abstractmethod
     def get_items(self, input_tensor):
         """
         Args: input_tensor: Tensor of size batch_size x 2 containing users and items' indices.
@@ -59,21 +67,19 @@ class CFModel(tf.keras.Model, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_all_items(self, input_tensor=None):
-        """Get all candidate item embeddings in a CF dataset.
+    def get_all_items(self):
+        """Get all item embeddings in a CF dataset.
 
-        Args: input_tensor: Tensor of size batch_size x 2 containing users and items' indices, or None
-        Returns:
-          Tensor of size (batch_size x) n_items x embedding_dimension representing embeddings for all items in the CF
+        Returns: Tensor of size n_items x embedding_dimension representing embeddings for all items in the CF
         """
         pass
 
-    def call(self, input_tensor, eval_mode=False):
+    def call(self, input_tensor, all_pairs=False):
         """Forward pass of CF embedding models.
 
         Args:
           input_tensor: Tensor of size batch_size x 2 containing pairs' indices.
-          eval_mode: boolean to indicate whether to compute scores against all
+          all_pairs: boolean to indicate whether to compute scores against all
             possible item entities in the CF, or only individual pairs' scores.
 
         Returns:
@@ -81,8 +87,8 @@ class CFModel(tf.keras.Model, abc.ABC):
           size batch_size x n_item where n_item is the total number of items in the CF.
         """
         user_embeds = self.get_users(input_tensor)
-        all_item_embeds = self.get_all_items(input_tensor) if eval_mode else self.get_items(input_tensor)
-        predictions = self.score(user_embeds, all_item_embeds, eval_mode)
+        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor)
+        predictions = self.score(user_embeds, all_item_embeds, all_pairs)
         return predictions
 
     @abc.abstractmethod
@@ -111,7 +117,7 @@ class CFModel(tf.keras.Model, abc.ABC):
                   scores against all possible items in the CF.
           targets: Numpy array of size batch_size x 1 containing pairs' scores.
         """
-        all_items = self.get_all_items(input_tensor)
+        all_items = self.get_all_items()
         user_embeds = self.get_users(input_tensor)
         item_embeds = self.get_items(input_tensor)
         scores = self.score(user_embeds, all_items, all_pairs=True)
@@ -159,3 +165,11 @@ class CFModel(tf.keras.Model, abc.ABC):
             ranks_random[ini:end] += np.sum((scores_random >= targets), axis=1)
 
         return ranks, ranks_random
+
+    def get_avg_norm(self, data_name: str):
+        if data_name == "user":
+            return tf.reduce_mean(tf.norm(self.get_all_users(), axis=-1)).numpy()
+        elif data_name == "item":
+            return tf.reduce_mean(tf.norm(self.get_all_items(), axis=-1)).numpy()
+        else:
+            raise ValueError(f"{data_name} not present in model")

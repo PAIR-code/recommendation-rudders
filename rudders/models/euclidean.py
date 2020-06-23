@@ -9,12 +9,14 @@ class BaseEuclidean(CFModel):
     def get_users(self, input_tensor):
         return self.user(input_tensor[:, 0])
 
+    def get_all_users(self):
+        return self.user.embeddings
+
     def get_items(self, input_tensor):
         return self.item(input_tensor[:, 1])
 
-    def get_all_items(self, input_tensor=None):
-        cands = self.item.embeddings
-        return cands
+    def get_all_items(self):
+        return self.item.embeddings
 
     def score(self, user_embeds, item_embeds, all_pairs):
         if self.sim == 'dot':

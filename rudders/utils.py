@@ -18,7 +18,7 @@ def set_seed(seed):
     tf.random.set_seed(seed)
 
 
-def setup_logger(print_logs: bool, save_logs: bool, save_path: Path):
+def setup_logger(print_logs: bool, save_logs: bool, save_path: Path, run_id: str):
     native_logging.root.removeHandler(logging._absl_handler)
     logging._warn_preinit_stderr = False
     formatter = native_logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%Y-%d-%m %H:%M:%S')
@@ -26,7 +26,7 @@ def setup_logger(print_logs: bool, save_logs: bool, save_path: Path):
     if save_logs:
         write_mode = 'a' if save_path.exists() else 'w'
         save_path.mkdir(parents=True, exist_ok=True)
-        log_file = save_path / "train.log"
+        log_file = save_path / f"{run_id}.log"
         stream = tf.io.gfile.GFile(str(log_file), write_mode)
         log_handler = native_logging.StreamHandler(stream)
         print('Saving logs in {}'.format(save_path))

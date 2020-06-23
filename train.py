@@ -45,8 +45,8 @@ def load_data(prep_path, dataset_name, debug):
     return train, dev, test, samples, n_users, n_items
 
 
-def save_config(logs_dir):
-    config_path = logs_dir / 'config.json'
+def save_config(logs_dir, run_id):
+    config_path = logs_dir / f'{run_id}.json'
     if FLAGS.save_logs and not config_path.exists():
         with tf.io.gfile.GFile(str(config_path), 'w') as fjson:
             json.dump(get_config_dict(CONFIG), fjson)
@@ -72,11 +72,11 @@ def get_optimizer(args):
 def main(_):
     set_seed(FLAGS.seed)
     logs_dir = Path(FLAGS.logs_dir)
-    setup_logger(FLAGS.print_logs, FLAGS.save_logs, logs_dir)
+    setup_logger(FLAGS.print_logs, FLAGS.save_logs, logs_dir, FLAGS.run_id)
     tf.config.experimental_run_functions_eagerly(FLAGS.debug)
 
     # save config
-    save_config(logs_dir)
+    save_config(logs_dir, FLAGS.run_id)
 
     # load data
     train, dev, test, samples, n_users, n_items = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.debug)

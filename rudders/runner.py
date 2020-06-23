@@ -17,7 +17,7 @@ class Runner:
         self.dev = dev
         self.test = test
         self.samples = samples
-        self.summary = tf.summary.create_file_writer(args.logs_dir + "/summary")
+        self.summary = tf.summary.create_file_writer(args.logs_dir + f"/summary/{args.run_id}")
         # self.ckpt_manager = self.setup_manager()
 
     def run(self):
@@ -30,6 +30,8 @@ class Runner:
             logging.info(f'Epoch {epoch} | train loss: {train_loss:.4f} | total time: {int(exec_time)} secs')
             with self.summary.as_default():
                 tf.summary.scalar('train/loss', train_loss, step=epoch)
+                tf.summary.scalar('train/user_avg_norm', self.model.get_avg_norm("user"), step=epoch)
+                tf.summary.scalar('train/item_avg_norm', self.model.get_avg_norm("item"), step=epoch)
 
             # if self.args.save_model and epoch % self.args.checkpoint == 0:
             #     logs_dir = self.manager.save()

@@ -152,7 +152,7 @@ class PairwiseHingeLoss(LossFunction):
 
     def calculate_loss(self, model, input_batch):
         labels = input_batch[:, 1]
-        logits = model(input_batch, eval_mode=True)
+        logits = model(input_batch, all_pairs=True)
         full_labels = tf.one_hot(labels, depth=self.n_items, dtype=logits.dtype)
         if self.use_neg_sampling:
             neg_sample_mask = self.get_neg_sample_mask(logits, full_labels)
