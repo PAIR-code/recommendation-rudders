@@ -2,6 +2,7 @@ from abc import ABC
 import tensorflow as tf
 from rudders.models.base import CFModel
 from rudders import hmath
+from rudders.models.euclidean import euclidean_sq_distance
 
 
 class BaseHyperbolic(CFModel, ABC):
@@ -36,3 +37,27 @@ class DistHyperbolic(BaseHyperbolic):
         if all_pairs:
             return -hmath.hyp_distance_all_pairs(user_embeds, item_embeds, c) ** 2
         return -hmath.hyp_distance(user_embeds, item_embeds, c) ** 2
+
+
+class DistanceDistortionHyperbolic(DistHyperbolic):
+
+    def distortion(self, input_tensor, all_pairs=False):
+        user_embeds = self.get_users(input_tensor)
+        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor)
+        distor = self._calculate_distortion(user_embeds, all_item_embeds, all_pairs)
+        return distor
+
+    def _calculate_distortion(self, user_embeds, item_embeds, all_pairs):
+        c = self.get_c()
+        if all_pairs:
+            hy_distance = hmath.hyp_distance_all_pairs(user_embeds, item_embeds, c)
+        else:
+            hy_distance = hmath.hyp_distance(user_embeds, item_embeds, c)
+        eu_distance = euclidean_distance(user_embeds, item_embeds, all_pairs)
+        eu_distance = tf.maximum(eu_distance, hmath.MIN_NORM)
+
+        return tf.abs(hy_distance - eu_distance) / eu_distance
+
+
+def euclidean_distance(x, y, all_pairs=False):
+    return tf.math.sqrt(euclidean_sq_distance(x, y, all_pairs))

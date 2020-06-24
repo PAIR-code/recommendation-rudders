@@ -7,24 +7,22 @@ import tensorflow as tf
 class LossFunction(abc.ABC):
     """Abstract loss function for CF embeddings."""
 
-    def __init__(self, sizes, neg_sample_size, double_neg, margin):
+    def __init__(self, sizes, args):
         """Initialize CF loss function.
 
         Args:
           sizes: Tuple of size 2 containing (n_users, n_items).
           neg_sample_size: Integer indicating the number of negative samples to use.
-          double_neg: Bool indicating whether or not to use double negative
-            sampling.
-          margin: Float indicating the margin between ascore for positive and
-            negative examples.
+          double_neg: Bool indicating whether or not to use double negative sampling.
+          margin: Float indicating the margin between a score for positive and negative examples.
         """
         self.n_users = sizes[0]
         self.n_items = sizes[1]
-        self.neg_sample_size = neg_sample_size
-        self.double_neg = double_neg
-        self.use_neg_sampling = neg_sample_size > 0
-        self.gamma = tf.Variable(self.neg_sample_size * tf.keras.backend.ones(1) / self.n_items, trainable=False)
-        self.margin = tf.Variable(margin * tf.keras.backend.ones(1), trainable=False)
+        self.neg_sample_size = args.neg_sample_size
+        self.double_neg = args.double_neg
+        self.use_neg_sampling = args.neg_sample_size > 0
+        self.gamma = tf.Variable(args.gamma * tf.keras.backend.ones(1), trainable=False)
+        self.margin = tf.Variable(args.margin * tf.keras.backend.ones(1), trainable=False)
 
     @abc.abstractmethod
     def loss_from_logits(self, logits, full_labels, labels):
@@ -158,3 +156,19 @@ class PairwiseHingeLoss(LossFunction):
             neg_sample_mask = self.get_neg_sample_mask(logits, full_labels)
             logits = logits * neg_sample_mask       # mask logits to only keep target and negative examples' scores
         return self.loss_from_logits(logits, full_labels, labels)
+
+
+class HingeDistortionLoss(PairwiseHingeLoss):
+
+    def calculate_loss(self, model, input_batch):
+        labels = input_batch[:, 1]
+        logits = model(input_batch, all_pairs=True)
+        distortion = model.distortion(input_batch, all_pairs=True)
+        full_labels = tf.one_hot(labels, depth=self.n_items, dtype=logits.dtype)
+        if self.use_neg_sampling:
+            neg_sample_mask = self.get_neg_sample_mask(logits, full_labels)
+            logits = logits * neg_sample_mask       # mask logits to only keep target and negative examples' scores
+            distortion = distortion * neg_sample_mask
+        hinge_loss = self.loss_from_logits(logits, full_labels, labels)
+        distortion_loss = tf.reduce_mean(tf.reduce_sum(distortion, axis=1))
+        return hinge_loss + self.gamma * distortion_loss
