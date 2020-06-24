@@ -159,7 +159,8 @@ class PairwiseHingeLoss(LossFunction):
 
 
 class HingeDistortionLoss(PairwiseHingeLoss):
-
+    """This loss can only be used with DistanceDistortionHyperbolic since the model need to implement
+    the 'distortion' method"""
     def calculate_loss(self, model, input_batch):
         labels = input_batch[:, 1]
         logits = model(input_batch, all_pairs=True)
