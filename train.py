@@ -28,6 +28,7 @@ def get_models(n_users, n_items):
     model = getattr(models, FLAGS.model)(n_users, n_items, FLAGS)
     model.build(input_shape=(1, 2))
     params = sum(np.prod(x.shape) for x in model.trainable_variables)
+    logging.info(model.summary())
     logging.info(f'Total number of trainable parameters: {params}')
     return model
 

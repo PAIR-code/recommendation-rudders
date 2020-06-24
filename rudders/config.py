@@ -5,6 +5,7 @@ CONFIG = {
         'prep_dir': ('Path to data directory', 'data/prep'),
         'dataset': ('Dataset', 'ml-1m'),
         'logs_dir': ('Path to logs directory', 'logs/'),
+        'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
         'model': ('Model', 'DistHyperbolic'),
         'loss_fn': ('Loss function to use', 'PairwiseHingeLoss'),
         'initializer': ('Which initializer to use', 'GlorotUniform'),
