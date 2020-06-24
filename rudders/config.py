@@ -38,6 +38,5 @@ CONFIG = {
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
         'save_model': ('Whether to save the model weights', True),
-        'double_neg': ('Whether to use double negative sampling or not', False)
     }
 }
