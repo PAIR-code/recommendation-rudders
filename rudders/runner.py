@@ -1,7 +1,6 @@
 import time
 import copy
 import tensorflow as tf
-import numpy as np
 from absl import logging
 from pathlib import Path
 from rudders.utils import rank_to_metric_dict
@@ -18,7 +17,6 @@ class Runner:
         self.test = test
         self.samples = samples
         self.summary = tf.summary.create_file_writer(args.logs_dir + f"/summary/{args.run_id}")
-        # self.ckpt_manager = self.setup_manager()
 
     def run(self):
         best_hr_at_10 = best_epoch = early_stopping_counter = 0
@@ -32,10 +30,6 @@ class Runner:
                 tf.summary.scalar('train/loss', train_loss, step=epoch)
                 tf.summary.scalar('train/user_avg_norm', self.model.get_avg_norm("user"), step=epoch)
                 tf.summary.scalar('train/item_avg_norm', self.model.get_avg_norm("item"), step=epoch)
-
-            # if self.args.save_model and epoch % self.args.checkpoint == 0:
-            #     logs_dir = self.manager.save()
-            #     logging.info(f'Saved checkpoint for epoch {epoch}: {logs_dir}')
 
             if epoch % self.args.validate == 0:
                 dev_loss = self.validate()
@@ -55,6 +49,7 @@ class Runner:
                     best_epoch = epoch
                     best_weights = copy.copy(self.model.get_weights())
                 else:
+                    self.reduce_lr()
                     early_stopping_counter += 1
                     if early_stopping_counter == self.args.patience:
                         logging.info('Early stopping!!!')
@@ -64,7 +59,7 @@ class Runner:
         self.model.set_weights(best_weights)
 
         if self.args.save_model:
-            self.model.save_weights(Path(self.args.logs_dir) / 'best_model.ckpt')
+            self.model.save_weights(str(Path(self.args.logs_dir) / f'{self.args.run_id}_{best_epoch}ep.ckpt'))
 
         # validation metrics
         logging.info(f"Final performance after {epoch} epochs")
@@ -116,17 +111,6 @@ class Runner:
             total_loss += loss.numpy().item()
 
         return total_loss / counter
-
-    def setup_manager(self):
-        # TODO: see how to use this
-        if not self.args.save_model:
-            return None
-        ckpt = tf.train.Checkpoint(step=tf.Variable(0), optimizer=self.optimizer, net=self.model)
-        manager = tf.train.CheckpointManager(ckpt, self.args.logs_dir, max_to_keep=1)
-        if manager.latest_checkpoint:
-            ckpt.restore(manager.latest_checkpoint)
-            logging.info(f'Restored from {manager.latest_checkpoint}')
-        return manager
 
     def reduce_lr(self):
         old_lr = float(tf.keras.backend.get_value(self.optimizer.lr))

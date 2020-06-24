@@ -1,11 +1,11 @@
 
 CONFIG = {
     'string': {
-        'run_id': ('Name of the run to write down logs and config', 'foo'),
+        'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
         'dataset': ('Dataset', 'ml-1m'),
         'logs_dir': ('Path to logs directory', 'logs/'),
-        'model': ('Model', 'DistEuclidean'),
+        'model': ('Model', 'DistHyperbolic'),
         'loss_fn': ('Loss function to use', 'PairwiseHingeLoss'),
         'initializer': ('Which initializer to use', 'GlorotUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),
@@ -36,7 +36,7 @@ CONFIG = {
         'debug': ('If debug is true, only use 1000 examples for debugging purposes', True),
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
-        'save_model': ('Whether to save the model weights', False),
+        'save_model': ('Whether to save the model weights', True),
         'double_neg': ('Whether to use double negative sampling or not', False)
     }
 }

@@ -1,9 +1,9 @@
-
+from abc import ABC
 import tensorflow as tf
 from rudders.models.base import CFModel
 
 
-class BaseEuclidean(CFModel):
+class BaseEuclidean(CFModel, ABC):
     """Base model class for Euclidean embeddings."""
 
     def get_users(self, input_tensor):
@@ -18,35 +18,27 @@ class BaseEuclidean(CFModel):
     def get_all_items(self):
         return self.item.embeddings
 
-    def score(self, user_embeds, item_embeds, all_pairs):
-        if self.sim == 'dot':
-            user_embeds = tf.linalg.normalize(user_embeds, axis=-1)[0]
-            item_embeds = tf.linalg.normalize(item_embeds, axis=-1)[0]
-            if all_pairs:
-                score = tf.matmul(user_embeds, tf.transpose(item_embeds))
-            else:
-                score = tf.reduce_sum(user_embeds * item_embeds, axis=-1, keepdims=True)
-        elif self.sim == 'dist':
-            score = -euclidean_sq_distance(user_embeds, item_embeds, all_pairs)
-        else:
-            raise AttributeError('Similarity function {} not recognized'.format(self.sim))
-        return score
-
 
 class SMFactor(BaseEuclidean):
     """Simple Matrix Factorization model."""
 
-    def __init__(self, n_users, n_items, args):
-        super(SMFactor, self).__init__(n_users, n_items, args)
-        self.sim = 'dot'
+    def score(self, user_embeds, item_embeds, all_pairs):
+        """Score based on dot product"""
+        user_embeds = tf.linalg.normalize(user_embeds, axis=-1)[0]
+        item_embeds = tf.linalg.normalize(item_embeds, axis=-1)[0]
+        if all_pairs:
+            score = tf.matmul(user_embeds, tf.transpose(item_embeds))
+        else:
+            score = tf.reduce_sum(user_embeds * item_embeds, axis=-1, keepdims=True)
+        return score
 
 
 class DistEuclidean(BaseEuclidean):
     """Simple Collaborative Metric Learning model."""
 
-    def __init__(self, n_users, n_items, args):
-        super(DistEuclidean, self).__init__(n_users, n_items, args)
-        self.sim = 'dist'
+    def score(self, user_embeds, item_embeds, all_pairs):
+        """Score based on squared euclidean distance"""
+        return -euclidean_sq_distance(user_embeds, item_embeds, all_pairs)
 
 
 def euclidean_sq_distance(x, y, all_pairs=False):

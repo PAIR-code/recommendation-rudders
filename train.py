@@ -49,15 +49,15 @@ def save_config(logs_dir, run_id):
     config_path = logs_dir / f'{run_id}.json'
     if FLAGS.save_logs and not config_path.exists():
         with tf.io.gfile.GFile(str(config_path), 'w') as fjson:
-            json.dump(get_config_dict(CONFIG), fjson)
+            json.dump(get_flags_dict(CONFIG), fjson)
 
 
-def get_config_dict(external_config):
+def get_flags_dict(flags):
     """Maps FLAGS to dictionary in order to save it in json format."""
     config = {}
-    for _, arg_dict in external_config.items():
+    for _, arg_dict in CONFIG.items():
         for arg, _ in arg_dict.items():
-            config[arg] = getattr(FLAGS, arg)
+            config[arg] = getattr(flags, arg)
     return config
 
 
@@ -75,8 +75,7 @@ def main(_):
     setup_logger(FLAGS.print_logs, FLAGS.save_logs, logs_dir, FLAGS.run_id)
     tf.config.experimental_run_functions_eagerly(FLAGS.debug)
 
-    # save config
-    save_config(logs_dir, FLAGS.run_id)
+    logging.info(f"Flags/config of this run:\n{get_flags_dict(FLAGS)}")
 
     # load data
     train, dev, test, samples, n_users, n_items = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.debug)
