@@ -7,7 +7,7 @@ import tensorflow as tf
 class LossFunction(abc.ABC):
     """Abstract loss function for CF embeddings."""
 
-    def __init__(self, sizes, neg_sample_size, double_neg, margin):
+    def __init__(self, n_users, n_items, args):
         """Initialize CF loss function.
 
         Args:
@@ -18,10 +18,10 @@ class LossFunction(abc.ABC):
           margin: Float indicating the margin between ascore for positive and
             negative examples.
         """
-        self.n_users = sizes[0]
-        self.n_items = sizes[1]
-        self.neg_sample_size = neg_sample_size
-        self.margin = tf.Variable(margin * tf.keras.backend.ones(1), trainable=False)
+        self.n_users = n_users
+        self.n_items = n_items
+        self.neg_sample_size = args.neg_sample_size
+        self.margin = tf.Variable(args.margin * tf.keras.backend.ones(1), trainable=False)
 
     @abc.abstractmethod
     def calculate_loss(self, model, input_batch):

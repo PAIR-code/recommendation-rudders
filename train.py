@@ -83,7 +83,7 @@ def main(_):
 
     model = get_models(n_users, n_items)
     optimizer = get_optimizer(FLAGS)
-    loss_fn = getattr(losses, FLAGS.loss_fn)((n_users, n_items), FLAGS.neg_sample_size, FLAGS.double_neg, FLAGS.margin)
+    loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS)
 
     runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples)
     runner.run()
