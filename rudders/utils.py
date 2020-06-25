@@ -10,12 +10,13 @@ import random
 FLAGS = flags.FLAGS
 
 
-def set_seed(seed):
+def set_seed(seed: int, set_tf_seed: bool):
     if seed < 1:
         seed = random.randint(1, 999999)
     random.seed(seed)
     np.random.seed(seed)
-    tf.random.set_seed(seed)
+    if set_tf_seed:
+        tf.random.set_seed(seed)
 
 
 def setup_logger(print_logs: bool, save_logs: bool, save_path: Path, run_id: str):

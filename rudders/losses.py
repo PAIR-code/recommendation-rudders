@@ -41,8 +41,8 @@ class PairwiseHingeLoss(LossFunction):
 
     def calculate_loss(self, model, input_batch):
         dist_to_pos = model(input_batch, all_pairs=False)
-        loss = tf.zeros(1, dtype=tf.float64)
-        for i in range(self.neg_sample_size):
+        loss = tf.keras.backend.constant(0.0)
+        for _ in range(self.neg_sample_size):
             neg_idx = tf.random.uniform((len(input_batch), 1), minval=0, maxval=self.n_items, dtype=input_batch.dtype)
             neg_input_batch = tf.concat((tf.expand_dims(input_batch[:, 0], 1), neg_idx), axis=1)
             dist_to_neg = model(neg_input_batch, all_pairs=False)

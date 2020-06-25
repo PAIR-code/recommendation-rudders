@@ -71,12 +71,13 @@ def get_optimizer(args):
 
 
 def main(_):
-    set_seed(FLAGS.seed)
+    set_seed(FLAGS.seed, set_tf_seed=FLAGS.debug)
     logs_dir = Path(FLAGS.logs_dir)
     setup_logger(FLAGS.print_logs, FLAGS.save_logs, logs_dir, FLAGS.run_id)
     tf.config.experimental_run_functions_eagerly(FLAGS.debug)
 
     logging.info(f"Flags/config of this run:\n{get_flags_dict(FLAGS)}")
+    print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
     # load data
     train, dev, test, samples, n_users, n_items = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.debug)

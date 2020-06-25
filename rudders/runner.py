@@ -23,7 +23,9 @@ class Runner:
         best_weights = None
 
         for epoch in range(1, self.args.max_epochs + 1):
-            train_loss, exec_time = self.train_epoch()
+            start = time.perf_counter()
+            train_loss = self.train_epoch(self.train.batch(self.args.batch_size)).numpy().item()
+            exec_time = time.perf_counter() - start
 
             logging.info(f'Epoch {epoch} | train loss: {train_loss:.4f} | total time: {int(exec_time)} secs')
             with self.summary.as_default():
@@ -84,22 +86,19 @@ class Runner:
 
         return metric_all, metric_random
 
-    def train_epoch(self):
-        train_batch = self.train.batch(self.args.batch_size)
-        total_loss = 0.
-        counter = 0
-        start = time.perf_counter()
+    @tf.function
+    def train_epoch(self, train_batch):
+        total_loss = tf.keras.backend.constant(0.0)
+        counter = tf.keras.backend.constant(0.0)
         for input_batch in train_batch:
-            counter += 1
+            counter += 1.
             with tf.GradientTape() as tape:
                 loss = self.loss_fn.calculate_loss(self.model, input_batch)
 
             gradients = tape.gradient(loss, self.model.trainable_variables)
             self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
-            total_loss += loss.numpy().item()
-
-        exec_time = time.perf_counter() - start
-        return total_loss / counter, exec_time
+            total_loss += loss
+        return total_loss / counter
 
     def validate(self):
         dev_batch = self.dev.batch(self.args.batch_size)
