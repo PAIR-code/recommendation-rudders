@@ -41,6 +41,9 @@ class NoRegularizer(CFRegularizer):
     def get_config(self):
         return {'reg_weight': 0}
 
+    def compute_norm(self, x):
+        return 0.
+
 
 class L1Regularizer(CFRegularizer):
     def compute_norm(self, x):

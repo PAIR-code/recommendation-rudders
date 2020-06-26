@@ -138,6 +138,6 @@ dmypy.json
 cython_debug/
 
 .idea/
-data/
-logs/
-ckpt
+hyperbolic-rs/data
+hyperbolic-rs/logs
+hyperbolic-rs/ckpt

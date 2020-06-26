@@ -8,7 +8,7 @@ CONFIG = {
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
         'model': ('Model', 'DistHyperbolic'),
         'loss_fn': ('Loss function to use', 'PairwiseHingeLoss'),
-        'initializer': ('Which initializer to use', 'GlorotUniform'),
+        'initializer': ('Which initializer to use', 'RandomUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),
         'optimizer': ('Optimizer', 'adam'),
         'dtype': ('Precision to use', 'float64'),
@@ -23,8 +23,8 @@ CONFIG = {
         'margin': ('Margin for hinge based models', 1)
     },
     'integer': {
-        'patience': ('Number of validation steps before early stopping', 30),
-        'validate': ('Number of epochs before computing validation metrics', 10),
+        'patience': ('Number of validation steps before early stopping', 6),
+        'validate': ('Number of epochs before computing validation metrics', 5),
         'checkpoint': ('Number of epochs before checkpointing the model', 5),
         'max_epochs': ('Maximum number of epochs to train for', 100),
         'dims': ('Embeddings dimension', 32),
