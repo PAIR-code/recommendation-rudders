@@ -1,4 +1,4 @@
 
 from rudders.models.euclidean import DistEuclidean, SMFactor
-from rudders.models.hyperbolic import DistHyperbolic, DistanceDistortionHyperbolic, \
-    DistanceDistortionHyperbolicTangentSpace
+from rudders.models.hyperbolic import DistHyperbolic, DistanceHyperbolicDistortion, \
+    DistanceHyperbolicTangentSpaceDistortion

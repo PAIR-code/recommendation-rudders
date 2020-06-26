@@ -61,3 +61,7 @@ def euclidean_sq_distance(x, y, all_pairs=False):
     else:
         xy = tf.math.reduce_sum(x * y, axis=-1, keepdims=True)
     return x2 + y2 - 2 * xy
+
+
+def euclidean_distance(x, y, all_pairs=False):
+    return tf.math.sqrt(euclidean_sq_distance(x, y, all_pairs))

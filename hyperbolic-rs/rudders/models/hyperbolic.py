@@ -2,7 +2,7 @@ from abc import ABC
 import tensorflow as tf
 from rudders.models.base import CFModel
 from rudders import hmath
-from rudders.models.euclidean import euclidean_sq_distance
+from rudders.models.euclidean import euclidean_distance
 
 
 class BaseHyperbolic(CFModel, ABC):
@@ -40,7 +40,14 @@ class DistHyperbolic(BaseHyperbolic):
         return -hmath.hyp_distance(user_embeds, item_embeds, c) ** 2
 
 
-class DistanceDistortionHyperbolic(DistHyperbolic):
+class DistanceHyperbolicDistortion(DistHyperbolic):
+    """
+    Computes distortion of the embeddings according to the formula:
+    distortion(u, i) = |hy_dist(u, i) - eu_dist(u, i)| / eu_dist(u, i)
+    with u, i \in B^n
+
+    Note that the euclidean distance is calculated with the points already projected onto the hyperbolic
+    """
 
     def distortion(self, input_tensor, all_pairs=False):
         user_embeds = self.get_users(input_tensor)
@@ -60,7 +67,12 @@ class DistanceDistortionHyperbolic(DistHyperbolic):
         return tf.abs(hy_distance - eu_distance) / eu_distance
 
 
-class DistanceDistortionHyperbolicTangentSpace(DistanceDistortionHyperbolic):
+class DistanceHyperbolicTangentSpaceDistortion(DistanceHyperbolicDistortion):
+    """
+    Computes distortion of the embeddings according to the formula:
+    distortion(u, i) = |hy_dist(u, i) - eu_dist(f(u), f(i))| / eu_dist(f(u), f(i))
+    with u, i \in B^n (Poincare ball) and f(u), f(i) \in R^n (Euclidean space)
+    """
 
     def distortion_from_embeds(self, user_embeds, item_embeds, all_pairs):
         c = self.get_c()
@@ -72,7 +84,3 @@ class DistanceDistortionHyperbolicTangentSpace(DistanceDistortionHyperbolic):
         eu_distance = tf.maximum(eu_distance, hmath.MIN_NORM)
 
         return tf.abs(hy_distance - eu_distance) / eu_distance
-
-
-def euclidean_distance(x, y, all_pairs=False):
-    return tf.math.sqrt(euclidean_sq_distance(x, y, all_pairs))

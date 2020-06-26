@@ -6,7 +6,7 @@ CONFIG = {
         'dataset': ('Dataset', 'ml-1m'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
-        'model': ('Model', 'DistanceDistortionHyperbolicTangentSpace'),
+        'model': ('Model', 'DistanceHyperbolicTangentSpaceDistortion'),
         'loss_fn': ('Loss function to use', 'HingeDistortionLoss'),
         'initializer': ('Which initializer to use', 'RandomUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),
