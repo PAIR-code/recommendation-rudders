@@ -141,3 +141,4 @@ cython_debug/
 hyperbolic-rs/data
 hyperbolic-rs/logs
 hyperbolic-rs/ckpt
+hyperbolic-rs/out
