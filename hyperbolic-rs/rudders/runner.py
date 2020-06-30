@@ -7,7 +7,7 @@ from rudders.utils import rank_to_metric_dict
 
 
 class Runner:
-    def __init__(self, args, model, optimizer, loss, train, dev, test, samples):
+    def __init__(self, args, model, optimizer, loss, train, dev, test, samples, id2uid, id2iid, iid2name):
         self.args = args
         self.model = model
         self.optimizer = optimizer
@@ -16,6 +16,9 @@ class Runner:
         self.dev = dev
         self.test = test
         self.samples = samples
+        self.id2uid = id2uid
+        self.id2iid = id2iid
+        self.iid2name = iid2name
         self.summary = tf.summary.create_file_writer(args.logs_dir + f"/summary/{args.run_id}")
 
     def run(self):
