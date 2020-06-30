@@ -24,7 +24,7 @@ class CFModel(tf.keras.Model, abc.ABC):
     def __init__(self, n_users, n_items, args):
         super(CFModel, self).__init__()
         self.dims = args.dims
-        self.initializer = getattr(tf.keras.initializers, args.initializer)
+        self.initializer = getattr(tf.keras.initializers, args.initializer)(minval=-0.01, maxval=0.01)
         self.item_regularizer = getattr(regularizers, args.regularizer)(args.item_reg)
         self.user_regularizer = getattr(regularizers, args.regularizer)(args.user_reg)
         self.user = tf.keras.layers.Embedding(
