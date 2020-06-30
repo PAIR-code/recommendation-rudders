@@ -3,7 +3,7 @@ CONFIG = {
     'string': {
         'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
-        'dataset': ('Dataset', 'keen'), # ml-1m
+        'dataset': ('Dataset (keen, gem or ml-1m)', 'gem'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
         'model': ('Model', 'DistHyperbolic'),

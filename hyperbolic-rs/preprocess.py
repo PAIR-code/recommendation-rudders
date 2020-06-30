@@ -8,8 +8,8 @@ from pathlib import Path
 from rudders.config import CONFIG
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset')
-# data/keen or data/ml-1m
+flags.DEFINE_string('dataset_path', default='data/gem', help='Path to raw dataset: data/keen, data/gem or data/ml-1m')
+flags.DEFINE_boolean('plot_graph', default=True, help='Plots the user-item graph')
 
 
 def movielens_to_dict(dataset_path):
@@ -50,9 +50,9 @@ def build_movieid2title(dataset_path):
     return movieid2title
 
 
-def keens_to_dict(dataset_path, min_interactions=4):
+def csv_to_dict(file_path, min_interactions=10):
     """
-    Maps raw dataset file to a Dictonary.
+    Maps raw csv interactions file to a Dictonary.
 
     :param dataset_path: Path to file containing interactions in a format
         user_id,keen_id
@@ -60,42 +60,42 @@ def keens_to_dict(dataset_path, min_interactions=4):
     :return: Dictionary containing users as keys, and a numpy array of items the user
       interacted with, sorted by the time of interaction.
     """
-    file_name = "user_keen_interactions.csv"
     samples = {}
-    with open(Path(dataset_path) / file_name, 'r') as f:
+    with open(file_path, 'r') as f:
         next(f)
         for line in f:
             line = line.strip('\n').split(',')
             uid = line[0]
-            kid = line[1]
+            iid = line[1]
             if uid in samples:
-                samples[uid].add(kid)
+                samples[uid].add(iid)
             else:
-                samples[uid] = {kid}
+                samples[uid] = {iid}
 
-    all_keens = set()
-    for ints in samples.values(): all_keens.update(ints)
+    all_items = set()
+    for ints in samples.values(): all_items.update(ints)
     interactions = sum([len(v) for v in samples.values()])
-    print(f"Processed users: {len(samples)}. Processed keens: {len(all_keens)}. Interactions: {interactions}")
+    print(f"Processed users: {len(samples)}. Processed items: {len(all_items)}. Interactions: {interactions}")
 
     filtered_samples = {uid: ints for uid, ints in samples.items() if len(ints) >= min_interactions}
 
-    filtered_keens = set()
-    for ints in filtered_samples.values(): filtered_keens.update(ints)
+    filtered_items = set()
+    for ints in filtered_samples.values(): filtered_items.update(ints)
     interactions = sum([len(v) for v in filtered_samples.values()])
-    print(f"After filtering: users: {len(filtered_samples)}, keens: {len(filtered_keens)}, interactions: {interactions}")
+    print(f"After filtering: users: {len(filtered_samples)}, items: {len(filtered_items)}, interactions: {interactions}")
 
     return filtered_samples
 
 
-def build_kid2title(dataset_path):
-    keen_data = "keens_and_gems_25_june_2020.json"
-    kid2title = {}
-    with open(Path(dataset_path) / keen_data, "r") as f:
+def build_iid2title(item_id_key, item_title_key):
+    keen_metadata = "data/keen/keens_and_gems_25_june_2020.json"
+    iid2title = {}
+    with open(keen_metadata, "r") as f:
         for line in f:
             line = json.loads(line)
-            kid2title[line["keen_id"]] = line["keen_title"][1:-1]
-    return kid2title
+            if item_id_key in line and item_title_key in line:
+                iid2title[line[item_id_key]] = line[item_title_key][1:-1]
+    return iid2title
 
 
 def map_item_ids_to_sequential_ids(samples):
@@ -154,14 +154,39 @@ def save_as_pickle(dst_dir, data):
         pickle.dump(data, fp)
 
 
+def plot_graph(samples):
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    graph = nx.Graph()
+    for uid, ints in samples.items():
+        for iid in ints:
+            graph.add_edge(uid, iid)
+
+    color_map = ["red" if node in samples else "blue" for node in graph]
+
+    fig = plt.figure()
+    pos = nx.spring_layout(graph, iterations=100)
+    nx.draw(graph, pos, ax=fig.add_subplot(111), node_size=20, node_color=color_map)
+    plt.show()
+
+
 def main(_):
     dataset_path = FLAGS.dataset_path
-    if "keen" in dataset_path:
-        samples = keens_to_dict(dataset_path)
-        iid2name = build_kid2title(dataset_path)
+    if "keen" in dataset_path or "gem" in dataset_path:
+        file_path = Path(dataset_path) / "interactions.csv"
+        samples = csv_to_dict(file_path)
+        if "keen" in dataset_path:
+            iid2name = build_iid2title(item_id_key="keen_id", item_title_key="keen_title")
+        else:
+            iid2name = build_iid2title(item_id_key="gem_id", item_title_key="gem_link_title")
     else:
         samples = movielens_to_dict(dataset_path)
         iid2name = build_movieid2title(dataset_path)
+
+    if FLAGS.plot_graph:
+        plot_graph(samples)
+        return
 
     uid2id, iid2id = map_item_ids_to_sequential_ids(samples)
 
