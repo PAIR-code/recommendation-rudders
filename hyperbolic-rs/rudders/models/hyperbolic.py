@@ -9,8 +9,8 @@ class BaseHyperbolic(CFModel, ABC):
 
     def __init__(self, n_users, n_items, args):
         super(BaseHyperbolic, self).__init__(n_users, n_items, args)
-        # inits c to a value that will result in softplus(c) == 1
-        init_value = tf.math.log(tf.math.exp(tf.keras.backend.ones(1)) - 1)
+        # inits c to a value that will result in softplus(c) == curvature
+        init_value = tf.math.log(tf.math.exp(tf.keras.backend.constant(args.curvature)) - 1)
         self.c = tf.Variable(initial_value=init_value, trainable=args.train_c)
 
     def get_users(self, input_tensor):

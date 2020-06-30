@@ -20,7 +20,8 @@ CONFIG = {
         'gamma': ('Margin for distance-based losses', 0),
         'item_reg': ('Regularization weight for item embeddings', 0),
         'user_reg': ('Regularization weight for user embeddings', 0),
-        'margin': ('Margin for hinge based models', 1)
+        'margin': ('Margin for hinge based models', 1),
+        'curvature': ('Curvature in case of using hyperbolic space', 1.)
     },
     'integer': {
         'patience': ('Number of validation steps before early stopping', 6),
@@ -33,7 +34,7 @@ CONFIG = {
         'seed': ('Random seed', 42),
     },
     'boolean': {
-        'train_c': ('Whether to train the hyperbolic curvature or not', False),
+        'train_c': ('Whether to train the hyperbolic curvature or not', True),
         'debug': ('If debug is true, only use 1000 examples for debugging purposes', True),
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),

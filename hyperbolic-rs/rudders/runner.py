@@ -32,6 +32,9 @@ class Runner:
                 tf.summary.scalar('train/loss', train_loss, step=epoch)
                 tf.summary.scalar('train/user_avg_norm', self.model.get_avg_norm("user"), step=epoch)
                 tf.summary.scalar('train/item_avg_norm', self.model.get_avg_norm("item"), step=epoch)
+                tf.summary.scalar('train/lr', float(tf.keras.backend.get_value(self.optimizer.lr)), step=epoch)
+                if hasattr(self.model, 'c'):
+                    tf.summary.scalar('train/curvature', self.model.get_c(), step=epoch)
 
             if epoch % self.args.validate == 0:
                 dev_loss = self.validate()
