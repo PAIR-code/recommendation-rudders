@@ -9,13 +9,16 @@ python train.py \
         --model=DistEuclidean \
         --dims=64 \
         --loss_fn=PairwiseHingeLoss \
-        --lr=3e-3 \
-        --max_epochs=1000 \
-        --margin=1 \
-        --batch_size=1024 \
-        --neg_sample_size=1 \
-        --validate=10 \
-        --patience=10 \
         --debug=False \
         --run_id=$RUN_ID \
+        --lr=1e-3 \
+        --max_epochs=1000 \
+        --neg_sample_size=1 \
+        --margin=2 \
+        --batch_size=2048 \
+        --neg_sample_size=1 \
+        --patience=10 \
+        --validate=10 \
+        --curvature=1.0 \
+        --train_c=False \
 
