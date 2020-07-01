@@ -6,14 +6,14 @@ from rudders.models.base import CFModel
 class BaseEuclidean(CFModel, ABC):
     """Base model class for Euclidean embeddings."""
 
-    def get_users(self, input_tensor):
-        return self.user(input_tensor[:, 0])
+    def get_users(self, indexes):
+        return self.user(indexes)
 
     def get_all_users(self):
         return self.user.embeddings
 
-    def get_items(self, input_tensor):
-        return self.item(input_tensor[:, 1])
+    def get_items(self, indexes):
+        return self.item(indexes)
 
     def get_all_items(self):
         return self.item.embeddings
@@ -39,6 +39,9 @@ class DistEuclidean(BaseEuclidean):
     def score(self, user_embeds, item_embeds, all_pairs):
         """Score based on squared euclidean distance"""
         return -euclidean_sq_distance(user_embeds, item_embeds, all_pairs)
+
+    def distance(self, embeds_a, embeds_b, all_pairs):
+        return tf.sqrt(euclidean_sq_distance(embeds_a, embeds_b, all_pairs))
 
 
 def euclidean_sq_distance(x, y, all_pairs=False):

@@ -86,8 +86,8 @@ class CFModel(tf.keras.Model, abc.ABC):
           Tensor containing pairs scores. If eval_mode is False, this tensor has size batch_size x 1, otherwise it has
           size batch_size x n_item where n_item is the total number of items in the CF.
         """
-        user_embeds = self.get_users(input_tensor)
-        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor)
+        user_embeds = self.get_users(input_tensor[:, 0])
+        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor[:, 1])
         predictions = self.score(user_embeds, all_item_embeds, all_pairs)
         return predictions
 
@@ -117,11 +117,11 @@ class CFModel(tf.keras.Model, abc.ABC):
                   scores against all possible items in the CF.
           targets: Numpy array of size batch_size x 1 containing pairs' scores.
         """
-        all_items = self.get_all_items()
-        user_embeds = self.get_users(input_tensor)
-        item_embeds = self.get_items(input_tensor)
-        scores = self.score(user_embeds, all_items, all_pairs=True)
+        user_embeds = self.get_users(input_tensor[:, 0])
+        item_embeds = self.get_items(input_tensor[:, 1])
         targets = self.score(user_embeds, item_embeds, all_pairs=False)
+        all_items = self.get_all_items()
+        scores = self.score(user_embeds, all_items, all_pairs=True)
         return scores.numpy(), targets.numpy()
 
     def random_eval(self, split_data, samples, batch_size=500, num_rand=100, seed=1234):

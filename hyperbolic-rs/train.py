@@ -4,6 +4,7 @@ from absl import app, flags, logging
 import numpy as np
 import tensorflow as tf
 import pickle
+import networkx as nx
 
 from rudders.config import CONFIG
 from rudders.utils import set_seed, setup_logger
@@ -58,6 +59,14 @@ def load_data(prep_path, dataset_name, debug):
     return train, dev, test, samples, n_users, n_items, data
 
 
+def load_item_item_distances(prep_path, dataset_name, item_item_file_path):
+    item_item_file_path = Path(prep_path) / dataset_name / item_item_file_path
+    logging.info(f"Loading data from {item_item_file_path}")
+    with tf.io.gfile.GFile(str(item_item_file_path), 'rb') as f:
+        data = pickle.load(f)
+    return data["item_item_distances"]
+
+
 def save_config(logs_dir, run_id):
     config_path = logs_dir / f'{run_id}.json'
     if FLAGS.save_logs and not config_path.exists():
@@ -82,6 +91,26 @@ def get_optimizer(args):
     return getattr(tf.keras.optimizers, args.optimizer)(learning_rate=args.lr)
 
 
+def build_distance_matrix(item_item_distances_dict, id2iid):
+    """
+    Build a distance matrix according to the graph distance between the items, stored in the item_item_distances_dict
+    The order of the matrix is given by the ids in id2iid.
+    This is, the distance between the item with numerical indexes i and j is in the position distance_matrix[i, j]
+
+    The distance to unconnected nodes or the distance from a node to itself is a large value
+    """
+    iid2id = {v: k for k, v in id2iid.items()}
+    distance_matrix = np.ones((len(id2iid), len(id2iid))) * 9999999
+    for src_index, src_iid in id2iid.items():
+        if src_iid not in item_item_distances_dict: continue
+        src_dist = item_item_distances_dict[src_iid]
+        for dst_iid, distance in src_dist.items():
+            if src_iid != dst_iid and dst_iid in iid2id:
+                dst_index = iid2id[dst_iid]
+                distance_matrix[src_index, dst_index] = distance
+    return distance_matrix
+
+
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=FLAGS.debug)
     logs_dir = Path(FLAGS.logs_dir)
@@ -93,10 +122,12 @@ def main(_):
 
     # load data
     train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.debug)
+    item_item_distances_dict = load_item_item_distances(FLAGS.prep_dir, FLAGS.dataset, FLAGS.item_item_file)
+    item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, data["id2iid"])
 
     model = get_models(n_users, n_items)
     optimizer = get_optimizer(FLAGS)
-    loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS)
+    loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS, item_distances=item_item_distance_matrix)
 
     runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples,
                     id2uid=data["id2uid"], id2iid=data["id2iid"], iid2name=data["iid2name"])
