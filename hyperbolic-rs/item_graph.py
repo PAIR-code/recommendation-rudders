@@ -194,7 +194,7 @@ def load_text_embeddings(text_embeddings_path):
         for line in f:
             data = line.strip().split(",")
             iid = data[0]
-            emb = tf.convert_to_tensor([float(x) for x in data[1:]])
+            emb = tf.convert_to_tensor([[float(x) for x in data[1:]]])
             embeds[iid] = emb
     return embeds
 
