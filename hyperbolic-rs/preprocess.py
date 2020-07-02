@@ -5,11 +5,13 @@ import random
 from pathlib import Path
 from rudders.datasets import movielens, keen
 from rudders.config import CONFIG
+from rudders.utils import set_seed
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('run_id', default='prep', help='Name of prep to store')
 flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/gem or data/ml-1m')
 flags.DEFINE_boolean('plot_graph', default=True, help='Plots the user-item graph')
+flags.DEFINE_integer('seed', default=42, help='Random seed')
 
 
 def map_item_ids_to_sequential_ids(samples):
@@ -94,6 +96,7 @@ def plot_graph(samples):
 
 
 def main(_):
+    set_seed(FLAGS.seed, set_tf_seed=True)
     dataset_path = Path(FLAGS.dataset_path)
     if "keen" in FLAGS.dataset_path:
         samples = keen.load_interactions_to_dict(dataset_path, min_interactions=1)
