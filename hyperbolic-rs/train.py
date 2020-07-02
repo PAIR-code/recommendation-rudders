@@ -107,7 +107,7 @@ def build_distance_matrix(item_item_distances_dict, id2iid):
         for dst_iid, distance in src_dist.items():
             if src_iid != dst_iid and dst_iid in iid2id:
                 dst_index = iid2id[dst_iid]
-                distance_matrix[src_index, dst_index] = distance
+                distance_matrix[src_index, dst_index] = max(distance, 0.1)  # set a minimum distance for stability
     return distance_matrix
 
 

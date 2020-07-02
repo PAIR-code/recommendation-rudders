@@ -1,3 +1,18 @@
+# Copyright 2017 The Rudders Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Script to create an item-item graph f based on semantic similarities from the text in the items"""
+
 from absl import app, flags
 from pathlib import Path
 import pickle
@@ -15,7 +30,7 @@ flags.DEFINE_string('file', default='', help='Path to file with keen data')
 flags.DEFINE_string('item', default='keen', help='Item to create embeddings: keen or gem')
 flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store results')
 flags.DEFINE_float('threshold', default=0.65, help='Cosine similarity threshold to add edges')
-flags.DEFINE_boolean('use_distance', default=False, help='Whether to use cosine distance as weight or each edge is 1')
+flags.DEFINE_boolean('use_distance', default=True, help='Whether to use cosine distance as weight or each edge is 1')
 
 
 def process_input(string):
@@ -187,7 +202,8 @@ def main(_):
     print(f"Graph info:\n{nx.info(graph)}")
     plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
 
-    all_distances = dict(nx.all_pairs_shortest_path_length(graph))
+    all_pairs = nx.all_pairs_dijkstra(graph, weight="weight" if FLAGS.use_distance else None)
+    all_distances = {n: dist for n, (dist, path) in all_pairs}
 
     result = {"item_item_distances": all_distances}
     file_name = f'item_item_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}.pickle'
