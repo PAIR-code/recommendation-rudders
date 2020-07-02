@@ -70,7 +70,7 @@ class Runner:
             self.model.save_weights(str(Path(self.args.ckpt_dir) / f'{self.args.run_id}_{best_epoch}ep.h5'))
 
         # validation metrics
-        logging.info(f"Final performance after {epoch} epochs")
+        logging.info(f"Final best performance from {best_epoch} epochs")
         self.compute_metrics(self.dev, "dev", epoch, write_summary=False)
         self.compute_metrics(self.test, "test", epoch, write_summary=False)
 
