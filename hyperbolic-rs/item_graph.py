@@ -26,9 +26,10 @@ import tensorflow_hub as hub
 
 URL_RE = '((www\.[^\s]+)|(https?://[^\s]+)|(http?://[^\s]+))'
 FLAGS = flags.FLAGS
-flags.DEFINE_string('file', default='', help='Path to file with keen data')
-flags.DEFINE_string('item', default='keen', help='Item to create embeddings: keen or gem')
+flags.DEFINE_string('file', default='data/keen/keens_and_gems_25_june_2020.json', help='Path to file with keen data')
+flags.DEFINE_string('item', default='gem', help='Item to create embeddings: keen or gem')
 flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store results')
+flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
 flags.DEFINE_float('threshold', default=0.65, help='Cosine similarity threshold to add edges')
 flags.DEFINE_boolean('use_distance', default=True, help='Whether to use cosine distance as weight or each edge is 1')
 
@@ -108,6 +109,17 @@ def build_texts_from_keens(keens):
     return texts
 
 
+def build_texts_from_gems(keens):
+    texts = {}
+    for keen in keens.values():
+        for gem in keen.gems:
+            sents = [gem.text, gem.link_title, gem.link_description]
+            sents = [s for s in sents if s]   # filters empty sentences
+            if sents:
+                texts[gem.gem_id] = sents
+    return texts
+
+
 def build_item_embeds(item_text, weight_first_embedding=False):
     """
     Build item embeddings based on the text they contain.
@@ -115,7 +127,7 @@ def build_item_embeds(item_text, weight_first_embedding=False):
     """
     use_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
     result = {}
-    for iid, sents in item_text.items():
+    for iid, sents in tqdm(item_text.items(), total=len(item_text)):
         embs = use_model(sents)
 
         weights = np.ones([1, len(embs)])
@@ -123,10 +135,10 @@ def build_item_embeds(item_text, weight_first_embedding=False):
             weights[0, 0] = 2
         weights = tf.convert_to_tensor(weights, dtype=tf.float32)
         weights = tf.keras.activations.softmax(weights, axis=-1)
-        keen_embeds = tf.transpose(weights) * embs
+        item_embeds = tf.transpose(weights) * embs
         # Takes mean of weighted embeddings
-        keen_embeds = tf.reduce_sum(keen_embeds, axis=0, keepdims=True)
-        result[iid] = keen_embeds
+        item_embeds = tf.reduce_sum(item_embeds, axis=0, keepdims=True)
+        result[iid] = item_embeds
     return result
 
 
@@ -176,31 +188,47 @@ def plot_graph(graph, dst_path):
     plt.savefig(str(dst_path))
 
 
+def load_text_embeddings(text_embeddings_path):
+    embeds = {}
+    with open(text_embeddings_path, "r") as f:
+        for line in f:
+            data = line.strip().split(",")
+            iid = data[0]
+            emb = tf.convert_to_tensor([float(x) for x in data[1:]])
+            embeds[iid] = emb
+    return embeds
+
+
 def main(_):
-    dst_path = Path(FLAGS.dst_path) / FLAGS.item
-    data = get_data(FLAGS.file)
-    all_keens = get_keens(data)
+    if not FLAGS.text_embeddings:
+        dst_path = Path(FLAGS.dst_path) / FLAGS.item
+        data = get_data(FLAGS.file)
+        all_keens = get_keens(data)
 
-    # keeps keens with at least one gem
-    keens = {k: v for k, v in all_keens.items() if v.gems}
-    print(f"Total amount of keens: {len(all_keens)}")
-    print(f"Keen with at least one gem: {len(keens)}")
+        # keeps keens with at least one gem
+        keens = {k: v for k, v in all_keens.items() if v.gems}
+        print(f"Total amount of keens: {len(all_keens)}")
+        print(f"Keen with at least one gem: {len(keens)}")
 
-    if FLAGS.item == "keen":
-        texts = build_texts_from_keens(keens)
+        if FLAGS.item == "keen":
+            texts = build_texts_from_keens(keens)
+        else:
+            texts = build_texts_from_gems(keens)
+
+        print(f"Items with text from {FLAGS.item} to encode with USE: {len(texts)}")
+        print(list(texts.items())[:3])
+
+        embeds = build_item_embeds(texts, weight_first_embedding=FLAGS.item == "keen")
+        export_embeds(embeds, dst_path)
+
     else:
-        raise NotImplemented()  # TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    print(f"Text from {FLAGS.item} to encode with USE")
-    print(list(texts.items())[:3])
-
-    embeds = build_item_embeds(texts, weight_first_embedding=FLAGS.item == "keen")
-    export_embeds(embeds, dst_path)
+        embeds = load_text_embeddings(FLAGS.text_embeddings)
 
     item_ids, cossim_matrix = build_cossim_matrix(embeds)
 
     graph = build_graph(item_ids, cossim_matrix, FLAGS.threshold, FLAGS.use_distance)
     print(f"Graph info:\n{nx.info(graph)}")
-    plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
+    # plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
 
     all_pairs = nx.all_pairs_dijkstra(graph, weight="weight" if FLAGS.use_distance else None)
     all_distances = {n: dist for n, (dist, path) in all_pairs}
