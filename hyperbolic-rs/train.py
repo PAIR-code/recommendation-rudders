@@ -33,10 +33,9 @@ def get_models(n_users, n_items):
     return model
 
 
-def load_data(prep_path, dataset_name, debug):
-    dataset_path = Path(prep_path) / dataset_name
-    logging.info(f"Loading data from {dataset_path}")
-    file_path = dataset_path / 'prep.pickle'
+def load_data(prep_path, dataset_name, prep_name, debug):
+    file_path = Path(prep_path) / dataset_name / f'{prep_name}.pickle'
+    logging.info(f"Loading data from {file_path}")
     with tf.io.gfile.GFile(str(file_path), 'rb') as f:
         data = pickle.load(f)
 
@@ -92,7 +91,8 @@ def main(_):
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
     # load data
-    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.debug)
+    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.prep_name,
+                                                                  FLAGS.debug)
 
     model = get_models(n_users, n_items)
     optimizer = get_optimizer(FLAGS)
