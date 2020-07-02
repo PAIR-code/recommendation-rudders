@@ -97,10 +97,10 @@ def build_distance_matrix(item_item_distances_dict, id2iid):
     The order of the matrix is given by the ids in id2iid.
     This is, the distance between the item with numerical indexes i and j is in the position distance_matrix[i, j]
 
-    The distance to unconnected nodes or the distance from a node to itself is a large value
+    The distance to unconnected nodes or the distance from a node to itself is -1
     """
     iid2id = {v: k for k, v in id2iid.items()}
-    distance_matrix = np.ones((len(id2iid), len(id2iid))) * 9999999
+    distance_matrix = np.ones((len(id2iid), len(id2iid))) * -1
     for src_index, src_iid in id2iid.items():
         if src_iid not in item_item_distances_dict: continue
         src_dist = item_item_distances_dict[src_iid]

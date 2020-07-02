@@ -56,8 +56,9 @@ class SemanticLoss(PairwiseHingeLoss):
     def __init__(self, n_users, n_items, args, **kwargs):
         super(SemanticLoss, self).__init__(n_users, n_items, args)
         self.item_distances = tf.keras.backend.constant(kwargs["item_distances"])
-        # Keep 2% of closest neighbors to compute loss only over those
-        self.neighbor_ids = tf.cast(tf.math.top_k(-self.item_distances, k=len(self.item_distances) // 50)[1], tf.int64)
+        # Keep small proportion of closest neighbors of each item to compute loss only over those
+        neighs_ids = tf.math.top_k(-self.item_distances, k=len(self.item_distances) // args.neighbors)[1]
+        self.neighbor_ids = tf.cast(neighs_ids, tf.int64)
         self.distortion_gamma = tf.Variable(args.distortion_gamma * tf.keras.backend.ones(1), trainable=False)
         self.distortion_neg_sample_size = args.distortion_neg_sample_size
 
@@ -69,14 +70,17 @@ class SemanticLoss(PairwiseHingeLoss):
     def calculate_distortion_loss(self, model, input_batch):
         loss = tf.keras.backend.constant(0.0)
         src_index = input_batch[:, 1]
-        src_items_embeds = model.get_items(src_index)
+        src_item_embeds = model.get_items(src_index)
         for _ in range(self.distortion_neg_sample_size):
             dst_index = self.get_dst_index(src_index)
             dst_item_embeds = model.get_items(dst_index)
             indexes = tf.concat((tf.expand_dims(src_index, 1), tf.expand_dims(dst_index, 1)), axis=1)
 
-            space_distance = model.distance(src_items_embeds, dst_item_embeds, all_pairs=False)
+            space_distance = model.distance(src_item_embeds, dst_item_embeds, all_pairs=False)
             graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, indexes), 1)
+
+            space_distance = tf.where(graph_distance > 0, space_distance, tf.zeros_like(space_distance))
+            graph_distance = tf.where(graph_distance > 0, graph_distance, tf.ones_like(graph_distance))
 
             this_loss = (space_distance / graph_distance)**2
             this_loss = tf.abs(this_loss - 1)

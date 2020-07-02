@@ -108,7 +108,7 @@ def hyp_distance(x, y, c):
     xy = tf.reduce_sum(x * y, axis=-1, keepdims=True)
     c1 = 1 - 2 * c * xy + c * y2
     c2 = 1 - c * x2
-    num = tf.sqrt(tf.square(c1) * x2 + tf.square(c2) * y2 - (2 * c1 * c2) * xy)
+    num = tf.sqrt(tf.maximum(tf.square(c1) * x2 + tf.square(c2) * y2 - (2 * c1 * c2) * xy, tf.zeros_like(x2)))
     denom = 1 - 2 * c * xy + tf.square(c) * x2 * y2
     pairwise_norm = num / tf.maximum(denom, MIN_NORM)
     dist = artanh(sqrt_c * pairwise_norm)

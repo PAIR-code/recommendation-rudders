@@ -19,12 +19,12 @@ CONFIG = {
         'lr_decay': ('Learning rate decay', 0.96),
         'min_lr': ('Minimum learning rate decay', 1e-5),
         'gamma': ('Margin for distance-based losses', 0),
-        'distortion_gamma': ('Weight for item-item distortion-based loss', 1.),
+        'distortion_gamma': ('Weight for item-item distortion-based loss', 0.5),
         'item_reg': ('Regularization weight for item embeddings', 0),
         'user_reg': ('Regularization weight for user embeddings', 0),
         'margin': ('Margin for hinge based models', 1),
         'curvature': ('Curvature in case of using hyperbolic space', 1.),
-        'min_similarity': ('Threshold for minimum similarity to add edges in item-item graph', 0.75)
+        'neighbors': ('Proportion of neighbors to keep for semantic loss', 0.02)
     },
     'integer': {
         'patience': ('Number of validation steps before early stopping', 10),
@@ -38,7 +38,7 @@ CONFIG = {
         'seed': ('Random seed', 42),
     },
     'boolean': {
-        'train_c': ('Whether to train the hyperbolic curvature or not', True),
+        'train_c': ('Whether to train the hyperbolic curvature or not', False),
         'debug': ('If debug is true, only use 1000 examples for debugging purposes', True),
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
