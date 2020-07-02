@@ -57,7 +57,7 @@ class SemanticLoss(PairwiseHingeLoss):
         super(SemanticLoss, self).__init__(n_users, n_items, args)
         self.item_distances = tf.keras.backend.constant(kwargs["item_distances"])
         # Keep small proportion of closest neighbors of each item to compute loss only over those
-        neighs_ids = tf.math.top_k(-self.item_distances, k=len(self.item_distances) // args.neighbors)[1]
+        neighs_ids = tf.math.top_k(-self.item_distances, k=int(len(self.item_distances) * args.neighbors))[1]
         self.neighbor_ids = tf.cast(neighs_ids, tf.int64)
         self.distortion_gamma = tf.Variable(args.distortion_gamma * tf.keras.backend.ones(1), trainable=False)
         self.distortion_neg_sample_size = args.distortion_neg_sample_size
