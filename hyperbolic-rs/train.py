@@ -17,10 +17,10 @@ from pathlib import Path
 from absl import app, flags, logging
 import numpy as np
 import tensorflow as tf
+import pickle
 
 from rudders.config import CONFIG
 from rudders.utils import set_seed, setup_logger
-from rudders.dataset import Dataset
 import rudders.models as models
 import rudders.losses as losses
 from rudders.runner import Runner
@@ -47,17 +47,28 @@ def get_models(n_users, n_items):
     return model
 
 
-def load_data(prep_path, dataset_name, debug):
-    dataset_path = Path(prep_path) / dataset_name
-    logging.info(f"Loading data from {dataset_path}")
-    dataset = Dataset(dataset_path, debug)
-    train = dataset.get_split('train')
-    dev = dataset.get_split('dev')
-    test = dataset.get_split('test')
-    samples = dataset.get_samples()
-    n_users, n_items = dataset.get_shape()
+def load_data(prep_path, dataset_name, prep_name, debug):
+    file_path = Path(prep_path) / dataset_name / f'{prep_name}.pickle'
+    logging.info(f"Loading data from {file_path}")
+    with tf.io.gfile.GFile(str(file_path), 'rb') as f:
+        data = pickle.load(f)
+
+    # splits
+    train = data["train"] if not debug else data["train"][:1000].astype(np.int64)
+    buffer_size = train.shape[0]
+    train = tf.data.Dataset.from_tensor_slices(train)
+    train.shuffle(buffer_size=buffer_size, reshuffle_each_iteration=True)
+    dev = tf.data.Dataset.from_tensor_slices(data["dev"])
+    test = tf.data.Dataset.from_tensor_slices(data["test"])
+
+    # metadata
+    samples = data["samples"]
+    n_users = len(samples)
+    all_items = set()
+    for v in samples.values(): all_items.update(v)
+    n_items = len(all_items)
     logging.info(f'Dataset stats: n_users: {n_users}, n_items: {n_items}')
-    return train, dev, test, samples, n_users, n_items
+    return train, dev, test, samples, n_users, n_items, data
 
 
 def save_config(logs_dir, run_id):
@@ -94,13 +105,15 @@ def main(_):
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
     # load data
-    train, dev, test, samples, n_users, n_items = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.debug)
+    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.prep_name,
+                                                                  FLAGS.debug)
 
     model = get_models(n_users, n_items)
     optimizer = get_optimizer(FLAGS)
     loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS)
 
-    runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples)
+    runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples,
+                    id2uid=data["id2uid"], id2iid=data["id2iid"], iid2name=data["iid2name"])
     runner.run()
     logging.info("Done!")
 

@@ -15,49 +15,44 @@
 from absl import app, flags
 import pickle
 import numpy as np
-import tensorflow as tf
+import random
 from pathlib import Path
+from rudders.datasets import movielens, keen
 from rudders.config import CONFIG
+from rudders.utils import set_seed
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string(
-    'dataset_path',
-    default='data/ml-1m/ratings.dat',
-    help='Path to raw dataset')
+flags.DEFINE_string('run_id', default='prep', help='Name of prep to store')
+flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/gem or data/ml-1m')
+flags.DEFINE_boolean('plot_graph', default=True, help='Plots the user-item graph')
+flags.DEFINE_integer('seed', default=42, help='Random seed')
 
 
-def movielens_to_dict(dataset_path):
+def map_item_ids_to_sequential_ids(samples):
     """
-    Maps raw dataset file to a Dictonary.
+    For each unique user or item id, this function creates a mapping to a sequence of number starting in 0.
+    This will be the index of the embeddings in the model.
 
-    :param dataset_path: Path to file containing interactions in a format
-        uid::iid::rate::time.
-    :return: Dictionary containing users as keys, and a numpy array of items the user
-      interacted with, sorted by the time of interaction.
+    :param samples: dict of <user_id1>: [<item_id1>, <item_id2>, ...]
+    :return: dicts of {<user_idX>: indexY} and {<item_idX>: indexW}
     """
-    samples = {}
-    with tf.io.gfile.GFile(dataset_path, 'r') as lines:
-        for line in lines:
-            line = line.strip('\n').split('::')
-            uid = int(line[0]) - 1
-            iid = int(line[1]) - 1
-            timestamp = int(line[3])
-            if uid in samples:
-                samples[uid].append((iid, timestamp))
-            else:
-                samples[uid] = [(iid, timestamp)]
-    for uid in samples:
-        sorted_items = sorted(samples[uid], key=lambda p: p[1])
-        samples[uid] = np.array([pair[0] for pair in sorted_items]).astype('int64')
-    return samples
+    uid2id, iid2id = {}, {}
+    for uid, ints in samples.items():
+        if uid not in uid2id:
+            uid2id[uid] = len(uid2id)
+        for iid in ints:
+            if iid not in iid2id:
+                iid2id[iid] = len(iid2id)
+
+    return uid2id, iid2id
 
 
-def create_splits(samples, random=False):
+def create_splits(samples, do_random=False):
     """
     Splits (user, item) dataset to train, dev and test.
 
     :param samples: Dict of sorted examples.
-    :param random: Bool whether to extract dev and test by random sampling. If False, dev, test are the last two
+    :param do_random: Bool whether to extract dev and test by random sampling. If False, dev, test are the last two
         items per user.
     :return: examples: Dictionary with 'train','dev','test' splits as numpy arrays
         containing corresponding (user_id, item_id) pairs, and 'to_skip' to a Dictionary containing filters
@@ -65,12 +60,16 @@ def create_splits(samples, random=False):
     """
     train, dev, test = [], [], []
     for uid, items in samples.items():
-        if random:
-            np.random.shuffle(items)
-        test.append([uid, items[-1]])
-        dev.append([uid, items[-2]])
-        for iid in items[:-2]:
-            train.append([uid, iid])
+        if do_random:
+            random.shuffle(items)
+        if len(items) >= 3:
+            test.append([uid, items[-1]])
+            dev.append([uid, items[-2]])
+            for iid in items[:-2]:
+                train.append([uid, iid])
+        else:
+            for iid in items:
+                train.append([uid, iid])
 
     return {
         'samples': samples,
@@ -80,31 +79,70 @@ def create_splits(samples, random=False):
     }
 
 
-def save_as_pickle(dst_dir, splits):
+def save_as_pickle(dst_dir, run_id, data):
     """
     Saves data to train, dev, test and samples pickle files.
 
     :param dst_dir: String path saving directory.
-    :param splits: Dictionary mapping splits 'train','dev','test' and 'samples' 
+    :param run_id: name of file to save
+    :param data: Data to store
     """
-    for key in ['train', 'dev', 'test', 'samples']:
-        save_path = Path(dst_dir / f'{key}.pickle')
-        with tf.io.gfile.GFile(str(save_path), 'wb') as fp:
-            pickle.dump(splits[key], fp)
+    save_path = Path(dst_dir / f'{run_id}.pickle')
+    with open(str(save_path), 'wb') as fp:
+        pickle.dump(data, fp)
+
+
+def plot_graph(samples):
+    """Plot user-item graph, setting different colors for items and users."""
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    graph = nx.Graph()
+    for uid, ints in samples.items():
+        for iid in ints:
+            graph.add_edge(uid, iid)
+
+    color_map = ["red" if node in samples else "blue" for node in graph]
+    fig = plt.figure()
+    pos = nx.spring_layout(graph, iterations=100)
+    nx.draw(graph, pos, ax=fig.add_subplot(111), node_size=20, node_color=color_map)
+    plt.show()
 
 
 def main(_):
-    dataset_path = FLAGS.dataset_path
-    sorted_samples = movielens_to_dict(dataset_path)
-    splits = create_splits(sorted_samples)
+    set_seed(FLAGS.seed, set_tf_seed=True)
+    dataset_path = Path(FLAGS.dataset_path)
+    if "keen" in FLAGS.dataset_path:
+        samples = keen.load_interactions_to_dict(dataset_path, min_interactions=4)
+        iid2name = keen.build_iid2title(item_id_key="keen_id", item_title_key="keen_title")
+    elif "gem" in FLAGS.dataset_path:
+        samples = keen.load_interactions_to_dict(dataset_path, min_interactions=10)
+        iid2name = keen.build_iid2title(item_id_key="gem_id", item_title_key="gem_link_title")
+    else:
+        samples = movielens.movielens_to_dict(dataset_path)
+        iid2name = movielens.build_movieid2title(dataset_path)
+
+    if FLAGS.plot_graph:
+        plot_graph(samples)
+        return
+
+    uid2id, iid2id = map_item_ids_to_sequential_ids(samples)
+
+    id_samples = {}
+    for uid, ints in samples.items():
+        id_samples[uid2id[uid]] = [iid2id[iid] for iid in ints]
+
+    splits = create_splits(id_samples)
+    splits["iid2name"] = iid2name
+    splits["id2uid"] = {v: k for k, v in uid2id.items()}
+    splits["id2iid"] = {v: k for k, v in iid2id.items()}
 
     # creates directories to save preprocessed data
     prep_path = Path(CONFIG["string"]["prep_dir"][1])
     prep_path.mkdir(parents=True, exist_ok=True)
-    to_save_dir = prep_path / dataset_path.split("/")[-2]
+    to_save_dir = prep_path / FLAGS.dataset_path.split("/")[-1]
     to_save_dir.mkdir(parents=True, exist_ok=True)
-
-    save_as_pickle(to_save_dir, splits)
+    save_as_pickle(to_save_dir, FLAGS.run_id, splits)
 
 
 if __name__ == '__main__':
