@@ -1,3 +1,17 @@
+# Copyright 2017 The Rudders Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from absl import app, flags
 import pickle
 import numpy as np
@@ -99,7 +113,7 @@ def main(_):
     set_seed(FLAGS.seed, set_tf_seed=True)
     dataset_path = Path(FLAGS.dataset_path)
     if "keen" in FLAGS.dataset_path:
-        samples = keen.load_interactions_to_dict(dataset_path, min_interactions=1)
+        samples = keen.load_interactions_to_dict(dataset_path, min_interactions=4)
         iid2name = keen.build_iid2title(item_id_key="keen_id", item_title_key="keen_title")
     elif "gem" in FLAGS.dataset_path:
         samples = keen.load_interactions_to_dict(dataset_path, min_interactions=10)
