@@ -32,6 +32,7 @@ flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store 
 flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
 flags.DEFINE_float('threshold', default=0.65, help='Cosine similarity threshold to add edges')
 flags.DEFINE_boolean('use_distance', default=True, help='Whether to use cosine distance as weight or each edge is 1')
+flags.DEFINE_boolean('plot', default=False, help='Whether to plot item-item graph or not')
 
 
 def process_input(string):
@@ -149,6 +150,17 @@ def export_embeds(embeds, dst_path):
             f.write(f"{iid},{values}\n")
 
 
+def load_text_embeddings(text_embeddings_path):
+    embeds = {}
+    with open(text_embeddings_path, "r") as f:
+        for line in f:
+            data = line.strip().split(",")
+            iid = data[0]
+            emb = tf.convert_to_tensor([[float(x) for x in data[1:]]])
+            embeds[iid] = emb
+    return embeds
+
+
 def build_cossim_matrix(item_embeds):
     iids = list(item_embeds.keys())
     embeds = tf.concat([item_embeds[k] for k in iids], axis=0)      # len(item_embeds) x embed_dim
@@ -188,20 +200,9 @@ def plot_graph(graph, dst_path):
     plt.savefig(str(dst_path))
 
 
-def load_text_embeddings(text_embeddings_path):
-    embeds = {}
-    with open(text_embeddings_path, "r") as f:
-        for line in f:
-            data = line.strip().split(",")
-            iid = data[0]
-            emb = tf.convert_to_tensor([[float(x) for x in data[1:]]])
-            embeds[iid] = emb
-    return embeds
-
-
 def main(_):
+    dst_path = Path(FLAGS.dst_path) / FLAGS.item
     if not FLAGS.text_embeddings:
-        dst_path = Path(FLAGS.dst_path) / FLAGS.item
         data = get_data(FLAGS.file)
         all_keens = get_keens(data)
 
@@ -228,7 +229,8 @@ def main(_):
 
     graph = build_graph(item_ids, cossim_matrix, FLAGS.threshold, FLAGS.use_distance)
     print(f"Graph info:\n{nx.info(graph)}")
-    # plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
+    if FLAGS.plot:
+        plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
 
     all_pairs = nx.all_pairs_dijkstra(graph, weight="weight" if FLAGS.use_distance else None)
     all_distances = {n: dist for n, (dist, path) in all_pairs}
