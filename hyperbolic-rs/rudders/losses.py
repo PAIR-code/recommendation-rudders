@@ -1,3 +1,16 @@
+# Copyright 2017 The Rudders Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Loss functions for CF with support for optional negative sampling."""
 
 import abc
@@ -96,4 +109,27 @@ class SemanticLoss(PairwiseHingeLoss):
                                                dtype=src_index.dtype)
         neighbor_index = tf.concat((tf.expand_dims(src_index, 1), neighbor_index_dst), axis=1)
         return tf.gather_nd(self.neighbor_ids, neighbor_index)
+
+
+class HingeDistortionLoss(PairwiseHingeLoss):
+    """This loss can only be used with DistanceDistortionHyperbolic since the model needs to implement
+        the 'distortion' method"""
+
+    def __init__(self, n_users, n_items, args):
+        super(HingeDistortionLoss, self).__init__(n_users, n_items, args)
+        self.gamma = tf.Variable(args.gamma * tf.keras.backend.ones(1), trainable=False)
+
+    def calculate_loss(self, model, input_batch):
+        distance_to_pos = model(input_batch, all_pairs=False)
+        distortion = model.distortion(input_batch, all_pairs=False)
+        loss = tf.keras.backend.constant(0.0)
+        for i in range(self.neg_sample_size):
+            neg_idx = tf.random.uniform((len(input_batch), 1), minval=0, maxval=self.n_items, dtype=input_batch.dtype)
+            neg_input_batch = tf.concat((tf.expand_dims(input_batch[:, 0], 1), neg_idx), axis=1)
+            dist_to_neg = model(neg_input_batch, all_pairs=False)
+            distortion = distortion + model.distortion(neg_input_batch, all_pairs=False)
+            loss = loss + self.loss_from_distances(distance_to_pos, dist_to_neg)
+
+        distortion_loss = tf.reduce_mean(distortion)
+        return loss + self.gamma * distortion_loss
 

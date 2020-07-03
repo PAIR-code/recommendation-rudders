@@ -1,3 +1,17 @@
+# Copyright 2017 The Rudders Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 from pathlib import Path
 from absl import app, flags, logging
@@ -5,7 +19,6 @@ import numpy as np
 import tensorflow as tf
 import pickle
 import networkx as nx
-
 from rudders.config import CONFIG
 from rudders.utils import set_seed, setup_logger
 import rudders.models as models
@@ -34,10 +47,9 @@ def get_models(n_users, n_items):
     return model
 
 
-def load_data(prep_path, dataset_name, debug):
-    dataset_path = Path(prep_path) / dataset_name
-    logging.info(f"Loading data from {dataset_path}")
-    file_path = dataset_path / 'prep.pickle'
+def load_data(prep_path, dataset_name, prep_name, debug):
+    file_path = Path(prep_path) / dataset_name / f'{prep_name}.pickle'
+    logging.info(f"Loading data from {file_path}")
     with tf.io.gfile.GFile(str(file_path), 'rb') as f:
         data = pickle.load(f)
 
@@ -121,7 +133,8 @@ def main(_):
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
     # load data
-    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.debug)
+    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.prep_name, 
+                                                                  FLAGS.debug)
     item_item_distances_dict = load_item_item_distances(FLAGS.prep_dir, FLAGS.dataset, FLAGS.item_item_file)
     item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, data["id2iid"])
 
