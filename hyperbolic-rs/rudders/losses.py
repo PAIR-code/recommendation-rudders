@@ -1,3 +1,16 @@
+# Copyright 2017 The Rudders Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Loss functions for CF with support for optional negative sampling."""
 
 import abc
@@ -13,10 +26,8 @@ class LossFunction(abc.ABC):
         Args:
           sizes: Tuple of size 2 containing (n_users, n_items).
           neg_sample_size: Integer indicating the number of negative samples to use.
-          double_neg: Bool indicating whether or not to use double negative
-            sampling.
-          margin: Float indicating the margin between ascore for positive and
-            negative examples.
+          double_neg: Bool indicating whether or not to use double negative sampling.
+          margin: Float indicating the margin between a score for positive and negative examples.
         """
         self.n_users = n_users
         self.n_items = n_items
@@ -52,3 +63,26 @@ class PairwiseHingeLoss(LossFunction):
     def loss_from_distances(self, dist_to_pos, dist_to_neg):
         """distances are negative. This means d = -dist(x,y)"""
         return tf.reduce_mean(tf.nn.relu(self.margin - dist_to_pos + dist_to_neg))
+
+
+class HingeDistortionLoss(PairwiseHingeLoss):
+    """This loss can only be used with DistanceDistortionHyperbolic since the model needs to implement
+        the 'distortion' method"""
+
+    def __init__(self, n_users, n_items, args):
+        super(HingeDistortionLoss, self).__init__(n_users, n_items, args)
+        self.gamma = tf.Variable(args.gamma * tf.keras.backend.ones(1), trainable=False)
+
+    def calculate_loss(self, model, input_batch):
+        distance_to_pos = model(input_batch, all_pairs=False)
+        distortion = model.distortion(input_batch, all_pairs=False)
+        loss = tf.keras.backend.constant(0.0)
+        for i in range(self.neg_sample_size):
+            neg_idx = tf.random.uniform((len(input_batch), 1), minval=0, maxval=self.n_items, dtype=input_batch.dtype)
+            neg_input_batch = tf.concat((tf.expand_dims(input_batch[:, 0], 1), neg_idx), axis=1)
+            dist_to_neg = model(neg_input_batch, all_pairs=False)
+            distortion = distortion + model.distortion(neg_input_batch, all_pairs=False)
+            loss = loss + self.loss_from_distances(distance_to_pos, dist_to_neg)
+
+        distortion_loss = tf.reduce_mean(distortion)
+        return loss + self.gamma * distortion_loss
