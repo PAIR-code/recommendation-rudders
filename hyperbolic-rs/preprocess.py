@@ -79,15 +79,13 @@ def create_splits(samples, do_random=False):
     }
 
 
-def save_as_pickle(dst_dir, run_id, data):
+def save_as_pickle(save_path, data):
     """
     Saves data to train, dev, test and samples pickle files.
 
-    :param dst_dir: String path saving directory.
-    :param run_id: name of file to save
+    :param save_path: path where to save data.
     :param data: Data to store
     """
-    save_path = Path(dst_dir / f'{run_id}.pickle')
     with open(str(save_path), 'wb') as fp:
         pickle.dump(data, fp)
 
@@ -113,7 +111,7 @@ def main(_):
     set_seed(FLAGS.seed, set_tf_seed=True)
     dataset_path = Path(FLAGS.dataset_path)
     if "keen" in FLAGS.dataset_path:
-        samples = keen.load_interactions_to_dict(dataset_path, min_interactions=4)
+        samples = keen.load_interactions_to_dict(dataset_path, min_interactions=5)
         iid2name = keen.build_iid2title(item_id_key="keen_id", item_title_key="keen_title")
     elif "gem" in FLAGS.dataset_path:
         samples = keen.load_interactions_to_dict(dataset_path, min_interactions=10)
@@ -142,7 +140,7 @@ def main(_):
     prep_path.mkdir(parents=True, exist_ok=True)
     to_save_dir = prep_path / FLAGS.dataset_path.split("/")[-1]
     to_save_dir.mkdir(parents=True, exist_ok=True)
-    save_as_pickle(to_save_dir, FLAGS.run_id, splits)
+    save_as_pickle(to_save_dir / f'{FLAGS.run_id}.pickle', splits)
 
 
 if __name__ == '__main__':

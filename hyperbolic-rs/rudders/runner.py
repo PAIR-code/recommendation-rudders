@@ -131,18 +131,16 @@ class Runner:
                     tf.summary.scalar(k, v, step=epoch)
 
         if print_samples:
-            self.print_samples(split)
+            self.print_samples()
 
         return metric_all, metric_random
 
-    def print_samples(self, split, n_users=10, n_samples=5, k_closest=10):
-        users = list(self.samples.keys())
-        random.shuffle(users)
-        users = users[:n_users]
+    def print_samples(self, n_users=10, n_samples=5, k_closest=10):
+        users = random.sample(list(self.samples.keys()), len(self.samples))[:n_users]
         user_tensor = tf.expand_dims(tf.convert_to_tensor(users), 1)
         input_tensor = tf.concat((user_tensor, tf.ones_like(user_tensor)), axis=1)
         scores = self.model(input_tensor, all_pairs=True)
-        top_k = tf.math.top_k(scores, k=k_closest)[1]
+        top_k = tf.math.top_k(scores, k=k_closest)[1].numpy()
 
         for i, user_index in enumerate(users):
             samples = self.samples[user_index]
@@ -151,18 +149,15 @@ class Runner:
                 logging.info(f"\t\t{item_index} - {self.get_item_name(item_index)}")
             
             logging.info(f"\tClosest {k_closest} items to user")
-            for closest in top_k[i]:
-                item_index = closest.numpy().item()
-                if item_index in samples:
-                    if item_index == samples[-1]:
-                        pos = "TEST"
-                    elif item_index == samples[-2]:
-                        pos = "DEV"
-                    else:
-                        pos = "TRAIN"
+            for item_index in top_k[i]:
+                if item_index == samples[-1]:
+                    pos = "TEST"
+                elif item_index == samples[-2]:
+                    pos = "DEV"
+                elif item_index in samples[:-2]:
+                    pos = "TRAIN"
                 else:
                     pos = "UNRELATED"
-
                 logging.info(f"\t\t{item_index} - {self.get_item_name(item_index)} - {pos}")
 
     def get_item_name(self, item_index):
@@ -175,4 +170,3 @@ class Runner:
             new_lr = old_lr * self.args.lr_decay
             new_lr = max(new_lr, self.args.min_lr)
             tf.keras.backend.set_value(self.optimizer.lr, new_lr)
-

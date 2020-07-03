@@ -15,57 +15,25 @@
 
 from absl import app, flags
 from pathlib import Path
-import pickle
 import json
-import re
 from tqdm import tqdm
 import networkx as nx
 import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
+from preprocess import save_as_pickle
+from rudders.datasets.keen import get_keens
 
-URL_RE = '((www\.[^\s]+)|(https?://[^\s]+)|(http?://[^\s]+))'
+
 FLAGS = flags.FLAGS
-flags.DEFINE_string('file', default='data/keen/keens_and_gems_25_june_2020.json', help='Path to file with keen data')
-flags.DEFINE_string('item', default='gem', help='Item to create embeddings: keen or gem')
+flags.DEFINE_string('file', default='data/keen/exports_2020-07-03_keens_and_gems.jsonl',
+                    help='Path to file with keen data')
+flags.DEFINE_string('item', default='keen', help='Item to create embeddings: keen or gem')
 flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store results')
 flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
 flags.DEFINE_float('threshold', default=0.65, help='Cosine similarity threshold to add edges')
-flags.DEFINE_boolean('use_distance', default=True, help='Whether to use cosine distance as weight or each edge is 1')
+flags.DEFINE_boolean('use_distance', default=False, help='Whether to use cosine distance as weight or each edge is 1')
 flags.DEFINE_boolean('plot', default=False, help='Whether to plot item-item graph or not')
-
-
-def process_input(string):
-    string = string[1:-1] if type(string) == str else ""
-    return string.replace("\\n", "")
-
-
-def get_value(item, key):
-    return item[key] if key in item else ""
-
-
-class Keen:
-    def __init__(self, keen_id, title, description, creator_uid):
-        self.keen_id = keen_id
-        self.title = process_input(title)
-        self.description = process_input(description)
-        self.creator_uid = process_input(creator_uid)
-        self.gems = []
-
-
-class Gem:
-    def __init__(self, item):
-        self.gem_id = get_value(item, "gem_id")
-        text = get_value(item, "gem_text")
-        text = re.sub(URL_RE, '', text)  # replace URL for empty string
-        self.text = process_input(text)
-        self.link_url = process_input(get_value(item, "gem_link_url"))
-        self.link_title = process_input(get_value(item, "gem_link_title"))
-        self.link_description = process_input(get_value(item, "gem_link_description"))
-        self.creator_uid = process_input(get_value(item, "gem_userid"))
-
-    def is_empty(self):
-        return not self.text and not self.link_url and not self.link_title and not self.link_description
 
 
 def get_data(path):
@@ -74,26 +42,6 @@ def get_data(path):
         for line in f:
             data.append(json.loads(line))
     return data
-
-
-def get_keens(data):
-    all_keens = {}
-    for item in data:
-        keen_id = item["keen_id"]
-        gem = None
-        if "gem_id" in item:
-            gem = Gem(item)
-
-        if keen_id in all_keens:
-            keen = all_keens[keen_id]
-        else:
-            keen = Keen(item["keen_id"], item["keen_title"], get_value(item, "keen_description"),
-                        item["keen_creator_uid"])
-            all_keens[keen_id] = keen
-
-        if gem is not None and not gem.is_empty():
-            keen.gems.append(gem)
-    return all_keens
 
 
 def build_texts_from_keens(keens):
@@ -186,11 +134,6 @@ def build_graph(iids, cossim_matrix, threshold, use_distance):
     return graph
 
 
-def save_as_pickle(path, data):
-    with open(str(path), 'wb') as fp:
-        pickle.dump(data, fp)
-
-
 def plot_graph(graph, dst_path):
     import matplotlib.pyplot as plt
 
@@ -237,8 +180,7 @@ def main(_):
 
     result = {"item_item_distances": all_distances}
     file_name = f'item_item_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}.pickle'
-    save_path = dst_path / file_name
-    save_as_pickle(save_path, result)
+    save_as_pickle(dst_path / file_name, result)
 
 
 if __name__ == '__main__':
