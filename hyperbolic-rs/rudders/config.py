@@ -44,7 +44,7 @@ CONFIG = {
         'patience': ('Number of validation steps before early stopping', 10),
         'validate': ('Number of epochs before computing validation metrics', 10),
         'checkpoint': ('Number of epochs before checkpointing the model', 5),
-        'max_epochs': ('Maximum number of epochs to train for', 100),
+        'max_epochs': ('Maximum number of epochs to train for', 12),
         'dims': ('Embeddings dimension', 32),
         'batch_size': ('Batch size', 1000),
         'neg_sample_size': ('Negative sample size, -1 to use loss without negative sampling', 1),

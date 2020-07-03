@@ -17,6 +17,7 @@ import copy
 import tensorflow as tf
 from absl import logging
 from pathlib import Path
+import random
 from rudders.utils import rank_to_metric_dict
 
 
@@ -85,26 +86,8 @@ class Runner:
 
         # validation metrics
         logging.info(f"Final best performance from {best_epoch} epochs")
-        self.compute_metrics(self.dev, "dev", epoch, write_summary=False)
-        self.compute_metrics(self.test, "test", epoch, write_summary=False)
-
-    def compute_metrics(self, split, title, epoch, write_summary=True):
-        random_items = 100
-        rank_all, rank_random = self.model.random_eval(split, self.samples, num_rand=random_items)
-        metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
-
-        logging.info(f"Result at epoch {epoch} in {title.upper()}")
-        logging.info(f"Random items {random_items}:" + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
-        logging.info("All items:" + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
-
-        if write_summary:
-            with self.summary.as_default():
-                for k, v in metric_random.items():
-                    tf.summary.scalar(f"{k}_r", v, step=epoch)
-                for k, v in metric_all.items():
-                    tf.summary.scalar(k, v, step=epoch)
-
-        return metric_all, metric_random
+        self.compute_metrics(self.dev, "dev", epoch, write_summary=False, print_samples=True)
+        self.compute_metrics(self.test, "test", epoch, write_summary=False, print_samples=True)
 
     @tf.function
     def train_epoch(self, train_batch):
@@ -131,9 +114,65 @@ class Runner:
 
         return total_loss / counter
 
+    def compute_metrics(self, split, title, epoch, write_summary=True, print_samples=False):
+        random_items = 100
+        rank_all, rank_random = self.model.random_eval(split, self.samples, num_rand=random_items)
+        metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
+
+        logging.info(f"Result at epoch {epoch} in {title.upper()}")
+        logging.info(f"Random items {random_items}:" + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
+        logging.info("All items:" + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
+
+        if write_summary:
+            with self.summary.as_default():
+                for k, v in metric_random.items():
+                    tf.summary.scalar(f"{k}_r", v, step=epoch)
+                for k, v in metric_all.items():
+                    tf.summary.scalar(k, v, step=epoch)
+
+        if print_samples:
+            self.print_samples(split)
+
+        return metric_all, metric_random
+
+    def print_samples(self, split, n_users=10, n_samples=5, k_closest=10):
+        users = list(self.samples.keys())
+        random.shuffle(users)
+        users = users[:n_users]
+        user_tensor = tf.expand_dims(tf.convert_to_tensor(users), 1)
+        input_tensor = tf.concat((user_tensor, tf.ones_like(user_tensor)), axis=1)
+        scores = self.model(input_tensor, all_pairs=True)
+        top_k = tf.math.top_k(scores, k=k_closest)[1]
+
+        for i, user_index in enumerate(users):
+            samples = self.samples[user_index]
+            logging.info(f"User {user_index} - {self.id2uid[user_index]} total training samples: {len(samples)}")
+            for item_index in samples[:-2][:n_samples]:
+                logging.info(f"\t\t{item_index} - {self.get_item_name(item_index)}")
+            
+            logging.info(f"\tClosest {k_closest} items to user")
+            for closest in top_k[i]:
+                item_index = closest.numpy().item()
+                if item_index in samples:
+                    if item_index == samples[-1]:
+                        pos = "TEST"
+                    elif item_index == samples[-2]:
+                        pos = "DEV"
+                    else:
+                        pos = "TRAIN"
+                else:
+                    pos = "UNRELATED"
+
+                logging.info(f"\t\t{item_index} - {self.get_item_name(item_index)} - {pos}")
+
+    def get_item_name(self, item_index):
+        iid = self.id2iid.get(item_index, "")
+        return self.iid2name.get(iid, "NoName")
+
     def reduce_lr(self):
         old_lr = float(tf.keras.backend.get_value(self.optimizer.lr))
         if old_lr > self.args.min_lr:
             new_lr = old_lr * self.args.lr_decay
             new_lr = max(new_lr, self.args.min_lr)
             tf.keras.backend.set_value(self.optimizer.lr, new_lr)
+
