@@ -50,7 +50,7 @@ class LossFunction(abc.ABC):
 class PairwiseHingeLoss(LossFunction):
     """Pairwise ranking hinge loss."""
 
-    def __init__(self, n_users, n_items, args):
+    def __init__(self, n_users, n_items, args, **kwargs):
         super(PairwiseHingeLoss, self).__init__(n_users, n_items, args)
         self.gamma = tf.Variable(tf.keras.backend.ones(1), trainable=False)
 
@@ -112,7 +112,7 @@ class DistortionLoss(LossFunction):
     """This loss can only be used with DistanceDistortionHyperbolic since the model needs to implement
         the 'distortion' method"""
 
-    def __init__(self, n_users, n_items, args):
+    def __init__(self, n_users, n_items, args, **kwargs):
         super(DistortionLoss, self).__init__(n_users, n_items, args)
         self.gamma = tf.Variable(args.distortion_gamma * tf.keras.backend.ones(1), trainable=False)
 
