@@ -85,9 +85,10 @@ class Runner:
             self.model.save_weights(str(Path(self.args.ckpt_dir) / f'{self.args.run_id}_{best_epoch}ep.h5'))
 
         # validation metrics
+        self.print_samples()
         logging.info(f"Final best performance from {best_epoch} epochs")
-        self.compute_metrics(self.dev, "dev", epoch, write_summary=False, print_samples=True)
-        self.compute_metrics(self.test, "test", epoch, write_summary=False, print_samples=True)
+        self.compute_metrics(self.dev, "dev", best_epoch, write_summary=False)
+        self.compute_metrics(self.test, "test", best_epoch, write_summary=False)
 
     @tf.function
     def train_epoch(self, train_batch):
@@ -114,7 +115,7 @@ class Runner:
 
         return total_loss / counter
 
-    def compute_metrics(self, split, title, epoch, write_summary=True, print_samples=False):
+    def compute_metrics(self, split, title, epoch, write_summary=True):
         random_items = 100
         rank_all, rank_random = self.model.random_eval(split, self.samples, num_rand=random_items)
         metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
@@ -130,9 +131,6 @@ class Runner:
                 for k, v in metric_all.items():
                     tf.summary.scalar(k, v, step=epoch)
 
-        if print_samples:
-            self.print_samples()
-
         return metric_all, metric_random
 
     def print_samples(self, n_users=10, n_samples=5, k_closest=10):
@@ -146,7 +144,7 @@ class Runner:
             samples = self.samples[user_index]
             logging.info(f"User {user_index} - {self.id2uid[user_index]} total training samples: {len(samples)}")
             for item_index in samples[:-2][:n_samples]:
-                logging.info(f"\t\t{item_index} - {self.get_item_name(item_index)}")
+                logging.info(f"\t - {item_index} - {self.get_item_name(item_index)}")
             
             logging.info(f"\tClosest {k_closest} items to user")
             for item_index in top_k[i]:
@@ -158,7 +156,7 @@ class Runner:
                     pos = "TRAIN"
                 else:
                     pos = "UNRELATED"
-                logging.info(f"\t\t{item_index} - {self.get_item_name(item_index)} - {pos}")
+                logging.info(f"\t{pos} - {item_index} - {self.get_item_name(item_index)}")
 
     def get_item_name(self, item_index):
         iid = self.id2iid.get(item_index, "")

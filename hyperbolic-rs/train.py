@@ -18,7 +18,6 @@ from absl import app, flags, logging
 import numpy as np
 import tensorflow as tf
 import pickle
-import networkx as nx
 from rudders.config import CONFIG
 from rudders.utils import set_seed, setup_logger
 import rudders.models as models
