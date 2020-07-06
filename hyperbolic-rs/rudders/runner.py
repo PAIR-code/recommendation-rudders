@@ -18,6 +18,7 @@ import tensorflow as tf
 from absl import logging
 from pathlib import Path
 import random
+from datetime import datetime
 from rudders.utils import rank_to_metric_dict
 
 
@@ -134,6 +135,7 @@ class Runner:
         return metric_all, metric_random
 
     def print_samples(self, n_users=10, n_samples=5, k_closest=10):
+        random.seed(datetime.now())
         users = random.sample(list(self.samples.keys()), len(self.samples))[:n_users]
         user_tensor = tf.expand_dims(tf.convert_to_tensor(users), 1)
         input_tensor = tf.concat((user_tensor, tf.ones_like(user_tensor)), axis=1)
