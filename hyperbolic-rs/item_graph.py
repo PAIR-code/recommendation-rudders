@@ -179,8 +179,9 @@ def main(_):
     all_distances = {n: dist for n, (dist, path) in all_pairs}
 
     result = {"item_item_distances": all_distances}
-    file_name = f'item_item_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}.pickle'
-    save_as_pickle(dst_path / file_name, result)
+    file_name = f'item_item_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}'
+    nx.write_weighted_edgelist(graph, str(dst_path / (file_name + ".edgelist")))
+    save_as_pickle(dst_path / (file_name + ".pickle"), result)
 
 
 if __name__ == '__main__':
