@@ -134,7 +134,7 @@ class Runner:
 
         return metric_all, metric_random
 
-    def print_samples(self, n_users=10, n_samples=5, k_closest=10):
+    def print_samples(self, n_users=20, n_samples=6, k_closest=10):
         random.seed(datetime.now())
         users = random.sample(list(self.samples.keys()), len(self.samples))[:n_users]
         user_tensor = tf.expand_dims(tf.convert_to_tensor(users), 1)
