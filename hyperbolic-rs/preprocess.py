@@ -25,7 +25,8 @@ from rudders.utils import set_seed
 FLAGS = flags.FLAGS
 flags.DEFINE_string('run_id', default='prep', help='Name of prep to store')
 flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/gem or data/ml-1m')
-flags.DEFINE_boolean('plot_graph', default=True, help='Plots the user-item graph')
+flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
+flags.DEFINE_boolean('shuffle', default=True, help='Shuffle the samples')
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 
 
@@ -71,6 +72,7 @@ def create_splits(samples, do_random=False):
         else:
             for iid in items:
                 train.append([uid, iid])
+
     return {
         'samples': samples,
         'train': np.array(train).astype('int64'),
@@ -130,7 +132,7 @@ def main(_):
     for uid, ints in samples.items():
         id_samples[uid2id[uid]] = [iid2id[iid] for iid in ints]
 
-    splits = create_splits(id_samples)
+    splits = create_splits(id_samples, do_random=FLAGS.shuffle)
     splits["iid2name"] = iid2name
     splits["id2uid"] = {v: k for k, v in uid2id.items()}
     splits["id2iid"] = {v: k for k, v in iid2id.items()}

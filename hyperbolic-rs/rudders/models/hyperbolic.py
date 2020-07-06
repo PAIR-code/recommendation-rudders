@@ -65,9 +65,13 @@ class DistanceHyperbolicDistortion(DistHyperbolic):
     Note that the euclidean distance is calculated with the points already projected onto the hyperbolic
     """
 
+    def __init__(self, n_users, n_items, args):
+        super(DistanceHyperbolicDistortion, self).__init__(n_users, n_items, args)
+        self.apply_log_map = False
+
     def distortion(self, input_tensor, all_pairs=False):
-        user_embeds = self.get_users(input_tensor)
-        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor)
+        user_embeds = self.get_users(input_tensor[:, 0])
+        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor[:, 1])
         distor = self.distortion_from_embeds(user_embeds, all_item_embeds, all_pairs)
         return distor
 
@@ -77,10 +81,16 @@ class DistanceHyperbolicDistortion(DistHyperbolic):
             hy_distance = hmath.hyp_distance_all_pairs(user_embeds, item_embeds, c)
         else:
             hy_distance = hmath.hyp_distance(user_embeds, item_embeds, c)
+
+        if self.apply_log_map:
+            user_embeds = hmath.logmap0(user_embeds, c)
+            item_embeds = hmath.logmap0(item_embeds, c)
         eu_distance = euclidean_distance(user_embeds, item_embeds, all_pairs)
         eu_distance = tf.maximum(eu_distance, hmath.MIN_NORM)
 
-        return tf.abs(hy_distance - eu_distance) / eu_distance
+        distortion = tf.pow(hy_distance / eu_distance, 2)
+        distortion = tf.abs(distortion - 1)
+        return distortion
 
 
 class DistanceHyperbolicTangentSpaceDistortion(DistanceHyperbolicDistortion):
@@ -90,14 +100,6 @@ class DistanceHyperbolicTangentSpaceDistortion(DistanceHyperbolicDistortion):
     with u, i \in B^n (Poincare ball) and f(u), f(i) \in R^n (Euclidean space)
     """
 
-    def distortion_from_embeds(self, user_embeds, item_embeds, all_pairs):
-        c = self.get_c()
-        if all_pairs:
-            hy_distance = hmath.hyp_distance_all_pairs(user_embeds, item_embeds, c)
-        else:
-            hy_distance = hmath.hyp_distance(user_embeds, item_embeds, c)
-        eu_distance = euclidean_distance(hmath.logmap0(user_embeds, c), hmath.logmap0(item_embeds, c), all_pairs)
-        eu_distance = tf.maximum(eu_distance, hmath.MIN_NORM)
-
-        return tf.abs(hy_distance - eu_distance) / eu_distance
-
+    def __init__(self, n_users, n_items, args):
+        super(DistanceHyperbolicTangentSpaceDistortion, self).__init__(n_users, n_items, args)
+        self.apply_log_map = True

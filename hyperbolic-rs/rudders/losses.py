@@ -50,6 +50,10 @@ class LossFunction(abc.ABC):
 class PairwiseHingeLoss(LossFunction):
     """Pairwise ranking hinge loss."""
 
+    def __init__(self, n_users, n_items, args):
+        super(PairwiseHingeLoss, self).__init__(n_users, n_items, args)
+        self.gamma = tf.Variable(tf.keras.backend.ones(1), trainable=False)
+
     def calculate_loss(self, model, input_batch):
         dist_to_pos = model(input_batch, all_pairs=False)
         loss = tf.keras.backend.constant(0.0)
@@ -65,7 +69,7 @@ class PairwiseHingeLoss(LossFunction):
         return tf.reduce_mean(tf.nn.relu(self.margin - dist_to_pos + dist_to_neg))
 
 
-class SemanticLoss(PairwiseHingeLoss):
+class SemanticLoss(LossFunction):
     def __init__(self, n_users, n_items, args, **kwargs):
         super(SemanticLoss, self).__init__(n_users, n_items, args)
         self.item_distances = tf.keras.backend.constant(kwargs["item_distances"])
@@ -75,16 +79,10 @@ class SemanticLoss(PairwiseHingeLoss):
         valid_item_dists = tf.where(self.item_distances > 0, self.item_distances, tf.keras.backend.ones(1) * 1000)
         neighs_ids = tf.math.top_k(-valid_item_dists, k=int(len(self.item_distances) * args.neighbors))[1]
         self.neighbor_ids = tf.cast(neighs_ids, tf.int64)
-
-        self.distortion_gamma = tf.Variable(args.distortion_gamma * tf.keras.backend.ones(1), trainable=False)
+        self.gamma = tf.Variable(args.semantic_gamma * tf.keras.backend.ones(1), trainable=False)
         self.distortion_neg_sample_size = args.distortion_neg_sample_size
 
     def calculate_loss(self, model, input_batch):
-        user_item_loss = super(SemanticLoss, self).calculate_loss(model, input_batch)
-        item_item_loss = self.calculate_distortion_loss(model, input_batch)
-        return user_item_loss + self.distortion_gamma * item_item_loss
-
-    def calculate_distortion_loss(self, model, input_batch):
         loss = tf.keras.backend.constant(0.0)
         src_index = input_batch[:, 1]
         src_item_embeds = model.get_items(src_index)
@@ -99,8 +97,7 @@ class SemanticLoss(PairwiseHingeLoss):
             space_distance = tf.where(graph_distance > 0, space_distance, tf.zeros_like(space_distance))
             graph_distance = tf.where(graph_distance > 0, graph_distance, tf.ones_like(graph_distance))
 
-            this_loss = (space_distance / graph_distance)**2
-            this_loss = tf.abs(this_loss - 1)
+            this_loss = tf.math.exp(tf.pow(space_distance, 2) / graph_distance) - 1
             loss = loss + tf.reduce_mean(this_loss)
         return loss
 
@@ -111,25 +108,39 @@ class SemanticLoss(PairwiseHingeLoss):
         return tf.gather_nd(self.neighbor_ids, neighbor_index)
 
 
-class HingeDistortionLoss(PairwiseHingeLoss):
+class DistortionLoss(LossFunction):
     """This loss can only be used with DistanceDistortionHyperbolic since the model needs to implement
         the 'distortion' method"""
 
     def __init__(self, n_users, n_items, args):
-        super(HingeDistortionLoss, self).__init__(n_users, n_items, args)
-        self.gamma = tf.Variable(args.gamma * tf.keras.backend.ones(1), trainable=False)
+        super(DistortionLoss, self).__init__(n_users, n_items, args)
+        self.gamma = tf.Variable(args.distortion_gamma * tf.keras.backend.ones(1), trainable=False)
 
     def calculate_loss(self, model, input_batch):
-        distance_to_pos = model(input_batch, all_pairs=False)
         distortion = model.distortion(input_batch, all_pairs=False)
-        loss = tf.keras.backend.constant(0.0)
         for i in range(self.neg_sample_size):
             neg_idx = tf.random.uniform((len(input_batch), 1), minval=0, maxval=self.n_items, dtype=input_batch.dtype)
             neg_input_batch = tf.concat((tf.expand_dims(input_batch[:, 0], 1), neg_idx), axis=1)
-            dist_to_neg = model(neg_input_batch, all_pairs=False)
             distortion = distortion + model.distortion(neg_input_batch, all_pairs=False)
-            loss = loss + self.loss_from_distances(distance_to_pos, dist_to_neg)
 
         distortion_loss = tf.reduce_mean(distortion)
-        return loss + self.gamma * distortion_loss
+        return distortion_loss
 
+
+class CompositeLoss(LossFunction):
+    """This class allows to compose a loss function made of different loss functions, resulting in a
+    multi-task loss with different criteria."""
+
+    def __init__(self, n_users, n_items, args, **kwargs):
+        super(CompositeLoss, self).__init__(n_users, n_items, args)
+        self.losses = [PairwiseHingeLoss(n_users, n_items, args)]
+        if args.distortion_gamma > 0:
+            self.losses.append(DistortionLoss(n_users, n_items, args))
+        if args.semantic_gamma > 0:
+            self.losses.append(SemanticLoss(n_users, n_items, args, **kwargs))
+
+    def calculate_loss(self, model, input_batch):
+        loss = tf.keras.backend.constant(0.0)
+        for loss_fn in self.losses:
+            loss = loss + loss_fn.gamma * loss_fn.calculate_loss(model, input_batch)
+        return loss

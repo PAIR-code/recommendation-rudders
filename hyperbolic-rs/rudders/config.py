@@ -21,8 +21,8 @@ CONFIG = {
         'logs_dir': ('Path to logs directory', 'logs/'),
         'item_item_file': ('Name of item-item distance file', 'item_item_hop_distance_th0.8.pickle'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
-        'model': ('Model', 'DistHyperbolic'),
-        'loss_fn': ('Loss function to use', 'SemanticLoss'),
+        'model': ('Model', 'DistanceHyperbolicTangentSpaceDistortion'),
+        'loss_fn': ('Loss function to use', 'CompositeLoss'),
         'initializer': ('Which initializer to use', 'RandomUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),
         'optimizer': ('Optimizer', 'adam'),
@@ -32,7 +32,10 @@ CONFIG = {
         'lr': ('Learning rate', 1e-3),
         'lr_decay': ('Learning rate decay', 0.96),
         'min_lr': ('Minimum learning rate decay', 1e-5),
-        'distortion_gamma': ('Weight for item-item distortion-based loss', 0.5),
+        'distortion_gamma': ('Weight for distortion-based loss. If distortion_gamma <= 0, distortion loss is not '
+                             'computed', -1.),
+        'semantic_gamma': ('Weight for item-item semantic-based loss. If semantic_gamma <= 0, semantic loss is not '
+                           'computed', 0.5),
         'gamma': ('Weight for distortion loss', 1),
         'item_reg': ('Regularization weight for item embeddings', 0),
         'user_reg': ('Regularization weight for user embeddings', 0),
