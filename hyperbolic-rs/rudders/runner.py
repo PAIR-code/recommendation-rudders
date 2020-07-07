@@ -122,8 +122,8 @@ class Runner:
         metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
 
         logging.info(f"Result at epoch {epoch} in {title.upper()}")
-        logging.info(f"Random items {random_items}:" + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
-        logging.info("All items:" + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
+        logging.info(f"Random items {random_items}: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
+        logging.info("All items: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
 
         if write_summary:
             with self.summary.as_default():
