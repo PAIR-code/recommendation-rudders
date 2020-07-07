@@ -20,6 +20,7 @@ from tqdm import tqdm
 import networkx as nx
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.metrics import CosineSimilarity
 import tensorflow_hub as hub
 from preprocess import save_as_pickle
 from rudders.datasets.keen import get_keens
@@ -111,7 +112,7 @@ def load_text_embeddings(text_embeddings_path):
 
 def build_cossim_matrix(item_embeds):
     iids = list(item_embeds.keys())
-    embeds = tf.concat([item_embeds[k] for k in iids], axis=0)      # len(item_embeds) x embed_dim
+    embeds = tf.cast(tf.concat([item_embeds[k] for k in iids], axis=0), tf.float16)    # len(item_embeds) x embed_dim
     embeds = tf.math.l2_normalize(embeds, axis=1)
     cossim_matrix = embeds @ tf.transpose(embeds)
     return iids, tf.clip_by_value(cossim_matrix, -1.0, 1.0)
@@ -122,10 +123,28 @@ def build_graph(iids, cossim_matrix, threshold, use_distance):
     Builds graph connecting items only if their cosine similarity is above 'threshold'.
     The weight of the edge can be the cosine distance if 'use_distance' is True. Otherwise each edge counts as 1.
     """
+    threshold = tf.convert_to_tensor(threshold, dtype=tf.float16)
     graph = nx.Graph()
     for i in tqdm(range(len(iids)), desc="build_graph"):
         for j in range(i + 1, len(iids)):
             similarity = cossim_matrix[i, j]
+            if similarity > threshold:
+                ki, kj = iids[i], iids[j]
+                weight = 1 - similarity.numpy().item() if use_distance else 1
+                graph.add_edge(ki, kj, weight=weight)
+                graph.add_edge(kj, ki, weight=weight)
+    return graph
+
+
+def build_graph_from_embeds(item_embeds, threshold, use_distance):
+    cossim = CosineSimilarity()
+    iids = list(item_embeds.keys())
+    graph = nx.Graph()
+    for i in tqdm(range(len(iids)), desc="build_graph_from_embeds"):
+        emb_i = item_embeds[iids[i]]
+        for j in range(i + 1, len(iids)):
+            emb_j = item_embeds[iids[j]]
+            similarity = cossim(emb_i, emb_j)
             if similarity > threshold:
                 ki, kj = iids[i], iids[j]
                 weight = 1 - similarity.numpy().item() if use_distance else 1
@@ -168,9 +187,14 @@ def main(_):
     else:
         embeds = load_text_embeddings(FLAGS.text_embeddings)
 
-    item_ids, cossim_matrix = build_cossim_matrix(embeds)
+    if len(embeds) < 65536:
+        item_ids, cossim_matrix = build_cossim_matrix(embeds)
+        graph = build_graph(item_ids, cossim_matrix, FLAGS.threshold, FLAGS.use_distance)
+    else:
+        # if there are N embeddings, the cossim_matrix is N^2, which might not fit in memory for large values of N.
+        # In this case, we compute the cosine similarity for each pair of embeddings, but this is deadly slow
+        graph = build_graph_from_embeds(embeds, FLAGS.threshold, FLAGS.use_distance)
 
-    graph = build_graph(item_ids, cossim_matrix, FLAGS.threshold, FLAGS.use_distance)
     print(f"Graph info:\n{nx.info(graph)}")
     if FLAGS.plot:
         plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
