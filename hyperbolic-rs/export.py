@@ -2,9 +2,11 @@ import argparse
 from pathlib import Path
 import h5py
 import tensorflow as tf
+import pickle
 import numba
 import numpy as np
-from rudders.hmath import expmap0
+from rudders.hmath import expmap0, hyp_distance_all_pairs
+from rudders.models.euclidean import euclidean_distance
 import os
 import matplotlib as mpl
 if os.environ.get('DISPLAY') is None:  # NOQA
@@ -23,12 +25,15 @@ ITEM_KEY = "item_embeddings"
 def main():
     parser = argparse.ArgumentParser(description="export.py")
     parser.add_argument("--model", required=True, help="Path to model to load")
-    parser.add_argument("--matplot", default=1, type=int,
+    parser.add_argument("--prep", default="data/prep/keen/ukeen-minint5-random.pickle",
+                        help="Path to prep file for id2title dict")
+    parser.add_argument("--matplot", default=0, type=int,
                         help="If matplot=1 it exports a matplot image. If not, it exports the coords and metadata to"
                              "be plotted in projector.tensorflow.org")
     parser.add_argument("--hyperbolic", default=1, type=int,
                         help="Whether the points were trained in a hyperbolic space or not. If --hyperbolic=1, it "
                              "assumes points are in the tangent space and need to be projected.")
+    parser.add_argument("--curvature", default=1, type=float, help="Curvature of hyperbolic space.")
 
     EXPORT_PATH.mkdir(parents=True, exist_ok=True)
     args = parser.parse_args()
@@ -38,26 +43,46 @@ def main():
     item_embeds = np.array(model_data[ITEM_KEY][ITEM_KEY]["embeddings:0"])
 
     if args.hyperbolic:
-        user_embeds = to_hyperbolic(user_embeds)
-        item_embeds = to_hyperbolic(item_embeds)
+        user_embeds = to_hyperbolic(user_embeds, args.curvature)
+        item_embeds = to_hyperbolic(item_embeds, args.curvature)
+
+    user_embeds_2d, item_embeds_2d = project_to_2d(user_embeds, item_embeds, hyperbolic=args.hyperbolic == 1)
 
     if args.matplot == 1:
-        plot(args.model, user_embeds, item_embeds, hyperbolic=args.hyperbolic == 1)
+        plot(args.model, user_embeds_2d, item_embeds_2d)
         return
 
-    export_for_projector(args.model, user_embeds, item_embeds)
+    closest_items = get_closest_items(item_embeds, hyperbolic=args.hyperbolic == 1, curvature=args.curvature)
+    id2title, samples = load_id2title(args.prep)
+    export_for_projector(args.model, user_embeds_2d, item_embeds_2d, id2title, samples, closest_items)
 
 
-def to_hyperbolic(embeds):
-    return expmap0(tf.convert_to_tensor(embeds), tf.convert_to_tensor([1.0], dtype=tf.float64)).numpy()
+def load_id2title(prep_path):
+    print(f"Loading prep from {prep_path}")
+    with tf.io.gfile.GFile(str(prep_path), 'rb') as f:
+        data = pickle.load(f)
+    id2iid, iid2name = data["id2iid"], data["iid2name"]
+    return {item_idx: iid2name[iid] for item_idx, iid in id2iid.items()}, data["samples"]
 
 
-def export_for_projector(filename, user_embeds, item_embeds):
-    meta, coords = ["id\ttype"], []
-    for name, embeddings in zip(["user", "item"], [user_embeds, item_embeds]):
-        for i, embed in enumerate(embeddings):
-            coords.append("\t".join([str(x) for x in embed]))
-            meta.append(f"{i + 1}\t{name}")
+def to_hyperbolic(embeds, c_value):
+    return expmap0(tf.convert_to_tensor(embeds), tf.convert_to_tensor([c_value], dtype=tf.float64)).numpy()
+
+
+def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, closest_items):
+    meta, coords = ["type\ttitle\tinteractions"], []
+    for i, embed in enumerate(user_embeds):
+        coords.append("\t".join([str(x) for x in embed]))
+        interactions = [id2title[item_id].replace("\t", "") for item_id in samples[i]]
+        interactions = "//".join(interactions)
+        meta.append(f"user\tu_{i + 1}\t{interactions}")
+
+    for i, embed in enumerate(item_embeds):
+        coords.append("\t".join([str(x) for x in embed]))
+        title = id2title[i].replace("\t", "-")
+        closests = [id2title[item_id].replace("\t", "") for item_id in closest_items[i]]
+        closests = "//".join(closests)
+        meta.append(f"item\t{title}\t{closests}")
 
     model_name = filename.split("/")[-1]
     coord_path = EXPORT_PATH / f"{model_name}-coords.tsv"
@@ -71,8 +96,7 @@ def write_file(path, data):
         f.write("\n".join(data))
 
 
-def plot(filename, user_embeds, item_embeds, subsample=0.5, scale=False, hyperbolic=True, n_neighbors=5,
-         min_dist=0.1, alpha=0.75, size=2):
+def project_to_2d(user_embeds, item_embeds, hyperbolic=True, scale=False, n_neighbors=5, min_dist=0.1):
     """
     For the Euclidean projection we just use UMAP to project Euclidean points into a 2D Euclidean space and plot them.
     For the hyperbolic projection:
@@ -81,9 +105,6 @@ def plot(filename, user_embeds, item_embeds, subsample=0.5, scale=False, hyperbo
     2 - UMAP uses as output metric the hyperboloid model of hyperbolic space
     3 - We map the points from the hyperboloid into the Poincare ball again to plot them
     """
-    if subsample > 0:
-        user_embeds = user_embeds[:int(len(user_embeds) * subsample)]
-        item_embeds = item_embeds[:int(len(item_embeds) * subsample)]
     embeds = np.concatenate((np.array(user_embeds), np.array(item_embeds)), axis=0)
 
     if scale:
@@ -110,10 +131,26 @@ def plot(filename, user_embeds, item_embeds, subsample=0.5, scale=False, hyperbo
         x = x / (1 + z)
         y = y / (1 + z)
 
-    print("Plotting...")
     split = len(user_embeds)
-    plt.scatter(x[:split], y[:split], c="#ff3e0e", label="users", alpha=alpha, s=size)
-    plt.scatter(x[split:], y[split:], c="#1f77b4", label="items", alpha=alpha, s=size)
+    concat = lambda a, b: np.concatenate((np.reshape(a, (-1, 1)), np.reshape(b, (-1, 1))), axis=-1)
+    user_embeds = concat(x[:split], y[:split])
+    item_embeds = concat(x[split:], y[split:])
+    return user_embeds, item_embeds
+
+
+def plot(filename, user_embeds, item_embeds, subsample=0.5, alpha=0.75, size=2):
+    """
+    :param filename: to store the image
+    :param user_embeds: Numpy array of shape (len(user_embeds), 2)
+    :param item_embeds: Numpy array of shape (len(item_embeds), 2)
+    """
+    if subsample > 0:
+        user_embeds = user_embeds[:int(len(user_embeds) * subsample)]
+        item_embeds = item_embeds[:int(len(item_embeds) * subsample)]
+
+    print("Plotting...")
+    plt.scatter(user_embeds[:, 0], user_embeds[:, 1], c="#ff3e0e", label="users", alpha=alpha, s=size)
+    plt.scatter(item_embeds[:, 0], item_embeds[:, 1], c="#1f77b4", label="items", alpha=alpha, s=size)
 
     model_name = filename.split("/")[-1]
     plt.title(f'{model_name} projection')
@@ -145,6 +182,18 @@ def hyperbolic_distance(x, y):
     pairwise_norm = num / np.maximum(denom, MIN_NORM)
     dist = artanh(sqrt_c * pairwise_norm)
     return 2 * dist / sqrt_c
+
+
+def get_closest_items(item_embeds, hyperbolic, curvature, top_k=15):
+    item_embeds = tf.convert_to_tensor(item_embeds)
+    if hyperbolic:
+        distances = hyp_distance_all_pairs(item_embeds, item_embeds, tf.convert_to_tensor([curvature], dtype=tf.float64))
+    else:
+        distances = euclidean_distance(item_embeds, item_embeds, all_pairs=True)
+
+    closest_indexes = tf.math.top_k(-distances, k=top_k + 1)[1]
+    closest_indexes = closest_indexes.numpy()[:, 1:]
+    return closest_indexes
 
 
 if __name__ == "__main__":
