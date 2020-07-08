@@ -19,7 +19,7 @@ import random
 from pathlib import Path
 from rudders.datasets import movielens, keen
 from rudders.config import CONFIG
-from rudders.utils import set_seed
+from rudders.utils import set_seed, sort_items_by_popularity
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('run_id', default='prep', help='Name of prep to store')
@@ -27,6 +27,8 @@ flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw datas
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=True, help='Shuffle the samples')
 flags.DEFINE_integer('seed', default=42, help='Random seed')
+flags.DEFINE_integer('filter_most_popular', default=-1,
+                     help='Filters out most popular items. If -1 it does not filter')
 
 
 def map_item_ids_to_sequential_ids(samples):
@@ -120,6 +122,13 @@ def main(_):
     else:
         samples = movielens.movielens_to_dict(dataset_path)
         iid2name = movielens.build_movieid2title(dataset_path)
+
+    if FLAGS.filter_most_popular > 0:
+        print(f"Filtering {FLAGS.filter_most_popular} most popular items")
+        sorted_items = sort_items_by_popularity(samples)
+        iid_to_filter = set([iid for iid, _ in sorted_items[:FLAGS.filter_most_popular]])
+        samples = {uid: list(set(ints) - iid_to_filter) for uid, ints in samples.items()}
+        samples = {uid: ints for uid, ints in samples.items() if ints}
 
     if FLAGS.plot_graph:
         plot_graph(samples)

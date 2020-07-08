@@ -72,3 +72,14 @@ def rank_to_metric_dict(ranks):
     for k in (1, 3, 10):
         metrics[f'HR@{k}'] = np.mean(ranks <= k) * 100
     return metrics
+
+
+def sort_items_by_popularity(samples):
+    item_degree = {}
+    for uid, ints in samples.items():
+        for iid in ints:
+            if iid in item_degree:
+                item_degree[iid] += 1
+            else:
+                item_degree[iid] = 1
+    return sorted(item_degree.items(), key=lambda item: item[1], reverse=True)
