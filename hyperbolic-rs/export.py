@@ -34,6 +34,7 @@ def main():
                         help="Whether the points were trained in a hyperbolic space or not. If --hyperbolic=1, it "
                              "assumes points are in the tangent space and need to be projected.")
     parser.add_argument("--curvature", default=1, type=float, help="Curvature of hyperbolic space.")
+    parser.add_argument("--debug", default=0, type=int, help="If debug is 1, uses only a few embeddings")
 
     EXPORT_PATH.mkdir(parents=True, exist_ok=True)
     args = parser.parse_args()
@@ -41,6 +42,10 @@ def main():
 
     user_embeds = np.array(model_data[USER_KEY][USER_KEY]["embeddings:0"])
     item_embeds = np.array(model_data[ITEM_KEY][ITEM_KEY]["embeddings:0"])
+
+    if args.debug == 1:
+        user_embeds = user_embeds[:100]
+        item_embeds = item_embeds[:100]
 
     if args.hyperbolic:
         user_embeds = to_hyperbolic(user_embeds, args.curvature)
@@ -52,9 +57,10 @@ def main():
         plot(args.model, user_embeds_2d, item_embeds_2d)
         return
 
-    closest_items = get_closest_items(item_embeds, hyperbolic=args.hyperbolic == 1, curvature=args.curvature)
+    closest_user_item = get_closest_points(user_embeds, item_embeds, hyperbolic=args.hyperbolic == 1, curvature=args.curvature, top_k=9)
+    closest_item_item = get_closest_points(item_embeds, item_embeds, hyperbolic=args.hyperbolic == 1, curvature=args.curvature)[:, 1:]
     id2title, samples = load_id2title(args.prep)
-    export_for_projector(args.model, user_embeds_2d, item_embeds_2d, id2title, samples, closest_items)
+    export_for_projector(args.model, user_embeds_2d, item_embeds_2d, id2title, samples, closest_user_item, closest_item_item)
 
 
 def load_id2title(prep_path):
@@ -69,20 +75,27 @@ def to_hyperbolic(embeds, c_value):
     return expmap0(tf.convert_to_tensor(embeds), tf.convert_to_tensor([c_value], dtype=tf.float64)).numpy()
 
 
-def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, closest_items):
-    meta, coords = ["type\ttitle\tinteractions"], []
+def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, closest_user_item, closest_item_item):
+    meta, coords = ["type\ttitle\tinteractions\tclosest"], []
     for i, embed in enumerate(user_embeds):
         coords.append("\t".join([str(x) for x in embed]))
+
         interactions = [id2title[item_id].replace("\t", "") for item_id in samples[i]]
         interactions = "//".join(interactions)
-        meta.append(f"user\tu_{i + 1}\t{interactions}")
+
+        closests = [id2title[item_id].replace("\t", "") for item_id in closest_user_item[i]]
+        closests = "//".join(closests)
+
+        meta.append(f"user\tu_{i + 1}\t{interactions}\t{closests}")
 
     for i, embed in enumerate(item_embeds):
         coords.append("\t".join([str(x) for x in embed]))
         title = id2title[i].replace("\t", "-")
-        closests = [id2title[item_id].replace("\t", "") for item_id in closest_items[i]]
+
+        closests = [id2title[item_id].replace("\t", "") for item_id in closest_item_item[i]]
         closests = "//".join(closests)
-        meta.append(f"item\t{title}\t{closests}")
+
+        meta.append(f"item\t{title}\t-\t{closests}")
 
     model_name = filename.split("/")[-1]
     coord_path = EXPORT_PATH / f"{model_name}-coords.tsv"
@@ -184,15 +197,15 @@ def hyperbolic_distance(x, y):
     return 2 * dist / sqrt_c
 
 
-def get_closest_items(item_embeds, hyperbolic, curvature, top_k=15):
-    item_embeds = tf.convert_to_tensor(item_embeds)
+def get_closest_points(src_embeds, dst_embeds, hyperbolic, curvature, top_k=15):
+    src_embeds, dst_embeds = tf.convert_to_tensor(src_embeds), tf.convert_to_tensor(dst_embeds)
     if hyperbolic:
-        distances = hyp_distance_all_pairs(item_embeds, item_embeds, tf.convert_to_tensor([curvature], dtype=tf.float64))
+        distances = hyp_distance_all_pairs(src_embeds, dst_embeds, tf.convert_to_tensor([curvature], dtype=tf.float64))
     else:
-        distances = euclidean_distance(item_embeds, item_embeds, all_pairs=True)
+        distances = euclidean_distance(src_embeds, dst_embeds, all_pairs=True)
 
     closest_indexes = tf.math.top_k(-distances, k=top_k + 1)[1]
-    closest_indexes = closest_indexes.numpy()[:, 1:]
+    closest_indexes = closest_indexes.numpy()
     return closest_indexes
 
 
