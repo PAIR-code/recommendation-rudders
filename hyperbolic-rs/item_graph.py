@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Script to create an item-item graph f based on semantic similarities from the text in the items"""
+"""Script to create an item-item graph based on semantic similarities from the text in the items"""
 
 from absl import app, flags
 from pathlib import Path
@@ -74,8 +74,16 @@ def build_item_embeds(item_text, weight_first_embedding=False):
     """
     Build item embeddings based on the text they contain.
     It uses the Universal Sentence Encoder to get embeddings from text.
+
+    To get the Keen embedding, it creates a text embedding from the keen title, keen description
+    and the content of each gem. Then it takes a weighted average of all these embeddings giving
+    extra weight to the keen title since usually it is a good summary of the keen's topic.
+
+    To get the Gem embedding, it creates a text embedding from the gem text, link's title and
+    link's description. In that case, the final embedding is just the average of the previous
+    embeddings, without any special weight.
     """
-    use_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
+    use_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder-large/5")
     result = {}
     for iid, sents in tqdm(item_text.items(), total=len(item_text)):
         embs = use_model(sents)
@@ -122,6 +130,8 @@ def build_graph(iids, cossim_matrix, threshold, use_distance):
     """
     Builds graph connecting items only if their cosine similarity is above 'threshold'.
     The weight of the edge can be the cosine distance if 'use_distance' is True. Otherwise each edge counts as 1.
+
+    cossim_matrix is the precomputed matrix of cosine similarities between the all the embeddings
     """
     threshold = tf.convert_to_tensor(threshold, dtype=tf.float16)
     graph = nx.Graph()
@@ -137,6 +147,13 @@ def build_graph(iids, cossim_matrix, threshold, use_distance):
 
 
 def build_graph_from_embeds(item_embeds, threshold, use_distance):
+    """
+    This function has the same functionality than 'build_graph' but instead of receiving the cossim_matrix
+    as a parameter, it calculates the cosine similarity between each pair of embeddings in place.
+
+    In case that the cossim_matrix is too large and it doesn't fit in memory, this method should be used.
+    However, this method is much slower than precomputing the cossim_matrix.
+    """
     cossim = CosineSimilarity()
     iids = list(item_embeds.keys())
     graph = nx.Graph()

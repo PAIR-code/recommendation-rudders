@@ -89,8 +89,17 @@ def get_keens(data):
 
 
 def process_input(string):
+    """
+    The json files are written in the following format:
+        {'key': '"value"'}
+
+    This function removes the initial and ending quotes and any '\n' in value.
+    Example:
+    Input: '"value1\nvalue2"'
+    Output: 'value value2'
+    """
     string = string[1:-1] if type(string) == str else ""
-    return string.replace("\\n", "")
+    return string.replace("\\n", " ")
 
 
 def get_value(item, key):
