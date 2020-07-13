@@ -68,7 +68,7 @@ def load_id2title(prep_path):
     with tf.io.gfile.GFile(str(prep_path), 'rb') as f:
         data = pickle.load(f)
     id2iid, iid2name = data["id2iid"], data["iid2name"]
-    return {item_idx: iid2name[iid] for item_idx, iid in id2iid.items()}, data["samples"]
+    return {item_idx: iid2name.get(iid, "None") for item_idx, iid in id2iid.items()}, data["samples"]
 
 
 def to_hyperbolic(embeds, c_value):
@@ -80,10 +80,10 @@ def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, 
     for i, embed in enumerate(user_embeds):
         coords.append("\t".join([str(x) for x in embed]))
 
-        interactions = [id2title[item_id].replace("\t", "") for item_id in samples[i]]
+        interactions = [id2title.get(item_id, "None").replace("\t", "") for item_id in samples[i]]
         interactions = "//".join(interactions)
 
-        closests = [id2title[item_id].replace("\t", "") for item_id in closest_user_item[i]]
+        closests = [id2title.get(item_id, "None").replace("\t", "") for item_id in closest_user_item[i]]
         closests = "//".join(closests)
 
         meta.append(f"user\tu_{i + 1}\t{interactions}\t{closests}")
