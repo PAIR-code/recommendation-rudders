@@ -134,8 +134,11 @@ def main(_):
     # load data
     train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.prep_name, 
                                                                   FLAGS.debug)
-    item_item_distances_dict = load_item_item_distances(FLAGS.prep_dir, FLAGS.dataset, FLAGS.item_item_file)
-    item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, data["id2iid"])
+
+    item_item_distance_matrix = None
+    if FLAGS.semantic_gamma > 0:    # if there is no semantic component in the loss it doesn't need to load the matrix
+        item_item_distances_dict = load_item_item_distances(FLAGS.prep_dir, FLAGS.dataset, FLAGS.item_item_file)
+        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, data["id2iid"])
 
     model = get_models(n_users, n_items)
     optimizer = get_optimizer(FLAGS)

@@ -22,10 +22,15 @@ from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='prep', help='Name of prep to store')
-flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/gem or data/ml-1m')
+flags.DEFINE_string('run_id', default='keengem-minkeenkeen2-maxkeenkeen1000-minkeen10-mingem2-maxgem100', help='Name of prep to store')
+flags.DEFINE_string('item', default='gem', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
+                                                'interactions), or movies')
+flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/ml-1m')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=True, help='Shuffle the samples')
+flags.DEFINE_integer('min_user_interactions', default=10, help='Users with less than this interactions are filtered')
+flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')
+flags.DEFINE_integer('max_item_interactions', default=100, help='Items with more than this interactions are filtered')
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 flags.DEFINE_integer('filter_most_popular', default=-1,
                      help='Filters out most popular items. If -1 it does not filter')
@@ -113,15 +118,23 @@ def plot_graph(samples):
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=True)
     dataset_path = Path(FLAGS.dataset_path)
-    if "keen" in FLAGS.dataset_path:
-        samples = keen.load_interactions_to_dict(dataset_path, min_interactions=5)
+    if FLAGS.item == "keen":
+        samples = keen.load_user_keen_interactions(dataset_path, min_user_ints=FLAGS.min_user_interactions,
+                                                   min_item_ints=FLAGS.min_item_interactions,
+                                                   max_item_ints=FLAGS.max_item_interactions)
         iid2name = keen.build_iid2title(item_id_key="keen_id", item_title_key="keen_title")
-    elif "gem" in FLAGS.dataset_path:
-        samples = keen.load_interactions_to_dict(dataset_path, min_interactions=10)
+    elif FLAGS.item == "gem":
+        samples = keen.load_keen_gems_interactions(dataset_path, min_keen_keen_edges=2, max_keen_keen_edges=1000,
+                                                   min_overlapping_users=2,
+                                                   min_keen_ints=FLAGS.min_user_interactions,
+                                                   min_item_ints=FLAGS.min_item_interactions,
+                                                   max_item_ints=FLAGS.max_item_interactions)
         iid2name = keen.build_iid2title(item_id_key="gem_id", item_title_key="gem_link_title")
-    else:
+    elif FLAGS.item == "movies":
         samples = movielens.movielens_to_dict(dataset_path)
         iid2name = movielens.build_movieid2title(dataset_path)
+    else:
+        raise ValueError(f"Unknown item: {FLAGS.item}")
 
     if FLAGS.filter_most_popular > 0:
         print(f"Filtering {FLAGS.filter_most_popular} most popular items")
@@ -155,4 +168,3 @@ def main(_):
 
 if __name__ == '__main__':
     app.run(main)
-
