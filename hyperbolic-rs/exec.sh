@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 LOOPS=3
-#RUN_ID="keen-hyper32-semantic-ga1-th0p7-nei0p01"
-RUN_ID="test-res"
+RUN_ID="keen-hyper32-semantic-ga1-th0p7-nei0p01"
 
 eval "$(conda shell.bash hook)"
 conda activate keen
