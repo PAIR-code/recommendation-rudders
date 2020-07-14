@@ -27,6 +27,7 @@ CONFIG = {
         'regularizer': ('Regularizer', 'L2Regularizer'),
         'optimizer': ('Optimizer', 'adam'),
         'dtype': ('Precision to use', 'float64'),
+        'results_file': ('Name of file to export results', 'results'),
     },
     'float': {
         'lr': ('Learning rate', 1e-3),
