@@ -70,12 +70,6 @@ def load_data(prep_path, dataset_name, prep_name, debug):
     return train, dev, test, samples, n_users, n_items, data
 
 
-def load_item_item_distances(prep_path, dataset_name, item_item_file_path):
-    item_item_file_path = Path(prep_path) / dataset_name / item_item_file_path
-    logging.info(f"Loading data from {item_item_file_path}")
-    with tf.io.gfile.GFile(str(item_item_file_path), 'rb') as f:
-        data = pickle.load(f)
-    return data["item_item_distances"]
 
 
 def save_config(logs_dir, run_id):
@@ -102,26 +96,6 @@ def get_optimizer(args):
     return getattr(tf.keras.optimizers, args.optimizer)(learning_rate=args.lr)
 
 
-def build_distance_matrix(item_item_distances_dict, id2iid):
-    """
-    Build a distance matrix according to the graph distance between the items, stored in the item_item_distances_dict
-    The order of the matrix is given by the ids in id2iid.
-    This is, the distance between the item with numerical indexes i and j is in the position distance_matrix[i, j]
-
-    The distance to unconnected nodes or the distance from a node to itself is -1
-    """
-    iid2id = {v: k for k, v in id2iid.items()}
-    distance_matrix = np.ones((len(id2iid), len(id2iid))) * -1
-    for src_index, src_iid in id2iid.items():
-        if src_iid not in item_item_distances_dict: continue
-        src_dist = item_item_distances_dict[src_iid]
-        for dst_iid, distance in src_dist.items():
-            if src_iid != dst_iid and dst_iid in iid2id:
-                dst_index = iid2id[dst_iid]
-                distance_matrix[src_index, dst_index] = max(distance, 0.1)  # set a minimum distance for stability
-    return distance_matrix
-
-
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=FLAGS.debug)
     logs_dir = Path(FLAGS.logs_dir)
@@ -137,8 +111,7 @@ def main(_):
 
     item_item_distance_matrix = None
     if FLAGS.semantic_gamma > 0:    # if there is no semantic component in the loss it doesn't need to load the matrix
-        item_item_distances_dict = load_item_item_distances(FLAGS.prep_dir, FLAGS.dataset, FLAGS.item_item_file)
-        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, data["id2iid"])
+        item_item_distance_matrix = data["item_item_distance_matrix"]
 
     model = get_models(n_users, n_items)
     optimizer = get_optimizer(FLAGS)

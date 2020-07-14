@@ -47,7 +47,23 @@ def load_user_keen_interactions(dataset_path, min_user_ints=5, min_item_ints=2, 
 
 def load_keen_gems_interactions(dataset_path, min_keen_keen_edges=3, max_keen_keen_edges=100, min_overlapping_users=2,
                                 min_keen_ints=10, min_item_ints=2, max_item_ints=100):
-    # TODO: add doc
+    """
+    Loads user-keen interactions and from there it infers the keen-gem interactions, using users as edges
+    between the keens.
+
+    :param dataset_path: Path to dataset dir containing interactions in a format user_id,keen_id
+    :param min_keen_keen_edges: keens interacting with less than min_keen_keen_edges are discarded.
+    This is useful to filter rare keens that are not well connected to other keens.
+    :param max_keen_keen_edges: keens interacting with more than max_keen_keen_edges are discarded.
+    This is useful to filter very "popular" keens that are connected to too many keens, and result in a
+    biased dataset.
+    :param min_overlapping_users: to create an edge between two keens there has to be at least
+    min_overlapping_users interacting with both of them
+    :param min_keen_ints: keens with less than min_keen_ints interactions with gems are discarded
+    :param min_item_ints: items (gems) with less than min_keen_ints are discarded
+    :param max_item_ints: items (gems) with more than max_keen_ints are discarded
+    :return:
+    """
 
     all_user_item_ints = load_interactions_file(dataset_path)
     keen_keen_graph = build_keen_keen_graph(all_user_item_ints)
@@ -57,7 +73,7 @@ def load_keen_gems_interactions(dataset_path, min_keen_keen_edges=3, max_keen_ke
     # have to be filtered out so they don't add their gems into the interactions
     filtered_keen_keen_graph = filter_keen_keen_graph(keen_keen_graph, min_keen_keen_edges=min_keen_keen_edges,
                                                       max_keen_keen_edges=max_keen_keen_edges,
-                                                      min_overlapping_user=min_overlapping_users)
+                                                      min_overlapping_users=min_overlapping_users)
     print(f"Total amount of keen-keen interactions: {len(keen_keen_graph)}")
     print(f"Keen-keen interactions through at least {min_overlapping_users} users and filtering: "
           f"{len(filtered_keen_keen_graph)}")
@@ -81,9 +97,24 @@ def load_keen_gems_interactions(dataset_path, min_keen_keen_edges=3, max_keen_ke
 
 
 def filter_keen_keen_graph(keen_keen_graph, min_keen_keen_edges=2, max_keen_keen_edges=100,
-                           min_overlapping_user=2):
-    # TODO: add doc
-    keen_keen_graph = remove_by_min_overlapping_users(keen_keen_graph, min_overlapping_user)
+                           min_overlapping_users=2):
+    """
+    The keen-keen graph is built using overlapping users interacting with two given keens as edges.
+    This function filters some keens from the graph.
+    It is designed to remove keens with very few connections and with too many connections to
+    other keens, so the dataset is not biased towards very popular keens.
+
+    :param keen_keen_graph: a graph of keens.
+    :param min_keen_keen_edges: keens interacting with less than min_keen_keen_edges are discarded.
+    This is useful to filter rare keens that are not well connected to other keens.
+    :param max_keen_keen_edges: keens interacting with more than max_keen_keen_edges are discarded.
+    This is useful to filter very "popular" keens that are connected to too many keens, and result in a
+    biased dataset.
+    :param min_overlapping_users: to create an edge between two keens there has to be at least
+    min_overlapping_users interacting with both of them
+    :return: a filtered version of the input graph
+    """
+    keen_keen_graph = remove_by_min_overlapping_users(keen_keen_graph, min_overlapping_users)
 
     there_are_keens_to_remove = True
     keens_to_remove = set()

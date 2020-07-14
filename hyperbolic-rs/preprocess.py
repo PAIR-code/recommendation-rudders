@@ -14,6 +14,7 @@
 
 from absl import app, flags
 import pickle
+import tensorflow as tf
 import numpy as np
 import random
 from pathlib import Path
@@ -22,15 +23,17 @@ from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='keengem-minkeenkeen2-maxkeenkeen1000-minkeen10-mingem2-maxgem100', help='Name of prep to store')
-flags.DEFINE_string('item', default='gem', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
+flags.DEFINE_string('run_id', default='ukeen-minuser5-minkeen2-maxkeen150-hopdist0.55', help='Name of prep to store')
+flags.DEFINE_string('item', default='keen', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
                                                 'interactions), or movies')
 flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/ml-1m')
+flags.DEFINE_string('item_item_file', default='data/prep/keen/item_item_hop_distance_th0.55.pickle',
+                    help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=True, help='Shuffle the samples')
-flags.DEFINE_integer('min_user_interactions', default=10, help='Users with less than this interactions are filtered')
+flags.DEFINE_integer('min_user_interactions', default=5, help='Users with less than this interactions are filtered')
 flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')
-flags.DEFINE_integer('max_item_interactions', default=100, help='Items with more than this interactions are filtered')
+flags.DEFINE_integer('max_item_interactions', default=150, help='Items with more than this interactions are filtered')
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 flags.DEFINE_integer('filter_most_popular', default=-1,
                      help='Filters out most popular items. If -1 it does not filter')
@@ -115,6 +118,33 @@ def plot_graph(samples):
     plt.show()
 
 
+def load_item_item_distances(item_item_file_path):
+    print(f"Loading data from {item_item_file_path}")
+    with tf.io.gfile.GFile(str(item_item_file_path), 'rb') as f:
+        data = pickle.load(f)
+    return data["item_item_distances"]
+
+
+def build_distance_matrix(item_item_distances_dict, iid2id):
+    """
+    Build a distance matrix according to the graph distance between the items, stored in the item_item_distances_dict
+    The order of the matrix is given by the ids in id2iid.
+    This is, the distance between the item with numerical indexes i and j is in the position distance_matrix[i, j]
+
+    The distance to unconnected nodes or the distance from a node to itself is -1
+    """
+    distance_matrix = np.ones((len(iid2id), len(iid2id))) * -1
+    for src_iid, src_index in iid2id.items():
+        if src_iid not in item_item_distances_dict:
+            continue
+        src_dist = item_item_distances_dict[src_iid]
+        for dst_iid, distance in src_dist.items():
+            if src_iid != dst_iid and dst_iid in iid2id:
+                dst_index = iid2id[dst_iid]
+                distance_matrix[src_index, dst_index] = max(distance, 0.1)  # set a minimum distance for stability
+    return distance_matrix
+
+
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=True)
     dataset_path = Path(FLAGS.dataset_path)
@@ -153,17 +183,23 @@ def main(_):
     for uid, ints in samples.items():
         id_samples[uid2id[uid]] = [iid2id[iid] for iid in ints]
 
-    splits = create_splits(id_samples, do_random=FLAGS.shuffle)
-    splits["iid2name"] = iid2name
-    splits["id2uid"] = {v: k for k, v in uid2id.items()}
-    splits["id2iid"] = {v: k for k, v in iid2id.items()}
+    data = create_splits(id_samples, do_random=FLAGS.shuffle)
+    data["iid2name"] = iid2name
+    data["id2uid"] = {v: k for k, v in uid2id.items()}
+    data["id2iid"] = {v: k for k, v in iid2id.items()}
+
+    # if there is an item-item graph it preprocesses it
+    if FLAGS.item_item_file:
+        item_item_distances_dict = load_item_item_distances(FLAGS.item_item_file)
+        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, iid2id)
+        data["item_item_distance_matrix"] = item_item_distance_matrix
 
     # creates directories to save preprocessed data
     prep_path = Path(CONFIG["string"]["prep_dir"][1])
     prep_path.mkdir(parents=True, exist_ok=True)
     to_save_dir = prep_path / FLAGS.dataset_path.split("/")[-1]
     to_save_dir.mkdir(parents=True, exist_ok=True)
-    save_as_pickle(to_save_dir / f'{FLAGS.run_id}.pickle', splits)
+    save_as_pickle(to_save_dir / f'{FLAGS.run_id}.pickle', data)
 
 
 if __name__ == '__main__':

@@ -19,7 +19,6 @@ CONFIG = {
         'dataset': ('Dataset (keen, gem or ml-1m)', 'keen'),
         'prep_name': ('Name of prep file to load', 'ukeen-minint5-random'),
         'logs_dir': ('Path to logs directory', 'logs/'),
-        'item_item_file': ('Name of item-item distance file', 'item_item_cosine_distance_th0.8.pickle'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
         'model': ('Model', 'DistEuclidean'),
         'loss_fn': ('Loss function to use', 'CompositeLoss'),
