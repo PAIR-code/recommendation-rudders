@@ -32,7 +32,14 @@ flags.DEFINE_string('file', default='data/keen/exports_2020-07-03_keens_and_gems
 flags.DEFINE_string('item', default='keen', help='Item to create embeddings: keen or gem')
 flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store results')
 flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
+flags.DEFINE_string('use_model_url', default="https://tfhub.dev/google/universal-sentence-encoder-large/5",
+                    help='URL of Universal Sentence Encoder Model')
 flags.DEFINE_float('threshold', default=0.65, help='Cosine similarity threshold to add edges')
+flags.DEFINE_integer('max_embedding_len', default=65536,
+                     help='If there are less embeddings than max_embedding_len, it will compute the similarity'
+                          'all at once using matrix multiplication. This is faster but much more memory expensive. '
+                          'If not, it will compute it "on the fly", which does not take as much memory but it is'
+                          'way slower.')
 flags.DEFINE_boolean('use_distance', default=False, help='Whether to use cosine distance as weight or each edge is 1')
 flags.DEFINE_boolean('plot', default=False, help='Whether to plot item-item graph or not')
 
@@ -70,7 +77,7 @@ def build_texts_from_gems(keens):
     return texts
 
 
-def build_item_embeds(item_text, weight_first_embedding=False):
+def build_item_embeds(item_text, use_url, weight_first_embedding=False):
     """
     Build item embeddings based on the text they contain.
     It uses the Universal Sentence Encoder to get embeddings from text.
@@ -83,7 +90,7 @@ def build_item_embeds(item_text, weight_first_embedding=False):
     link's description. In that case, the final embedding is just the average of the previous
     embeddings, without any special weight.
     """
-    use_model = hub.load("https://tfhub.dev/google/universal-sentence-encoder-large/5")
+    use_model = hub.load(use_url)
     result = {}
     for iid, sents in tqdm(item_text.items(), total=len(item_text)):
         embs = use_model(sents)
@@ -100,7 +107,8 @@ def build_item_embeds(item_text, weight_first_embedding=False):
     return result
 
 
-def export_embeds(embeds, dst_path):
+def export_text_embeddings(embeds, dst_path):
+    """Export embeddings in CSV format emulating GloVe format"""
     with open(str(dst_path / "item_embeddings.csv"), "w") as f:
         for iid, vec in embeds.items():
             values = ",".join([str(x) for x in vec[0].numpy()])
@@ -108,6 +116,7 @@ def export_embeds(embeds, dst_path):
 
 
 def load_text_embeddings(text_embeddings_path):
+    """Loads pre-computed text embeddings. They must be persisted in CSV format"""
     embeds = {}
     with open(text_embeddings_path, "r") as f:
         for line in f:
@@ -131,7 +140,11 @@ def build_graph(iids, cossim_matrix, threshold, use_distance):
     Builds graph connecting items only if their cosine similarity is above 'threshold'.
     The weight of the edge can be the cosine distance if 'use_distance' is True. Otherwise each edge counts as 1.
 
-    cossim_matrix is the precomputed matrix of cosine similarities between the all the embeddings
+    :param iids: list of items ids (unique alpha numeric ids)
+    :param cossim_matrix: precomputed matrix of cosine similarities between the all the embeddings
+    :param threshold: only pairs of items with similarity above threshold will be added to the graph
+    :param use_distance: if True, the cosine similarity is converted to cosine distance and added
+    as the edge weight. If False, the edge weight is 1.
     """
     threshold = tf.convert_to_tensor(threshold, dtype=tf.float16)
     graph = nx.Graph()
@@ -198,13 +211,13 @@ def main(_):
         print(f"Items with text from {FLAGS.item} to encode with USE: {len(texts)}")
         print(list(texts.items())[:3])
 
-        embeds = build_item_embeds(texts, weight_first_embedding=FLAGS.item == "keen")
-        export_embeds(embeds, dst_path)
+        embeds = build_item_embeds(texts, FLAGS.use_model_url, weight_first_embedding=FLAGS.item == "keen")
+        export_text_embeddings(embeds, dst_path)
 
     else:
         embeds = load_text_embeddings(FLAGS.text_embeddings)
 
-    if len(embeds) < 65536:
+    if len(embeds) < FLAGS.max_embedding_len:
         item_ids, cossim_matrix = build_cossim_matrix(embeds)
         graph = build_graph(item_ids, cossim_matrix, FLAGS.threshold, FLAGS.use_distance)
     else:

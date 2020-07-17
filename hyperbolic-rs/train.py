@@ -109,6 +109,11 @@ def build_distance_matrix(item_item_distances_dict, id2iid):
     This is, the distance between the item with numerical indexes i and j is in the position distance_matrix[i, j]
 
     The distance to unconnected nodes or the distance from a node to itself is -1
+
+    :param item_item_distances_dict: dictionary that has the precomputed distances between pairs of items,
+    if there is a path between them in the semantic graph.
+    :param id2iid: mapping of item index (0, 1, 2, ..) and item id (unique alpha numeric value that identifies
+    the item)
     """
     iid2id = {v: k for k, v in id2iid.items()}
     distance_matrix = np.ones((len(id2iid), len(id2iid))) * -1

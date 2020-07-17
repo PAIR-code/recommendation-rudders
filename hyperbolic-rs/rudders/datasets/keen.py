@@ -98,7 +98,14 @@ def process_input(string):
     Input: '"value1\nvalue2"'
     Output: 'value value2'
     """
-    string = string[1:-1] if type(string) == str else ""
+    if type(string) != str:
+        string = ""
+    if string:
+        if string[0] == '"':
+            string = string[1:]
+        if string[-1] == '"':
+            string = string[:-1]
+    string = re.sub(' +', ' ', string)  # removes more than one white space
     return string.replace("\\n", " ")
 
 
