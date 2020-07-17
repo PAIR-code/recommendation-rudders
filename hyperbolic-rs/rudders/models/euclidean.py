@@ -81,4 +81,5 @@ def euclidean_sq_distance(x, y, all_pairs=False):
 
 
 def euclidean_distance(x, y, all_pairs=False):
-    return tf.math.sqrt(euclidean_sq_distance(x, y, all_pairs))
+    sq_dist = euclidean_sq_distance(x, y, all_pairs)
+    return tf.math.sqrt(tf.maximum(sq_dist, tf.zeros_like(sq_dist)))

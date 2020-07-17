@@ -23,11 +23,11 @@ from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='ukeen-minuser5-minkeen2-maxkeen150-hopdist0.55', help='Name of prep to store')
+flags.DEFINE_string('run_id', default='ukeen-minuser5-minkeen2-maxkeen150-hopdist0.7', help='Name of prep to store')
 flags.DEFINE_string('item', default='keen', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
                                                 'interactions), or movies')
 flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/ml-1m')
-flags.DEFINE_string('item_item_file', default='data/prep/keen/item_item_hop_distance_th0.55.pickle',
+flags.DEFINE_string('item_item_file', default='data/prep/keen/item_item_hop_distance_th0.7.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=True, help='Shuffle the samples')
@@ -48,17 +48,19 @@ def map_item_ids_to_sequential_ids(samples):
     :return: dicts of {<user_idX>: indexY} and {<item_idX>: indexW}
     """
     uid2id, iid2id = {}, {}
-    for uid, ints in samples.items():
+    sorted_samples = sorted(samples.items(), key=lambda x: x[0])
+    for uid, ints in sorted_samples:
         if uid not in uid2id:
             uid2id[uid] = len(uid2id)
-        for iid in ints:
+        sorted_ints = sorted(ints)
+        for iid in sorted_ints:
             if iid not in iid2id:
                 iid2id[iid] = len(iid2id)
 
     return uid2id, iid2id
 
 
-def create_splits(samples, do_random=False):
+def create_splits(samples, do_random=False, seed=42):
     """
     Splits (user, item) dataset to train, dev and test.
 
@@ -72,6 +74,7 @@ def create_splits(samples, do_random=False):
     train, dev, test = [], [], []
     for uid, items in samples.items():
         if do_random:
+            random.seed(seed)
             random.shuffle(items)
         if len(items) >= 3:
             test.append([uid, items[-1]])
@@ -181,9 +184,10 @@ def main(_):
 
     id_samples = {}
     for uid, ints in samples.items():
-        id_samples[uid2id[uid]] = [iid2id[iid] for iid in ints]
+        sorted_ints = sorted(ints)
+        id_samples[uid2id[uid]] = [iid2id[iid] for iid in sorted_ints]
 
-    data = create_splits(id_samples, do_random=FLAGS.shuffle)
+    data = create_splits(id_samples, do_random=FLAGS.shuffle, seed=FLAGS.seed)
     data["iid2name"] = iid2name
     data["id2uid"] = {v: k for k, v in uid2id.items()}
     data["id2iid"] = {v: k for k, v in iid2id.items()}

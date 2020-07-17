@@ -296,7 +296,7 @@ def get_keens(data):
             keen = all_keens[keen_id]
         else:
             keen = Keen(item["keen_id"], item["keen_title"], get_value(item, "keen_description"),
-                        item["keen_creator_uid"])
+                        item["keen_creator_uid"], item["keen_created_date"])
             all_keens[keen_id] = keen
 
         if gem is not None and not gem.is_empty():
@@ -314,11 +314,12 @@ def get_value(item, key):
 
 
 class Keen:
-    def __init__(self, keen_id, title, description, creator_uid):
+    def __init__(self, keen_id, title, description, creator_uid, created_date):
         self.keen_id = keen_id
         self.title = process_input(title)
         self.description = process_input(description)
         self.creator_uid = process_input(creator_uid)
+        self.created_date = created_date
         self.gems = []
 
 
@@ -332,6 +333,7 @@ class Gem:
         self.link_title = process_input(get_value(item, "gem_link_title"))
         self.link_description = process_input(get_value(item, "gem_link_description"))
         self.creator_uid = process_input(get_value(item, "gem_uid"))
+        self.created_date = get_value(item, "gem_date")
 
     def is_empty(self):
         return not self.text and not self.link_url and not self.link_title and not self.link_description
