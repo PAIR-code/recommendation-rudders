@@ -17,10 +17,10 @@ CONFIG = {
         'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
         'dataset': ('Dataset (keen, gem or ml-1m)', 'keen'),
-        'prep_name': ('Name of prep file to load', 'ukeen-minint5-random'),
+        'prep_name': ('Name of prep file to load', 'ukeen-minuser5-minkeen2-maxkeen150-hopdist0.6'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
-        'model': ('Model', 'DistEuclidean'),
+        'model': ('Model', 'SMFactor'),
         'loss_fn': ('Loss function to use', 'CompositeLoss'),
         'initializer': ('Which initializer to use', 'RandomUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),
@@ -35,13 +35,13 @@ CONFIG = {
         'distortion_gamma': ('Weight for distortion-based loss. If distortion_gamma <= 0, distortion loss is not '
                              'computed', -1.),
         'semantic_gamma': ('Weight for item-item semantic-based loss. If semantic_gamma <= 0, semantic loss is not '
-                           'computed', 0.5),
+                           'computed', 1.),
         'gamma': ('Weight for distortion loss', 1),
         'item_reg': ('Regularization weight for item embeddings', 0),
         'user_reg': ('Regularization weight for user embeddings', 0),
         'margin': ('Margin for hinge based models', 1),
         'curvature': ('Curvature in case of using hyperbolic space', 1.),
-        'neighbors': ('Proportion of neighbors to keep for semantic loss', 0.02)
+        'neighbors': ('Proportion of neighbors to keep for semantic loss', 0.01)
     },
     'integer': {
         'patience': ('Number of validation steps before early stopping', 10),
