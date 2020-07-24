@@ -36,7 +36,7 @@ for dtype, flag_fn in flag_fns.items():
 FLAGS = flags.FLAGS
 
 
-def get_models(n_users, n_items):
+def get_model(n_users, n_items):
     tf.keras.backend.set_floatx(FLAGS.dtype)
     model = getattr(models, FLAGS.model)(n_users, n_items, FLAGS)
     model.build(input_shape=(1, 2))
@@ -142,7 +142,7 @@ def main(_):
     item_item_distances_dict = load_item_item_distances(FLAGS.prep_dir, FLAGS.dataset, FLAGS.item_item_file)
     item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, data["id2iid"])
 
-    model = get_models(n_users, n_items)
+    model = get_model(n_users, n_items)
     optimizer = get_optimizer(FLAGS)
     loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS, item_distances=item_item_distance_matrix)
 

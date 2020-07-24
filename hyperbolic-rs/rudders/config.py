@@ -36,7 +36,7 @@ CONFIG = {
                              'computed', -1.),
         'semantic_gamma': ('Weight for item-item semantic-based loss. If semantic_gamma <= 0, semantic loss is not '
                            'computed', 0.5),
-        'gamma': ('Weight for distortion loss', 1),
+        'gamma': ('Weight for Hinge loss', 1),
         'item_reg': ('Regularization weight for item embeddings', 0),
         'user_reg': ('Regularization weight for user embeddings', 0),
         'margin': ('Margin for hinge based models', 1),
