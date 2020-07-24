@@ -15,12 +15,11 @@
 import sys
 from pathlib import Path
 import logging as native_logging
-from absl import logging, flags
+from absl import logging
 import tensorflow as tf
 import numpy as np
 import random
-
-FLAGS = flags.FLAGS
+import pickle
 
 
 def set_seed(seed: int, set_tf_seed: bool):
@@ -83,3 +82,14 @@ def sort_items_by_popularity(samples):
             else:
                 item_degree[iid] = 1
     return sorted(item_degree.items(), key=lambda item: item[1], reverse=True)
+
+
+def save_as_pickle(save_path, data):
+    """
+    Saves data to train, dev, test and samples pickle files.
+
+    :param save_path: path where to save data.
+    :param data: Data to store
+    """
+    with open(str(save_path), 'wb') as fp:
+        pickle.dump(data, fp)

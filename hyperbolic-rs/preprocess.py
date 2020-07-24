@@ -20,17 +20,17 @@ import random
 from pathlib import Path
 from rudders.datasets import movielens, keen
 from rudders.config import CONFIG
-from rudders.utils import set_seed, sort_items_by_popularity
+from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='ukeen-minuser5-minkeen2-maxkeen150-hopdist0.7', help='Name of prep to store')
-flags.DEFINE_string('item', default='keen', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
-                                                'interactions), or movies')
-flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/ml-1m')
-flags.DEFINE_string('item_item_file', default='data/prep/keen/item_item_hop_distance_th0.7.pickle',
+flags.DEFINE_string('run_id', default='prep-hopdist0.75', help='Name of prep to store')
+flags.DEFINE_string('item', default='ml-1m', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
+                                                'interactions), or "ml-1m"')
+flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m')
+flags.DEFINE_string('item_item_file', default='data/prep/ml-1m/item_item_hop_distance_th0.75.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
-flags.DEFINE_boolean('shuffle', default=True, help='Shuffle the samples')
+flags.DEFINE_boolean('shuffle', default=False, help='Shuffle the samples')
 flags.DEFINE_integer('min_user_interactions', default=5, help='Users with less than this interactions are filtered')
 flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')
 flags.DEFINE_integer('max_item_interactions', default=150, help='Items with more than this interactions are filtered')
@@ -93,17 +93,6 @@ def create_splits(samples, do_random=False, seed=42):
     }
 
 
-def save_as_pickle(save_path, data):
-    """
-    Saves data to train, dev, test and samples pickle files.
-
-    :param save_path: path where to save data.
-    :param data: Data to store
-    """
-    with open(str(save_path), 'wb') as fp:
-        pickle.dump(data, fp)
-
-
 def plot_graph(samples):
     """Plot user-item graph, setting different colors for items and users."""
     import networkx as nx
@@ -163,7 +152,7 @@ def main(_):
                                                    min_item_ints=FLAGS.min_item_interactions,
                                                    max_item_ints=FLAGS.max_item_interactions)
         iid2name = keen.build_iid2title(item_id_key="gem_id", item_title_key="gem_link_title")
-    elif FLAGS.item == "movies":
+    elif FLAGS.item == "ml-1m":
         samples = movielens.movielens_to_dict(dataset_path)
         iid2name = movielens.build_movieid2title(dataset_path)
     else:
@@ -184,8 +173,9 @@ def main(_):
 
     id_samples = {}
     for uid, ints in samples.items():
-        sorted_ints = sorted(ints)
-        id_samples[uid2id[uid]] = [iid2id[iid] for iid in sorted_ints]
+        if FLAGS.item != "ml-1m":
+            ints = sorted(ints)
+        id_samples[uid2id[uid]] = [iid2id[iid] for iid in ints]
 
     data = create_splits(id_samples, do_random=FLAGS.shuffle, seed=FLAGS.seed)
     data["iid2name"] = iid2name

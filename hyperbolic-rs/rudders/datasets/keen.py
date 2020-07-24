@@ -337,3 +337,30 @@ class Gem:
 
     def is_empty(self):
         return not self.text and not self.link_url and not self.link_title and not self.link_description
+
+
+# Functions used for building the item-item graph
+
+def build_texts_from_keens(keens):
+    texts = {}
+    for kid, keen in keens.items():
+        keen_sents = [keen.description]
+        for gem in keen.gems:
+            keen_sents.append(gem.text)
+            keen_sents.append(gem.link_title)
+            keen_sents.append(gem.link_description)
+        keen_sents = [s for s in keen_sents if s]   # filters empty sentences
+        keen_sents = [keen.title] + keen_sents      # title is always the first element in the list
+        texts[kid] = keen_sents
+    return texts
+
+
+def build_texts_from_gems(keens):
+    texts = {}
+    for keen in keens.values():
+        for gem in keen.gems:
+            sents = [gem.text, gem.link_title, gem.link_description]
+            sents = [s for s in sents if s]   # filters empty sentences
+            if sents:
+                texts[gem.gem_id] = sents
+    return texts
