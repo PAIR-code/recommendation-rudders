@@ -18,6 +18,7 @@ from absl import app, flags, logging
 import numpy as np
 import tensorflow as tf
 import pickle
+from scipy import sparse
 from rudders.config import CONFIG
 from rudders.utils import set_seed, setup_logger
 import rudders.models as models
@@ -70,8 +71,6 @@ def load_data(prep_path, dataset_name, prep_name, debug):
     return train, dev, test, samples, n_users, n_items, data
 
 
-
-
 def save_config(logs_dir, run_id):
     config_path = logs_dir / f'{run_id}.json'
     if FLAGS.save_logs and not config_path.exists():
@@ -112,6 +111,9 @@ def main(_):
     item_item_distance_matrix = None
     if FLAGS.semantic_gamma > 0:    # if there is no semantic component in the loss it doesn't need to load the matrix
         item_item_distance_matrix = data["item_item_distance_matrix"]
+        if sparse.issparse(item_item_distance_matrix):
+            dense_matrix = item_item_distance_matrix.toarray()
+            item_item_distance_matrix = np.where(dense_matrix != 0, dense_matrix, np.ones_like(dense_matrix) * -1)
 
     model = get_models(n_users, n_items)
     optimizer = get_optimizer(FLAGS)
