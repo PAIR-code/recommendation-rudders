@@ -23,6 +23,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('pop_prep_dir', default='data/prep', help='Path to data directory')
 flags.DEFINE_string('pop_dataset', default='keen', help='Dataset (keen, gem or ml-1m)')
 flags.DEFINE_string('pop_prep_name', default='ukeen-minint5-random', help='Name of prep file to load')
+flags.DEFINE_boolean('pop_debug', default=False, help='Uses 1000 examples for debugging purposes')
 
 
 def random_eval(pop_ranking, split_data, samples, batch_size=500, num_rand=100, seed=1234):
@@ -72,7 +73,8 @@ def print_most_popular_items(data, sorted_item_degree, top_items=25):
 
 
 def main(_):
-    _, dev, test, samples, _, _, data = load_data(FLAGS.pop_prep_dir, FLAGS.pop_dataset, FLAGS.pop_prep_name, False)
+    _, dev, test, samples, _, _, data = load_data(FLAGS.pop_prep_dir, FLAGS.pop_dataset, FLAGS.pop_prep_name,
+                                                  FLAGS.pop_debug)
     sorted_items = sort_items_by_popularity(samples)
     print_most_popular_items(data, sorted_items)
 
@@ -84,6 +86,7 @@ def main(_):
     for title, split in zip(["DEV", "TEST"], [dev, test]):
         rank_all, rank_random = random_eval(pop_ranking, split, samples, num_rand=random_items)
         metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
+
         print(f"Result for {title.upper()}")
         print(f"Random items {random_items}: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
         print("All items: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))

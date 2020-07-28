@@ -24,11 +24,11 @@ from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='prep-hopdist0.65', help='Name of prep to store')
+flags.DEFINE_string('run_id', default='prep-notitle-hopdist0.75', help='Name of prep to store')
 flags.DEFINE_string('item', default='ml-1m', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
                                                 'interactions), or "ml-1m"')
 flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m')
-flags.DEFINE_string('item_item_file', default='data/prep/ml-1m/item_item_hop_distance_th0.65.pickle',
+flags.DEFINE_string('item_item_file', default='data/prep/ml-1m/item_item_notitle_hop_distance_th0.75.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=False, help='Shuffle the samples')
@@ -113,25 +113,33 @@ def plot_graph(samples):
 
 
 def load_item_item_distances(item_item_file_path):
+    """Loads item-item distances that were precomputed with item_graph.py"""
     print(f"Loading data from {item_item_file_path}")
     with tf.io.gfile.GFile(str(item_item_file_path), 'rb') as f:
         data = pickle.load(f)
     return data["item_item_distances"]
 
 
-def build_distance_matrix(item_item_distances_dict, iid2id, sparse=False):
+def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False):
     """
     Build a distance matrix according to the graph distance between the items, stored in the item_item_distances_dict
-    The order of the matrix is given by the ids in id2iid.
+    The order of the matrix is given by the ids in iid2id.
     This is, the distance between the item with numerical indexes i and j is in the position distance_matrix[i, j]
 
     The distance to unconnected nodes or the distance from a node to itself is 0 if the matrix is sparse, or -1
     if the matrix is dense.
+
+    :param item_item_distances_dict: dictionary that has the precomputed distances between pairs of items,
+    if there is a path between them in the semantic graph.
+    :param iid2id: mapping of item id (unique alpha numeric value that identifies the item) and
+    item index (0, 1, 2, ..)
+    :param do_sparse: if True, the distance matrix is returned as a sparse matrix, else as a numpy array
     """
-    if sparse:
+    if do_sparse:
         distance_matrix = np.zeros((len(iid2id), len(iid2id)))
     else:
         distance_matrix = np.ones((len(iid2id), len(iid2id))) * -1
+
     for src_iid, src_index in iid2id.items():
         if src_iid not in item_item_distances_dict:
             continue
@@ -141,7 +149,7 @@ def build_distance_matrix(item_item_distances_dict, iid2id, sparse=False):
                 dst_index = iid2id[dst_iid]
                 distance_matrix[src_index, dst_index] = max(distance, 0.1)  # set a minimum distance for stability
 
-    if FLAGS.sparse:
+    if do_sparse:
         return sparse.csr_matrix(distance_matrix)
     return distance_matrix
 
@@ -191,10 +199,10 @@ def main(_):
     data["id2uid"] = {v: k for k, v in uid2id.items()}
     data["id2iid"] = {v: k for k, v in iid2id.items()}
 
-    # if there is an item-item graph it preprocesses it
+    # if there is an item-item graph, we preprocess it
     if FLAGS.item_item_file:
         item_item_distances_dict = load_item_item_distances(FLAGS.item_item_file)
-        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, iid2id, sparse=FLAGS.sparse)
+        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=FLAGS.sparse)
         data["item_item_distance_matrix"] = item_item_distance_matrix
 
     # creates directories to save preprocessed data

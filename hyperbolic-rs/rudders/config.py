@@ -17,10 +17,10 @@ CONFIG = {
         'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
         'dataset': ('Dataset (keen, gem or ml-1m)', 'ml-1m'),
-        'prep_name': ('Name of prep file to load', 'prep-hopdist0.75'),
+        'prep_name': ('Name of prep file to load', 'prep-hopdist0.85'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
-        'model': ('Model', 'SMFactor'),
+        'model': ('Model', 'DistEuclidean'),
         'loss_fn': ('Loss function to use', 'CompositeLoss'),
         'initializer': ('Which initializer to use', 'RandomUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),
@@ -60,6 +60,5 @@ CONFIG = {
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
         'save_model': ('Whether to save the model weights', True),
-        'use_graph_weight': ('If True it uses distances in the graph. If not, all edges equal 1', False),
     }
 }

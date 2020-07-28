@@ -218,6 +218,12 @@ def load_interactions_file(dataset_path):
 
 
 def build_item_user_ints(interactions):
+    """
+    Transposes a dict of user-item interactions into one of item-user interactions
+
+    :param interactions: dict with uid: set of iids that represent interactions between user uid and item iid.
+    :return: dict with iid: set of uids
+    """
     item_user_ints = {}
     for uid, ints in interactions.items():
         for iid in ints:
@@ -229,6 +235,17 @@ def build_item_user_ints(interactions):
 
 
 def filter_user_interactions(user_item_ints, valid_items, min_user_ints=5, max_user_ints=10000):
+    """
+    Given a dict of user-item interactions, returns a filtered dict of user-item interactions that:
+    1 - Only keep the items that are in 'valid_items'
+    2 - Only keep the user whose amount of interactions is between min_user_ints and max_user_ints.
+
+    :param user_item_ints: dict of uid: set of iids
+    :param valid_items: set with iids of valid items that the users are allowed to interact with
+    :param min_user_ints: minimum amount of user interactions to be included in the result dict
+    :param max_user_ints: maximum amount of user interactions to be included in the result dict
+    :return: filtered_user_item_ints according to the previous criteria
+    """
     filtered_user_item_ints = {}
     for uid, ints in user_item_ints.items():
         new_ints = set([iid for iid in ints if iid in valid_items])
@@ -285,6 +302,8 @@ def load_all_keens():
 
 
 def get_keens(data):
+    """Given a list of dicts with raw data taken from the file of keens and gems, instantiates Keens with
+    their respective gems."""
     all_keens = {}
     for item in data:
         keen_id = item["keen_id"]
@@ -305,7 +324,23 @@ def get_keens(data):
 
 
 def process_input(string):
-    string = string[1:-1] if type(string) == str else ""
+    """
+    The json files are written in the following format:
+        {'key': '"value"'}
+
+    This function removes the initial and ending quotes and any '\n' in value.
+    Example:
+    Input: '"value1\nvalue2"'
+    Output: 'value value2'
+    """
+    if type(string) != str:
+        string = ""
+    if string:
+        if string[0] == '"':
+            string = string[1:]
+        if string[-1] == '"':
+            string = string[:-1]
+    string = re.sub(' +', ' ', string)  # removes more than one white space
     return string.replace("\\n", " ")
 
 
@@ -342,6 +377,12 @@ class Gem:
 # Functions used for building the item-item graph
 
 def build_texts_from_keens(keens):
+    """
+    Collects available text from keens in a list and returns it
+    :param keens: dict of iid: keen_iid
+    :return: texts: dict of iid: list of strings with text collected from each keen.
+    The title of the keen is always in the first position of the list
+    """
     texts = {}
     for kid, keen in keens.items():
         keen_sents = [keen.description]
@@ -356,6 +397,11 @@ def build_texts_from_keens(keens):
 
 
 def build_texts_from_gems(keens):
+    """
+    Collects available text from each gem inside each keen in a list and returns it
+    :param keens: dict of iid: keen_iid
+    :return: texts: dict of iid: list of strings with text collected from each gem.
+    """
     texts = {}
     for keen in keens.values():
         for gem in keen.gems:

@@ -53,7 +53,6 @@ class CFModel(tf.keras.Model, abc.ABC):
             embeddings_regularizer=self.item_regularizer,
             name='item_embeddings')
         self.gamma = tf.Variable(initial_value=args.gamma * tf.keras.backend.ones(1), trainable=False)
-        self.rhs_dep_lhs = False
 
     @abc.abstractmethod
     def get_users(self, input_tensor):
@@ -159,8 +158,6 @@ class CFModel(tf.keras.Model, abc.ABC):
         ranks = np.ones(total_examples)
         ranks_random = np.ones(total_examples)
         for counter, input_tensor in enumerate(split_data.batch(batch_size)):
-            # if batch_size * counter >= total_examples:
-            #     break
             scores, targets = self.get_scores_targets(input_tensor)  # score: score to all; targets: score to valid/eval item
             scores_random = np.ones(shape=(scores.shape[0], num_rand))
             for i, query in enumerate(input_tensor):
