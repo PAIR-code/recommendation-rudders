@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
-RUN_ID="keen-euclid64-lr3e-3"
+RUN_ID="keen-hyper32-semantic-ga1-th0p7-nei0p01"
 
 eval "$(conda shell.bash hook)"
 conda activate keen
 python train.py \
         --dataset=keen \
-        --model=DistEuclidean \
-        --dims=64 \
-        --loss_fn=PairwiseHingeLoss \
+        --model=DistHyperbolic \
+        --dims=32 \
+        --loss_fn=SemanticLoss \
+        --distortion_gamma=1. \
+        --neighbors=0.01 \
+        --item_item_file=item_item_distance_th0.7.pickle \
         --debug=False \
         --run_id=$RUN_ID \
         --lr=1e-3 \

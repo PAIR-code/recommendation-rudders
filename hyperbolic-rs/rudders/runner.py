@@ -17,6 +17,8 @@ import copy
 import tensorflow as tf
 from absl import logging
 from pathlib import Path
+import random
+from datetime import datetime
 from rudders.utils import rank_to_metric_dict
 
 
@@ -61,10 +63,10 @@ class Runner:
                     tf.summary.scalar('dev/loss', dev_loss, step=epoch)
 
                 # compute validation metrics
-                _, metric_random = self.compute_metrics(self.dev, "dev", epoch)
+                metric_all, _ = self.compute_metrics(self.dev, "dev", epoch)
 
                 # early stopping
-                hr_at_10 = metric_random["HR@10"]
+                hr_at_10 = metric_all["HR@10"]
                 if hr_at_10 > best_hr_at_10:
                     best_hr_at_10 = hr_at_10
                     early_stopping_counter = 0
@@ -84,27 +86,10 @@ class Runner:
             self.model.save_weights(str(Path(self.args.ckpt_dir) / f'{self.args.run_id}_{best_epoch}ep.h5'))
 
         # validation metrics
-        logging.info(f"Final performance after {epoch} epochs")
-        self.compute_metrics(self.dev, "dev", epoch, write_summary=False)
-        self.compute_metrics(self.test, "test", epoch, write_summary=False)
-
-    def compute_metrics(self, split, title, epoch, write_summary=True):
-        random_items = 100
-        rank_all, rank_random = self.model.random_eval(split, self.samples, num_rand=random_items)
-        metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
-
-        logging.info(f"Result at epoch {epoch} in {title.upper()}")
-        logging.info(f"Random items {random_items}:" + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
-        logging.info("All items:" + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
-
-        if write_summary:
-            with self.summary.as_default():
-                for k, v in metric_random.items():
-                    tf.summary.scalar(f"{k}_r", v, step=epoch)
-                for k, v in metric_all.items():
-                    tf.summary.scalar(k, v, step=epoch)
-
-        return metric_all, metric_random
+        self.print_samples()
+        logging.info(f"Final best performance from {best_epoch} epochs")
+        self.compute_metrics(self.dev, "dev", best_epoch, write_summary=False)
+        self.compute_metrics(self.test, "test", best_epoch, write_summary=False)
 
     @tf.function
     def train_epoch(self, train_batch):
@@ -130,6 +115,54 @@ class Runner:
             total_loss += loss.numpy().item()
 
         return total_loss / counter
+
+    def compute_metrics(self, split, title, epoch, write_summary=True):
+        random_items = 100
+        rank_all, rank_random = self.model.random_eval(split, self.samples, num_rand=random_items)
+        metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
+
+        logging.info(f"Result at epoch {epoch} in {title.upper()}")
+        logging.info(f"Random items {random_items}: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
+        logging.info("All items: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
+
+        if write_summary:
+            with self.summary.as_default():
+                for k, v in metric_random.items():
+                    tf.summary.scalar(f"{k}_r", v, step=epoch)
+                for k, v in metric_all.items():
+                    tf.summary.scalar(k, v, step=epoch)
+
+        return metric_all, metric_random
+
+    def print_samples(self, n_users=20, n_samples=6, k_closest=10):
+        random.seed(datetime.now())
+        users = random.sample(list(self.samples.keys()), len(self.samples))[:n_users]
+        user_tensor = tf.expand_dims(tf.convert_to_tensor(users), 1)
+        input_tensor = tf.concat((user_tensor, tf.ones_like(user_tensor)), axis=1)
+        scores = self.model(input_tensor, all_pairs=True)
+        top_k = tf.math.top_k(scores, k=k_closest)[1].numpy()
+
+        for i, user_index in enumerate(users):
+            samples = self.samples[user_index]
+            logging.info(f"User {user_index} - {self.id2uid[user_index]} total training samples: {len(samples)}")
+            for item_index in samples[:-2][:n_samples]:
+                logging.info(f"\t - {item_index} - {self.get_item_name(item_index)}")
+            
+            logging.info(f"\tClosest {k_closest} items to user")
+            for item_index in top_k[i]:
+                if item_index == samples[-1]:
+                    pos = "TEST"
+                elif item_index == samples[-2]:
+                    pos = "DEV"
+                elif item_index in samples[:-2]:
+                    pos = "TRAIN"
+                else:
+                    pos = "UNRELATED"
+                logging.info(f"\t{pos} - {item_index} - {self.get_item_name(item_index)}")
+
+    def get_item_name(self, item_index):
+        iid = self.id2iid.get(item_index, "")
+        return self.iid2name.get(iid, "NoName")
 
     def reduce_lr(self):
         old_lr = float(tf.keras.backend.get_value(self.optimizer.lr))

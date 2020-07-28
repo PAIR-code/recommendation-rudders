@@ -18,7 +18,6 @@ from absl import app, flags, logging
 import numpy as np
 import tensorflow as tf
 import pickle
-
 from rudders.config import CONFIG
 from rudders.utils import set_seed, setup_logger
 import rudders.models as models
@@ -37,7 +36,7 @@ for dtype, flag_fn in flag_fns.items():
 FLAGS = flags.FLAGS
 
 
-def get_models(n_users, n_items):
+def get_model(n_users, n_items):
     tf.keras.backend.set_floatx(FLAGS.dtype)
     model = getattr(models, FLAGS.model)(n_users, n_items, FLAGS)
     model.build(input_shape=(1, 2))
@@ -71,6 +70,14 @@ def load_data(prep_path, dataset_name, prep_name, debug):
     return train, dev, test, samples, n_users, n_items, data
 
 
+def load_item_item_distances(prep_path, dataset_name, item_item_file_path):
+    item_item_file_path = Path(prep_path) / dataset_name / item_item_file_path
+    logging.info(f"Loading data from {item_item_file_path}")
+    with tf.io.gfile.GFile(str(item_item_file_path), 'rb') as f:
+        data = pickle.load(f)
+    return data["item_item_distances"]
+
+
 def save_config(logs_dir, run_id):
     config_path = logs_dir / f'{run_id}.json'
     if FLAGS.save_logs and not config_path.exists():
@@ -95,6 +102,31 @@ def get_optimizer(args):
     return getattr(tf.keras.optimizers, args.optimizer)(learning_rate=args.lr)
 
 
+def build_distance_matrix(item_item_distances_dict, id2iid):
+    """
+    Build a distance matrix according to the graph distance between the items, stored in the item_item_distances_dict
+    The order of the matrix is given by the ids in id2iid.
+    This is, the distance between the item with numerical indexes i and j is in the position distance_matrix[i, j]
+
+    The distance to unconnected nodes or the distance from a node to itself is -1
+
+    :param item_item_distances_dict: dictionary that has the precomputed distances between pairs of items,
+    if there is a path between them in the semantic graph.
+    :param id2iid: mapping of item index (0, 1, 2, ..) and item id (unique alpha numeric value that identifies
+    the item)
+    """
+    iid2id = {v: k for k, v in id2iid.items()}
+    distance_matrix = np.ones((len(id2iid), len(id2iid))) * -1
+    for src_index, src_iid in id2iid.items():
+        if src_iid not in item_item_distances_dict: continue
+        src_dist = item_item_distances_dict[src_iid]
+        for dst_iid, distance in src_dist.items():
+            if src_iid != dst_iid and dst_iid in iid2id:
+                dst_index = iid2id[dst_iid]
+                distance_matrix[src_index, dst_index] = max(distance, 0.1)  # set a minimum distance for stability
+    return distance_matrix
+
+
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=FLAGS.debug)
     logs_dir = Path(FLAGS.logs_dir)
@@ -105,12 +137,14 @@ def main(_):
     print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
     # load data
-    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.prep_name,
+    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.prep_name, 
                                                                   FLAGS.debug)
+    item_item_distances_dict = load_item_item_distances(FLAGS.prep_dir, FLAGS.dataset, FLAGS.item_item_file)
+    item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, data["id2iid"])
 
-    model = get_models(n_users, n_items)
+    model = get_model(n_users, n_items)
     optimizer = get_optimizer(FLAGS)
-    loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS)
+    loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS, item_distances=item_item_distance_matrix)
 
     runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples,
                     id2uid=data["id2uid"], id2iid=data["id2iid"], iid2name=data["iid2name"])

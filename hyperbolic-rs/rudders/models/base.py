@@ -53,7 +53,6 @@ class CFModel(tf.keras.Model, abc.ABC):
             embeddings_regularizer=self.item_regularizer,
             name='item_embeddings')
         self.gamma = tf.Variable(initial_value=args.gamma * tf.keras.backend.ones(1), trainable=False)
-        self.rhs_dep_lhs = False
 
     @abc.abstractmethod
     def get_users(self, input_tensor):
@@ -99,8 +98,8 @@ class CFModel(tf.keras.Model, abc.ABC):
           Tensor containing pairs scores. If eval_mode is False, this tensor has size batch_size x 1, otherwise it has
           size batch_size x n_item where n_item is the total number of items in the CF.
         """
-        user_embeds = self.get_users(input_tensor)
-        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor)
+        user_embeds = self.get_users(input_tensor[:, 0])
+        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor[:, 1])
         predictions = self.score(user_embeds, all_item_embeds, all_pairs)
         return predictions
 
@@ -130,11 +129,11 @@ class CFModel(tf.keras.Model, abc.ABC):
                   scores against all possible items in the CF.
           targets: Numpy array of size batch_size x 1 containing pairs' scores.
         """
-        all_items = self.get_all_items()
-        user_embeds = self.get_users(input_tensor)
-        item_embeds = self.get_items(input_tensor)
-        scores = self.score(user_embeds, all_items, all_pairs=True)
+        user_embeds = self.get_users(input_tensor[:, 0])
+        item_embeds = self.get_items(input_tensor[:, 1])
         targets = self.score(user_embeds, item_embeds, all_pairs=False)
+        all_items = self.get_all_items()
+        scores = self.score(user_embeds, all_items, all_pairs=True)
         return scores.numpy(), targets.numpy()
 
     def random_eval(self, split_data, samples, batch_size=500, num_rand=100, seed=1234):
@@ -159,8 +158,6 @@ class CFModel(tf.keras.Model, abc.ABC):
         ranks = np.ones(total_examples)
         ranks_random = np.ones(total_examples)
         for counter, input_tensor in enumerate(split_data.batch(batch_size)):
-            # if batch_size * counter >= total_examples:
-            #     break
             scores, targets = self.get_scores_targets(input_tensor)  # score: score to all; targets: score to valid/eval item
             scores_random = np.ones(shape=(scores.shape[0], num_rand))
             for i, query in enumerate(input_tensor):
