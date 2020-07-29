@@ -15,6 +15,7 @@
 import abc
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.activations import sigmoid
 
 from rudders.models import regularizers
 
@@ -86,7 +87,7 @@ class CFModel(tf.keras.Model, abc.ABC):
         """
         pass
 
-    def call(self, input_tensor, all_pairs=False):
+    def call(self, input_tensor):
         """Forward pass of CF embedding models.
 
         Args:
@@ -99,8 +100,8 @@ class CFModel(tf.keras.Model, abc.ABC):
           size batch_size x n_item where n_item is the total number of items in the CF.
         """
         user_embeds = self.get_users(input_tensor[:, 0])
-        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor[:, 1])
-        predictions = self.score(user_embeds, all_item_embeds, all_pairs)
+        item_embeds = self.get_items(input_tensor[:, 1])
+        predictions = self.score(user_embeds, item_embeds, all_pairs=False)
         return predictions
 
     @abc.abstractmethod
@@ -183,3 +184,102 @@ class CFModel(tf.keras.Model, abc.ABC):
             return tf.reduce_mean(tf.norm(self.get_all_items(), axis=-1)).numpy()
         else:
             raise ValueError(f"{data_name} not present in model")
+
+
+class MultiRelationalCF(CFModel, abc.ABC):
+    def __init__(self, n_users, n_items, args):
+        super().__init__(n_users, n_items, args)
+        self.user_bias = tf.keras.layers.Embedding(
+            input_dim=n_users,
+            output_dim=1,
+            embeddings_initializer=tf.zeros_initializer(),
+            embeddings_regularizer=self.user_regularizer,
+            name='user_bias')
+        self.item_bias = tf.keras.layers.Embedding(
+            input_dim=n_items,
+            output_dim=1,
+            embeddings_initializer=tf.zeros_initializer(),
+            embeddings_regularizer=self.item_regularizer,
+            name='item_bias')
+        self.relation_embeds = tf.keras.layers.Embedding(
+            input_dim=3,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.item_regularizer,
+            name='relation_embeds')
+        self.relation_trans = tf.keras.layers.Embedding(
+            input_dim=3,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.item_regularizer,
+            name='relation_trans')
+        self.user_item_index = 0
+        self.item_user_index = 1
+        self.item_item_index = 2
+
+    def get_user_item_score(self, input_tensor, all_pairs=False):
+        """input batch has pairs of (uid, iid)"""
+        user_embeds = self.get_users(input_tensor[:, 0])
+        user_bias = self.user_bias(input_tensor[:, 0])
+
+        if all_pairs:
+            item_embeds = self.get_all_items()
+            item_bias = self.item_bias.embeddings
+        else:
+            item_embeds = self.get_items(input_tensor[:, 1])
+            item_bias = self.item_bias(input_tensor[:, 1])
+
+        rel_embeds = self.relation_embeds(self.user_item_index)
+        rel_trans = self.relation_trans(self.user_item_index)
+
+        score = self.multirel_score(head_embeds=user_embeds, tail_embeds=item_embeds, head_bias=user_bias,
+                                    tail_bias=item_bias, relation_embeds=rel_embeds, relation_trans=rel_trans,
+                                    all_pairs=all_pairs)
+        return score
+
+    def get_item_user_score(self, input_tensor):
+        """input batch has pairs of (uid, iid)"""
+        user_embeds = self.get_users(input_tensor[:, 0])
+        user_bias = self.user_bias(input_tensor[:, 0])
+
+        item_embeds = self.get_items(input_tensor[:, 1])
+        item_bias = self.item_bias(input_tensor[:, 1])
+
+        rel_embeds = self.relation_embeds(self.item_user_index)
+        rel_trans = self.relation_trans(self.item_user_index)
+
+        score = self.multirel_score(head_embeds=item_embeds, tail_embeds=user_embeds, head_bias=item_bias,
+                                    tail_bias=user_bias, relation_embeds=rel_embeds, relation_trans=rel_trans)
+        return score
+
+    def get_item_item_score(self, input_tensor):
+        """input batch has pairs of (iid, uid)"""
+        item_embed_a = self.get_items(input_tensor[:, 0])
+        item_bias_a = self.item_bias(input_tensor[:, 0])
+
+        item_embed_b = self.get_items(input_tensor[:, 1])
+        item_bias_b = self.item_bias(input_tensor[:, 1])
+
+        rel_embeds = self.relation_embeds(self.item_item_index)
+        rel_trans = self.relation_trans(self.item_item_index)
+
+        score = self.multirel_score(head_embeds=item_embed_a, tail_embeds=item_embed_b, head_bias=item_bias_a,
+                                    tail_bias=item_bias_b, relation_embeds=rel_embeds, relation_trans=rel_trans)
+        return score
+
+    @abc.abstractmethod
+    def multirel_score(self, head_embeds, tail_embeds, head_bias, tail_bias, relation_embeds, relation_trans,
+                       all_pairs=False):
+        pass
+
+    def get_scores_targets(self, input_tensor):
+        targets = self.get_user_item_score(input_tensor)
+        all = self.get_user_item_score(input_tensor, all_pairs=True)
+        return sigmoid(all).numpy(), sigmoid(targets).numpy()
+
+    def score(self, user_embeds, item_embeds, all_pairs):
+        return -1
+
+    def call(self, input_tensor):
+        """Forward pass of CF embedding models."""
+        return sigmoid(self.get_user_item_score(input_tensor))

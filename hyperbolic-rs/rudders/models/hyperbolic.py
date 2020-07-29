@@ -14,7 +14,7 @@
 
 from abc import ABC
 import tensorflow as tf
-from rudders.models.base import CFModel
+from rudders.models.base import CFModel, MultiRelationalCF
 from rudders import hmath
 from rudders.models.euclidean import euclidean_distance
 
@@ -103,3 +103,32 @@ class DistanceHyperbolicTangentSpaceDistortion(DistanceHyperbolicDistortion):
     def __init__(self, n_users, n_items, args):
         super(DistanceHyperbolicTangentSpaceDistortion, self).__init__(n_users, n_items, args)
         self.apply_log_map = True
+
+
+class MultiRelHyperbolic(MultiRelationalCF, BaseHyperbolic):
+
+    def multirel_score(self, head_embeds, tail_embeds, head_bias, tail_bias, relation_embeds, relation_trans,
+                       all_pairs=False):
+        """
+        :param head_embeds: in HS
+        :param tail_embeds: in HS
+        :param head_bias: scalars
+        :param tail_bias: scalars
+        :param relation_embeds: in Eu
+        :param relation_trans: in Eu
+        :param all_pairs:
+        :return:
+        """
+        curv = self.get_c()
+        tg_head_embeds = hmath.logmap0(head_embeds, curv)
+        head_side = relation_trans * tg_head_embeds
+        head_side = hmath.expmap0(head_side, curv)
+        relation_embeds = hmath.expmap0(tf.expand_dims(relation_embeds, 0), curv)
+        tail_side = hmath.mobius_add(tail_embeds, relation_embeds, curv)
+
+        if all_pairs:
+            sq_dist = hmath.hyp_distance_all_pairs(head_side, tail_side, curv) ** 2
+            tail_bias = tf.transpose(tail_bias)
+        else:
+            sq_dist = hmath.hyp_distance(head_side, tail_side, curv) ** 2
+        return -sq_dist + head_bias + tail_bias

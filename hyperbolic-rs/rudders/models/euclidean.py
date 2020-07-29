@@ -14,7 +14,7 @@
 
 from abc import ABC
 import tensorflow as tf
-from rudders.models.base import CFModel
+from rudders.models.base import CFModel, MultiRelationalCF
 
 
 class BaseEuclidean(CFModel, ABC):
@@ -60,6 +60,20 @@ class DistEuclidean(BaseEuclidean):
 
     def distance(self, embeds_a, embeds_b, all_pairs):
         return tf.sqrt(euclidean_sq_distance(embeds_a, embeds_b, all_pairs))
+
+
+class MultiRelEuclidean(MultiRelationalCF, BaseEuclidean):
+
+    def multirel_score(self, head_embeds, tail_embeds, head_bias, tail_bias, relation_embeds, relation_trans,
+                       all_pairs=False):
+        head_side = relation_trans * head_embeds        # h x n
+        tail_side = tail_embeds + relation_embeds       # t x n
+        if all_pairs:
+            sq_dist = euclidean_sq_distance(head_side, tail_side, all_pairs=True)   # h x t
+            tail_bias = tf.transpose(tail_bias)
+        else:
+            sq_dist = euclidean_sq_distance(head_side, tail_side, all_pairs=False)  # h x 1
+        return -sq_dist + head_bias + tail_bias
 
 
 def euclidean_sq_distance(x, y, all_pairs=False):

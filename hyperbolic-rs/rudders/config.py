@@ -16,12 +16,12 @@ CONFIG = {
     'string': {
         'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
-        'dataset': ('Dataset (keen, gem or ml-1m)', 'ml-1m'),
-        'prep_name': ('Name of prep file to load', 'prep-hopdist0.85'),
+        'dataset': ('Dataset (keen, gem or ml-1m)', 'keen'),
+        'prep_name': ('Name of prep file to load', 'ukeen-minuser5-minkeen2-maxkeen150-hopdist0.7'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
-        'model': ('Model', 'DistEuclidean'),
-        'loss_fn': ('Loss function to use', 'CompositeLoss'),
+        'model': ('Model', 'MultiRelHyperbolic'),
+        'loss_fn': ('Loss function to use', 'MultiRelCompositeLoss'),
         'initializer': ('Which initializer to use', 'RandomUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),
         'optimizer': ('Optimizer', 'adam'),
@@ -35,7 +35,7 @@ CONFIG = {
         'distortion_gamma': ('Weight for distortion-based loss. If distortion_gamma <= 0, distortion loss is not '
                              'computed', -1.),
         'semantic_gamma': ('Weight for item-item semantic-based loss. If semantic_gamma <= 0, semantic loss is not '
-                           'computed', 1.),
+                           'computed', -1.),
         'gamma': ('Weight for distortion loss', 1),
         'item_reg': ('Regularization weight for item embeddings', 0),
         'user_reg': ('Regularization weight for user embeddings', 0),
