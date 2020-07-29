@@ -113,7 +113,7 @@ class ItemItemHingeLoss(LossFunction):
         # Keep small proportion of closest neighbors of each item to compute loss only over those
         # First set unreachable nodes to a large distance, then it looks for the indexes of min_k
         # (top_k of -distances) to use them in the loss calculation
-        valid_item_dists = tf.where(self.item_distances > 0, self.item_distances, tf.keras.backend.ones(1) * 1000)
+        valid_item_dists = tf.where(self.item_distances > 0, self.item_distances, tf.keras.backend.ones(1) * 1e6)
         neighs_ids = tf.math.top_k(-valid_item_dists, k=int(len(self.item_distances) * args.neighbors))[1]
         self.neighbor_ids = tf.cast(neighs_ids, tf.int64)
         self.gamma = tf.Variable(args.semantic_gamma * tf.keras.backend.ones(1), trainable=False)
@@ -122,22 +122,24 @@ class ItemItemHingeLoss(LossFunction):
 
     def calculate_loss(self, model, input_batch):
         item_ids = tf.expand_dims(input_batch[:, 1], 1)
-        dst_index = self.get_negative_sample_ids(input_batch)
+        dst_index = self.get_neighbors_ids(item_ids)
         item_item_input_batch = tf.concat((item_ids, dst_index), axis=1)
+        inverse_item_item_input_batch = tf.concat((dst_index, item_ids), axis=1)
+        loss = tf.keras.backend.constant(0.0)
+        for item_item_batch in [item_item_input_batch, inverse_item_item_input_batch]:
+            space_distance = tf.keras.activations.sigmoid(model.get_item_item_score(item_item_batch))
+            graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, item_item_batch), 1)
 
-        space_distance = tf.keras.activations.sigmoid(model.get_item_item_score(item_item_input_batch))
-        graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, item_item_input_batch), 1)
+            space_distance = tf.where(graph_distance > 0, space_distance, tf.ones_like(space_distance))
 
-        space_distance = tf.where(graph_distance > 0, space_distance, tf.ones_like(space_distance))
+            loss = loss + self.bce(tf.ones_like(space_distance), space_distance)
+        return loss
 
-        return self.bce(tf.ones_like(space_distance), space_distance)
-
-    def get_negative_sample_ids(self, input_batch):
-        src_index = tf.expand_dims(input_batch[:, 1], 1)
+    def get_neighbors_ids(self, src_index):
         neighbor_index_dst = tf.random.uniform((len(src_index), 1), minval=0, maxval=self.neighbor_ids.shape[-1],
                                                dtype=src_index.dtype)
-        neighbor_index = tf.concat((tf.expand_dims(src_index, 1), neighbor_index_dst), axis=1)
-        return tf.gather_nd(self.neighbor_ids, neighbor_index)
+        neighbor_index = tf.concat((src_index, neighbor_index_dst), axis=1)
+        return tf.expand_dims(tf.gather_nd(self.neighbor_ids, neighbor_index), 1)
 
 
 class SemanticLoss(LossFunction):

@@ -253,7 +253,7 @@ class MultiRelationalCF(CFModel, abc.ABC):
         return score
 
     def get_item_item_score(self, input_tensor):
-        """input batch has pairs of (iid, uid)"""
+        """input batch has pairs of (iid, iid)"""
         item_embed_a = self.get_items(input_tensor[:, 0])
         item_bias_a = self.item_bias(input_tensor[:, 0])
 
