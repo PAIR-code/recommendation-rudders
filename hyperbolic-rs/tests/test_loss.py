@@ -21,13 +21,12 @@ from rudders.utils import set_seed
 
 
 def get_flags(initializer='RandomUniform', regularizer='L2Regularizer', dims=32, neg_sample_size=1,
-              entity_reg=0, relation_reg=0, gamma=1, semantic_gamma=1, semantic_graph_weight=2, semantic_pos_sample_size=1,
-              neighbors=1):
+              entity_reg=0, relation_reg=0, batch_size=10, gamma=1, semantic_gamma=1, semantic_graph_weight=2,
+              semantic_pos_sample_size=1, neighbors=1):
 
     Flags = namedtuple("Flags", ['initializer', 'regularizer', 'dims', 'neg_sample_size', 'entity_reg', 'relation_reg',
-                                 'gamma', 'semantic_gamma', 'semantic_graph_weight',
+                                 'batch_size', 'gamma', 'semantic_gamma', 'semantic_graph_weight',
                                  'semantic_pos_sample_size', 'neighbors'])
-
     return Flags(
         initializer=initializer,
         regularizer=regularizer,
@@ -35,6 +34,7 @@ def get_flags(initializer='RandomUniform', regularizer='L2Regularizer', dims=32,
         neg_sample_size=neg_sample_size,
         entity_reg=entity_reg,
         relation_reg=relation_reg,
+        batch_size=batch_size,
         gamma=gamma,
         semantic_gamma=semantic_gamma,
         semantic_graph_weight=semantic_graph_weight,

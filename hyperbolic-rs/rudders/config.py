@@ -20,7 +20,7 @@ CONFIG = {
         'prep_name': ('Name of prep file to load', 'multi-ukeen-minuser5-minkeen2-maxkeen150-hopdist0.75'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
-        'model': ('Model', 'MultiRelHyperbolic'),
+        'model': ('Model', 'DistEuclidean'),
         'loss_fn': ('Loss function to use', 'CompositeLoss'),
         'initializer': ('Which initializer to use', 'RandomUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),

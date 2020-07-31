@@ -39,6 +39,7 @@ class BCEwithNegativeSampleLoss(LossFunction, abc.ABC):
         self.head_index = head_index
         self.tail_index = tail_index
         self.relation_id = relation_id
+        self.relation_tensor = tf.constant(self.relation_id.value, shape=(args.batch_size, 1), dtype=tf.int64)
         self.ini_neg_index = ini_neg_index
         self.end_neg_index = end_neg_index
         self.neg_sample_size = args.neg_sample_size
@@ -58,7 +59,7 @@ class BCEwithNegativeSampleLoss(LossFunction, abc.ABC):
     def build_positive_input_batch(self, input_batch):
         """From a batch x 2 input_batch tensor with (head, tail) builds a batch x 3 input batch of the form
         (head, relation, tail)"""
-        relation = tf.constant(self.relation_id.value, shape=(len(input_batch), 1), dtype=tf.int64)
+        relation = self.relation_tensor[:len(input_batch)]
         head = tf.expand_dims(input_batch[:, self.head_index], 1)
         tail = tf.expand_dims(input_batch[:, self.tail_index], 1)
         return tf.concat((head, relation, tail), axis=-1)
@@ -66,7 +67,7 @@ class BCEwithNegativeSampleLoss(LossFunction, abc.ABC):
     def build_negative_input_batch(self, input_batch):
         """From a batch x 2 input_batch tensor with (head, tail) builds a batch x 3 input batch of the form
         (head, relation, corrupted_tail)"""
-        relation = tf.constant(self.relation_id.value, shape=(len(input_batch), 1), dtype=tf.int64)
+        relation = self.relation_tensor[:len(input_batch)]
         head = tf.expand_dims(input_batch[:, self.head_index], 1)
         corrupted_tail = tf.random.uniform((len(input_batch), 1),
                                            minval=self.ini_neg_index,
@@ -106,6 +107,7 @@ class ItemItemBCELoss(LossFunction):
         self.gamma = tf.Variable(args.semantic_gamma * tf.keras.backend.ones(1), trainable=False)
         self.pos_sample_size = args.semantic_pos_sample_size
         self.semantic_graph_weight = args.semantic_graph_weight
+        self.relation_tensor = tf.constant(Relations.ITEM_ITEM.value, shape=(args.batch_size, 1), dtype=tf.int64)
         self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=False)
 
     def calculate_loss(self, model, input_batch):
@@ -134,7 +136,7 @@ class ItemItemBCELoss(LossFunction):
         """
         item_ids = tf.expand_dims(input_batch[:, -1], 1)
         dst_index = self.get_neighbors_ids(item_ids)
-        relation = tf.constant(Relations.ITEM_ITEM.value, shape=(len(input_batch), 1), dtype=tf.int64)
+        relation = self.relation_tensor[:len(input_batch)]
         item_item_input_batch = tf.concat((item_ids, relation, dst_index), axis=1)
         inverse_item_item_input_batch = tf.concat((dst_index, relation, item_ids), axis=1)
         return inverse_item_item_input_batch, item_item_input_batch
