@@ -24,14 +24,14 @@ from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='multi-ukeen-minuser5-minkeen2-maxkeen100-hopdist0.55', help='Name of prep to store')
+flags.DEFINE_string('run_id', default='multi-ukeen-minuser5-minkeen2-maxkeen150-hopdist0.55', help='Name of prep to store')
 flags.DEFINE_string('item', default='keen', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
                                                 'interactions), or "ml-1m"')
 flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/ml-1m')
 flags.DEFINE_string('item_item_file', default='data/prep/keen/item_item_hop_distance_th0.55.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
-flags.DEFINE_boolean('shuffle', default=False, help='Shuffle the samples')
+flags.DEFINE_boolean('shuffle', default=True, help='Shuffle the samples')
 flags.DEFINE_boolean('sparse', default=False, help='Stores item-item matrix as a sparse matrix')
 flags.DEFINE_integer('min_user_interactions', default=5, help='Users with less than this interactions are filtered')
 flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')

@@ -14,6 +14,7 @@
 """Loss functions for CF with support for optional negative sampling."""
 
 import abc
+
 import tensorflow as tf
 from rudders.models import Relations
 
@@ -31,8 +32,8 @@ class LossFunction(abc.ABC):
         pass
 
 
-class BCEwithNegativeSampleLoss(LossFunction, abc.ABC):
-    """Abstract BCE loss with negative sampling."""
+class TripletWithNegativeSampleLoss(LossFunction, abc.ABC):
+    """Abstract Triplet (head, relation, tail) loss with negative sampling."""
 
     def __init__(self, head_index, tail_index, relation_id, ini_neg_index, end_neg_index, args):
         super().__init__()
@@ -43,18 +44,7 @@ class BCEwithNegativeSampleLoss(LossFunction, abc.ABC):
         self.ini_neg_index = ini_neg_index
         self.end_neg_index = end_neg_index
         self.neg_sample_size = args.neg_sample_size
-        self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=True)
         self.gamma = tf.Variable(args.gamma * tf.keras.backend.ones(1), trainable=False)
-
-    def calculate_loss(self, model, input_batch):
-        triple_input_batch = self.build_positive_input_batch(input_batch)
-        score_to_pos = model(triple_input_batch)
-        loss = self.bce(tf.ones_like(score_to_pos), score_to_pos)
-        for _ in range(self.neg_sample_size):
-            neg_triple_input_batch = self.build_negative_input_batch(input_batch)
-            score_to_neg = model(neg_triple_input_batch)
-            loss = loss + self.bce(tf.zeros_like(score_to_neg), score_to_neg)
-        return loss
 
     def build_positive_input_batch(self, input_batch):
         """From a batch x 2 input_batch tensor with (head, tail) builds a batch x 3 input batch of the form
@@ -71,30 +61,12 @@ class BCEwithNegativeSampleLoss(LossFunction, abc.ABC):
         head = tf.expand_dims(input_batch[:, self.head_index], 1)
         corrupted_tail = tf.random.uniform((len(input_batch), 1),
                                            minval=self.ini_neg_index,
-                                           maxval=self.end_neg_index,
+                                           maxval=self.end_neg_index + 1,
                                            dtype=input_batch.dtype)
         return tf.concat((head, relation, corrupted_tail), axis=-1)
 
 
-class UserItemBCELoss(BCEwithNegativeSampleLoss):
-    def __init__(self, n_users, n_items, args, **kwargs):
-        # sets ini and end neg_indexes such that the negative samples are going to be items
-        ini_item = 0
-        end_item = n_items - 1
-        super().__init__(head_index=0, tail_index=1, relation_id=Relations.USER_ITEM,
-                         ini_neg_index=ini_item, end_neg_index=end_item, args=args)
-
-
-class ItemUserBCELoss(BCEwithNegativeSampleLoss):
-    def __init__(self, n_users, n_items, args, **kwargs):
-        # sets ini and end neg_indexes such that the negative samples are going to be users
-        ini_user = n_items
-        end_user = n_items + n_users - 1
-        super().__init__(head_index=1, tail_index=0, relation_id=Relations.ITEM_USER,
-                         ini_neg_index=ini_user, end_neg_index=end_user, args=args)
-
-
-class ItemItemBCELoss(LossFunction):
+class ItemItemLoss(LossFunction, abc.ABC):
     def __init__(self, n_users, n_items, args, **kwargs):
         super().__init__()
         self.item_distances = tf.keras.backend.constant(kwargs["item_distances"])
@@ -108,25 +80,6 @@ class ItemItemBCELoss(LossFunction):
         self.pos_sample_size = args.semantic_pos_sample_size
         self.semantic_graph_weight = args.semantic_graph_weight
         self.relation_tensor = tf.constant(Relations.ITEM_ITEM.value, shape=(args.batch_size, 1), dtype=tf.int64)
-        self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=False)
-
-    def calculate_loss(self, model, input_batch):
-        loss = tf.keras.backend.constant(0.0)
-        for _ in range(self.pos_sample_size):
-            inverse_item_item_input_batch, item_item_input_batch = self.build_item_item_input(input_batch)
-            for item_item_batch in [item_item_input_batch, inverse_item_item_input_batch]:
-                model_score = model(item_item_batch)
-                # gets graph distance
-                item_src, item_dst = tf.expand_dims(item_item_batch[:, 0], 1), tf.expand_dims(item_item_batch[:, -1], 1)
-                item_item_ids = tf.concat((item_src, item_dst), axis=-1)
-                graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, item_item_ids), 1)
-                # It adds graph distance so it penalizes less the items far apart in the graph
-                weighted_logits = model_score + graph_distance / self.semantic_graph_weight
-                prob = tf.keras.activations.sigmoid(weighted_logits)
-
-                prob = tf.where(graph_distance > 0, prob, tf.ones_like(model_score))
-                loss = loss + self.bce(tf.ones_like(prob), prob)
-        return loss
 
     def build_item_item_input(self, input_batch):
         """
@@ -148,18 +101,156 @@ class ItemItemBCELoss(LossFunction):
         return tf.expand_dims(tf.gather_nd(self.neighbor_ids, neighbor_index), 1)
 
 
-class CompositeLoss(LossFunction):
+class CompositeLoss(LossFunction, abc.ABC):
     """This class allows to compose a loss function made of different loss functions, resulting in a
     multi-task loss with different criteria."""
 
-    def __init__(self, n_users, n_items, args, **kwargs):
+    def __init__(self):
         super().__init__()
-        self.losses = [UserItemBCELoss(n_users, n_items, args), ItemUserBCELoss(n_users, n_items, args)]
-        if args.semantic_gamma > 0:
-            self.losses.append(ItemItemBCELoss(n_users, n_items, args, **kwargs))
+        self.losses = []
 
     def calculate_loss(self, model, input_batch):
         loss = tf.keras.backend.constant(0.0)
         for loss_fn in self.losses:
             loss = loss + loss_fn.gamma * loss_fn.calculate_loss(model, input_batch)
         return loss
+
+
+############## BCE Loss ################
+
+class BCETripletLoss(TripletWithNegativeSampleLoss):
+    def __init__(self, head_index, tail_index, relation_id, ini_neg_index, end_neg_index, args):
+        super().__init__(head_index, tail_index, relation_id, ini_neg_index, end_neg_index, args)
+        self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+
+    def calculate_loss(self, model, input_batch):
+        triple_input_batch = self.build_positive_input_batch(input_batch)
+        score_to_pos = model(triple_input_batch)
+        loss = self.bce(tf.ones_like(score_to_pos), score_to_pos)
+        for _ in range(self.neg_sample_size):
+            neg_triple_input_batch = self.build_negative_input_batch(input_batch)
+            score_to_neg = model(neg_triple_input_batch)
+            loss = loss + self.bce(tf.zeros_like(score_to_neg), score_to_neg)
+        return loss
+
+
+class BCEUserItemLoss(BCETripletLoss):
+    def __init__(self, n_users, n_items, args, **kwargs):
+        # sets ini and end neg_indexes such that the negative samples are going to be items
+        ini_item = 0
+        end_item = n_items - 1
+        super().__init__(head_index=0, tail_index=1, relation_id=Relations.USER_ITEM,
+                         ini_neg_index=ini_item, end_neg_index=end_item, args=args)
+
+
+class BCEItemUserLoss(BCETripletLoss):
+    def __init__(self, n_users, n_items, args, **kwargs):
+        # sets ini and end neg_indexes such that the negative samples are going to be users
+        ini_user = n_items
+        end_user = n_items + n_users - 1
+        super().__init__(head_index=1, tail_index=0, relation_id=Relations.ITEM_USER,
+                         ini_neg_index=ini_user, end_neg_index=end_user, args=args)
+
+
+class BCEItemItemLoss(ItemItemLoss):
+    def __init__(self, n_users, n_items, args, **kwargs):
+        super().__init__(n_users, n_items, args, **kwargs)
+        self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=False)
+
+    def calculate_loss(self, model, input_batch):
+        loss = tf.keras.backend.constant(0.0)
+        for _ in range(self.pos_sample_size):
+            inverse_item_item_input_batch, item_item_input_batch = self.build_item_item_input(input_batch)
+            for item_item_batch in [item_item_input_batch, inverse_item_item_input_batch]:
+                model_score = model(item_item_batch)
+                # gets graph distance
+                item_src, item_dst = tf.expand_dims(item_item_batch[:, 0], 1), tf.expand_dims(item_item_batch[:, -1], 1)
+                item_item_ids = tf.concat((item_src, item_dst), axis=-1)
+                graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, item_item_ids), 1)
+                # It adds graph distance so it penalizes less the items far apart in the graph
+                weighted_logits = model_score + graph_distance / self.semantic_graph_weight
+                prob = tf.keras.activations.sigmoid(weighted_logits)
+
+                prob = tf.where(graph_distance > 0, prob, tf.ones_like(model_score))
+                loss = loss + self.bce(tf.ones_like(prob), prob)
+        return loss
+
+
+class BCECompositeLoss(CompositeLoss):
+    """This class allows to compose a loss function made of different loss functions, resulting in a
+    multi-task loss with different criteria."""
+
+    def __init__(self, n_users, n_items, args, **kwargs):
+        super().__init__()
+        self.losses = [BCEUserItemLoss(n_users, n_items, args), BCEItemUserLoss(n_users, n_items, args)]
+        if args.semantic_gamma > 0:
+            self.losses.append(BCEItemItemLoss(n_users, n_items, args, **kwargs))
+
+
+######## Hinge loss ########
+
+class HingeTripletLoss(TripletWithNegativeSampleLoss):
+    def __init__(self, head_index, tail_index, relation_id, ini_neg_index, end_neg_index, args):
+        super().__init__(head_index, tail_index, relation_id, ini_neg_index, end_neg_index, args)
+        self.margin = args.hinge_margin
+
+    def calculate_loss(self, model, input_batch):
+        triple_input_batch = self.build_positive_input_batch(input_batch)
+        score_to_pos = model(triple_input_batch)
+        loss = tf.keras.backend.constant(0.0)
+        for _ in range(self.neg_sample_size):
+            neg_triple_input_batch = self.build_negative_input_batch(input_batch)
+            score_to_neg = model(neg_triple_input_batch)
+            loss = loss + tf.reduce_mean(tf.nn.relu(self.margin - score_to_pos + score_to_neg))
+        return loss
+
+
+class HingeUserItemLoss(HingeTripletLoss):
+    def __init__(self, n_users, n_items, args, **kwargs):
+        # sets ini and end neg_indexes such that the negative samples are going to be items
+        ini_item = 0
+        end_item = n_items - 1
+        super().__init__(head_index=0, tail_index=1, relation_id=Relations.USER_ITEM,
+                         ini_neg_index=ini_item, end_neg_index=end_item, args=args)
+
+
+class HingeItemUserLoss(HingeTripletLoss):
+    def __init__(self, n_users, n_items, args, **kwargs):
+        # sets ini and end neg_indexes such that the negative samples are going to be users
+        ini_user = n_items
+        end_user = n_items + n_users - 1
+        super().__init__(head_index=1, tail_index=0, relation_id=Relations.ITEM_USER,
+                         ini_neg_index=ini_user, end_neg_index=end_user, args=args)
+
+
+class HingeItemItemLoss(ItemItemLoss):
+    def __init__(self, n_users, n_items, args, **kwargs):
+        super().__init__(n_users, n_items, args, **kwargs)
+
+    def calculate_loss(self, model, input_batch):
+        loss = tf.keras.backend.constant(0.0)
+        for _ in range(self.pos_sample_size):
+            inverse_item_item_input_batch, item_item_input_batch = self.build_item_item_input(input_batch)
+            for item_item_batch in [item_item_input_batch, inverse_item_item_input_batch]:
+                model_score = model(item_item_batch)
+                # gets graph distance
+                item_src, item_dst = tf.expand_dims(item_item_batch[:, 0], 1), tf.expand_dims(item_item_batch[:, -1], 1)
+                item_item_ids = tf.concat((item_src, item_dst), axis=-1)
+                graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, item_item_ids), 1)
+
+                model_score = tf.where(graph_distance > 0, model_score, tf.zeros_like(model_score))
+                this_loss = tf.math.sigmoid(-model_score) / graph_distance
+                this_loss = tf.where(graph_distance > 0, this_loss, tf.zeros_like(graph_distance))
+                loss = loss + tf.reduce_mean(this_loss)
+        return loss
+
+
+class HingeCompositeLoss(CompositeLoss):
+    """This class allows to compose a loss function made of different loss functions, resulting in a
+    multi-task loss with different criteria."""
+
+    def __init__(self, n_users, n_items, args, **kwargs):
+        super().__init__()
+        self.losses = [HingeUserItemLoss(n_users, n_items, args), HingeItemUserLoss(n_users, n_items, args)]
+        if args.semantic_gamma > 0:
+            self.losses.append(HingeItemItemLoss(n_users, n_items, args, **kwargs))

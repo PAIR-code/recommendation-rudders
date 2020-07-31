@@ -16,7 +16,7 @@ import numpy as np
 from collections import namedtuple
 from unittest.mock import MagicMock
 from rudders.models import DistEuclidean
-from rudders.losses import UserItemBCELoss, ItemItemBCELoss, CompositeLoss
+from rudders.losses import BCEUserItemLoss, BCEItemItemLoss, BCECompositeLoss
 from rudders.utils import set_seed
 
 
@@ -72,7 +72,7 @@ class TestLoss(tf.test.TestCase):
         model = self.get_model(self.n_users, self.n_items)
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 1]], dtype=tf.int64)
-        loss = UserItemBCELoss(self.n_users, self.n_items, self.flags)
+        loss = BCEUserItemLoss(self.n_users, self.n_items, self.flags)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -91,7 +91,7 @@ class TestLoss(tf.test.TestCase):
         model = self.get_model(self.n_users, self.n_items)
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 1]], dtype=tf.int64)
-        loss = UserItemBCELoss(self.n_users, self.n_items, self.flags)
+        loss = BCEUserItemLoss(self.n_users, self.n_items, self.flags)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -110,7 +110,7 @@ class TestLoss(tf.test.TestCase):
         model = self.get_model(self.n_users, self.n_items)
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 1]], dtype=tf.int64)
-        loss = UserItemBCELoss(self.n_users, self.n_items, self.flags)
+        loss = BCEUserItemLoss(self.n_users, self.n_items, self.flags)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -129,7 +129,7 @@ class TestLoss(tf.test.TestCase):
         model = self.get_model(self.n_users, self.n_items)
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 1]], dtype=tf.int64)
-        loss = UserItemBCELoss(self.n_users, self.n_items, self.flags)
+        loss = BCEUserItemLoss(self.n_users, self.n_items, self.flags)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -148,7 +148,7 @@ class TestLoss(tf.test.TestCase):
         model = self.get_model(self.n_users, self.n_items)
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 1]], dtype=tf.int64)
-        loss = UserItemBCELoss(self.n_users, self.n_items, self.flags)
+        loss = BCEUserItemLoss(self.n_users, self.n_items, self.flags)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -169,7 +169,7 @@ class TestLoss(tf.test.TestCase):
         model = self.get_model(self.n_users, 2)
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 0]], dtype=tf.int64)
-        loss = ItemItemBCELoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
+        loss = BCEItemItemLoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -190,7 +190,7 @@ class TestLoss(tf.test.TestCase):
         model = self.get_model(self.n_users, 2)
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 0]], dtype=tf.int64)
-        loss = ItemItemBCELoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
+        loss = BCEItemItemLoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -211,7 +211,7 @@ class TestLoss(tf.test.TestCase):
         model = self.get_model(self.n_users, self.n_items)
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 0]], dtype=tf.int64)
-        loss = ItemItemBCELoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
+        loss = BCEItemItemLoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -238,7 +238,7 @@ class TestLoss(tf.test.TestCase):
 
         # set semantic gamma so we do not use item-item loss
         self.flags = get_flags(semantic_gamma=-1)
-        loss = CompositeLoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
+        loss = BCECompositeLoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
 
         result = loss.calculate_loss(model, input_batch)
 
@@ -265,7 +265,7 @@ class TestLoss(tf.test.TestCase):
         model.call = MagicMock(side_effect=effect())
         input_batch = tf.convert_to_tensor([[0, 0]], dtype=tf.int64)
 
-        loss = CompositeLoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
+        loss = BCECompositeLoss(self.n_users, self.n_items, self.flags, item_distances=item_distances)
 
         result = loss.calculate_loss(model, input_batch)
 
