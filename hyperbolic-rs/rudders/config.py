@@ -36,7 +36,7 @@ CONFIG = {
                            'computed', 1.),
         'gamma': ('Weight for distortion loss', 1),
         'semantic_graph_weight': ('Weight to divide graph distance in semantic loss. The larger, items far away '
-                                  'in the graph will be more penalized', 2),
+                                  'in the graph will be more penalized', 1),
         'entity_reg': ('Regularization weight for entity embeddings', 0),
         'relation_reg': ('Regularization weight for relation embeddings', 0),
         'hinge_margin': ('Margin for hinge based models', 1),
