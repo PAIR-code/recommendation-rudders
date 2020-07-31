@@ -14,121 +14,57 @@
 
 from abc import ABC
 import tensorflow as tf
-from rudders.models.base import CFModel, MultiRelationalCF
+from rudders.models.base import CFModel
 from rudders import hmath
-from rudders.models.euclidean import euclidean_distance
 
 
 class BaseHyperbolic(CFModel, ABC):
     """Base model class for hyperbolic embeddings with parameters defined in tangent space."""
 
-    def __init__(self, n_users, n_items, args):
-        super(BaseHyperbolic, self).__init__(n_users, n_items, args)
+    def __init__(self, n_users, n_items, n_relations, item_ids, args, train_bias=True):
+        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias)
         # inits c to a value that will result in softplus(c) == curvature
         init_value = tf.math.log(tf.math.exp(tf.keras.backend.constant(args.curvature)) - 1)
         self.c = tf.Variable(initial_value=init_value, trainable=args.train_c)
 
-    def get_users(self, indexes):
-        return hmath.expmap0(self.user(indexes), self.get_c())
-
-    def get_all_users(self):
-        return hmath.expmap0(self.user.embeddings, self.get_c())
-
-    def get_items(self, indexes):
-        return hmath.expmap0(self.item(indexes), self.get_c())
-
-    def get_all_items(self):
-        return hmath.expmap0(self.item.embeddings, self.get_c())
-
     def get_c(self):
         return tf.math.softplus(self.c)
 
-    def distance(self, embeds_a, embeds_b, all_pairs):
-        c = self.get_c()
-        if all_pairs:
-            return hmath.hyp_distance_all_pairs(embeds_a, embeds_b, c)
-        return hmath.hyp_distance(embeds_a, embeds_b, c)
+    def get_lhs(self, input_tensor):
+        return hmath.expmap0(self.entities(input_tensor[:, 0]), self.get_c())
+
+    def get_rhs(self, input_tensor):
+        return hmath.expmap0(self.entities(input_tensor[:, -1]), self.get_c())
+
+    def similarity_score(self, lhs, rhs, all_items):
+        """Score based on square hyperbolic distance"""
+        if all_items:
+            return -hmath.hyp_distance_all_pairs(lhs, rhs, self.get_c())**2
+        return -hmath.hyp_distance(lhs, rhs, self.get_c())**2
 
 
 class DistHyperbolic(BaseHyperbolic):
-    def score(self, user_embeds, item_embeds, all_pairs):
-        """Score based on square hyperbolic distance"""
-        return -self.distance(user_embeds, item_embeds, all_pairs)**2
+    def __init__(self, n_users, n_items, n_relations, item_ids, args):
+        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias=False)
+        self.relations = None
 
 
-class DistanceHyperbolicDistortion(DistHyperbolic):
-    """
-    Computes distortion of the embeddings according to the formula:
-    distortion(u, i) = |hy_dist(u, i) - eu_dist(u, i)| / eu_dist(u, i)
-    with u, i \in B^n
+class MultiRelHyperbolic(BaseHyperbolic):
+    def __init__(self, n_users, n_items, n_relations, item_ids, args):
+        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias=True)
+        self.relation_transforms = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='relation_transforms')
 
-    Note that the euclidean distance is calculated with the points already projected onto the hyperbolic
-    """
+    def get_lhs(self, input_tensor):
+        tg_heads = self.entities(input_tensor[:, 0])
+        tg_relation_transforms = self.relation_transforms(input_tensor[:, 1])
+        return hmath.expmap0(tg_relation_transforms * tg_heads, self.get_c())
 
-    def __init__(self, n_users, n_items, args):
-        super(DistanceHyperbolicDistortion, self).__init__(n_users, n_items, args)
-        self.apply_log_map = False
-
-    def distortion(self, input_tensor, all_pairs=False):
-        user_embeds = self.get_users(input_tensor[:, 0])
-        all_item_embeds = self.get_all_items() if all_pairs else self.get_items(input_tensor[:, 1])
-        distor = self.distortion_from_embeds(user_embeds, all_item_embeds, all_pairs)
-        return distor
-
-    def distortion_from_embeds(self, user_embeds, item_embeds, all_pairs):
-        c = self.get_c()
-        if all_pairs:
-            hy_distance = hmath.hyp_distance_all_pairs(user_embeds, item_embeds, c)
-        else:
-            hy_distance = hmath.hyp_distance(user_embeds, item_embeds, c)
-
-        if self.apply_log_map:
-            user_embeds = hmath.logmap0(user_embeds, c)
-            item_embeds = hmath.logmap0(item_embeds, c)
-        eu_distance = euclidean_distance(user_embeds, item_embeds, all_pairs)
-        eu_distance = tf.maximum(eu_distance, hmath.MIN_NORM)
-
-        distortion = tf.pow(hy_distance / eu_distance, 2)
-        distortion = tf.abs(distortion - 1)
-        return distortion
-
-
-class DistanceHyperbolicTangentSpaceDistortion(DistanceHyperbolicDistortion):
-    """
-    Computes distortion of the embeddings according to the formula:
-    distortion(u, i) = |hy_dist(u, i) - eu_dist(f(u), f(i))| / eu_dist(f(u), f(i))
-    with u, i \in B^n (Poincare ball) and f(u), f(i) \in R^n (Euclidean space)
-    """
-
-    def __init__(self, n_users, n_items, args):
-        super(DistanceHyperbolicTangentSpaceDistortion, self).__init__(n_users, n_items, args)
-        self.apply_log_map = True
-
-
-class MultiRelHyperbolic(MultiRelationalCF, BaseHyperbolic):
-
-    def multirel_score(self, head_embeds, tail_embeds, head_bias, tail_bias, relation_embeds, relation_trans,
-                       all_pairs=False):
-        """
-        :param head_embeds: in HS
-        :param tail_embeds: in HS
-        :param head_bias: scalars
-        :param tail_bias: scalars
-        :param relation_embeds: in Eu
-        :param relation_trans: in Eu
-        :param all_pairs:
-        :return:
-        """
-        curv = self.get_c()
-        tg_head_embeds = hmath.logmap0(head_embeds, curv)
-        head_side = relation_trans * tg_head_embeds
-        head_side = hmath.expmap0(head_side, curv)
-        relation_embeds = hmath.expmap0(tf.expand_dims(relation_embeds, 0), curv)
-        tail_side = hmath.mobius_add(tail_embeds, relation_embeds, curv)
-
-        if all_pairs:
-            sq_dist = hmath.hyp_distance_all_pairs(head_side, tail_side, curv) ** 2
-            tail_bias = tf.transpose(tail_bias)
-        else:
-            sq_dist = hmath.hyp_distance(head_side, tail_side, curv) ** 2
-        return -sq_dist + head_bias + tail_bias
+    def get_rhs(self, input_tensor):
+        tails = hmath.expmap0(self.entities(input_tensor[:, -1]), self.get_c())
+        relation_additions = hmath.expmap0(self.relations(input_tensor[:, 1]), self.get_c())
+        return hmath.mobius_add(tails, relation_additions, self.get_c())

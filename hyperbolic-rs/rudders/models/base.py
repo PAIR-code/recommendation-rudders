@@ -11,131 +11,146 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import abc
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.activations import sigmoid
-
+from enum import Enum
 from rudders.models import regularizers
 
 
-class CFModel(tf.keras.Model, abc.ABC):
-    """Abstract CF embedding model class.
+# I do this because the relations are not defined in the preprocessing yet
+class Relations(Enum):
+    USER_ITEM = 0
+    ITEM_USER = 1
+    ITEM_ITEM = 2
 
-    Module to define basic operations in CF embedding models, including embedding
-    initialization, computing embeddings and pairs' scores.
-    Attributes:
-      dims: Integer, embeddings dimension.
-      initializer: tf.keras.initializers class indicating which initializer to use.
-      item_regularizer: tf.keras.regularizers.Regularizer for item embeddings.
-      user_regularizer: tf.keras.regularizers.Regularizer for user embeddings.
-      user: Tensorflow tf.keras.layers.Embedding class, holding user embeddings.
-      item: Tensorflow tf.keras.layers.Embedding class, holding item embeddings.
-      gamma: non trainable tf.Variable representing the margin for distance-based losses.
+
+class CFModel(tf.keras.Model, abc.ABC):
+    """Abstract collaborative filtering embedding model class.
+
+    This implementation is based on Knowledge Graph embeddings models, in order to model different types
+    of relations between entities (users and items)
+
+    Module to define basic operations in CF embedding models, including embedding initialization, computing
+    embeddings and pairs' scores.
     """
 
-    def __init__(self, n_users, n_items, args):
-        super(CFModel, self).__init__()
+    def __init__(self, n_users, n_items, n_relations, item_ids, args, train_bias=True):
+        super().__init__()
         self.dims = args.dims
+        self.item_ids = np.reshape(np.array(item_ids), (-1, 1))
         self.initializer = getattr(tf.keras.initializers, args.initializer)(minval=-0.01, maxval=0.01)
-        self.item_regularizer = getattr(regularizers, args.regularizer)(args.item_reg)
-        self.user_regularizer = getattr(regularizers, args.regularizer)(args.user_reg)
-        self.user = tf.keras.layers.Embedding(
-            input_dim=n_users,
+        self.entity_regularizer = getattr(regularizers, args.regularizer)(args.entity_reg)
+        self.relation_regularizer = getattr(regularizers, args.regularizer)(args.relation_reg)
+        n_entities = n_users + n_items
+        self.entities = tf.keras.layers.Embedding(
+            input_dim=n_entities,
             output_dim=self.dims,
             embeddings_initializer=self.initializer,
-            embeddings_regularizer=self.user_regularizer,
-            name='user_embeddings')
-        self.item = tf.keras.layers.Embedding(
-            input_dim=n_items,
+            embeddings_regularizer=self.entity_regularizer,
+            name='entity_embeddings')
+        self.relations = tf.keras.layers.Embedding(
+            input_dim=n_relations,
             output_dim=self.dims,
             embeddings_initializer=self.initializer,
-            embeddings_regularizer=self.item_regularizer,
-            name='item_embeddings')
-        self.gamma = tf.Variable(initial_value=args.gamma * tf.keras.backend.ones(1), trainable=False)
+            embeddings_regularizer=self.relation_regularizer,
+            name='relation_embeddings')
+
+        self.bias_head = tf.keras.layers.Embedding(
+            input_dim=n_entities,
+            output_dim=1,
+            embeddings_initializer='zeros',
+            name='head_biases',
+            trainable=train_bias)
+        self.bias_tail = tf.keras.layers.Embedding(
+            input_dim=n_entities,
+            output_dim=1,
+            embeddings_initializer='zeros',
+            name='tail_biases',
+            trainable=train_bias)
 
     @abc.abstractmethod
-    def get_users(self, input_tensor):
+    def get_lhs(self, input_tensor):
         """
-        Args: input_tensor: Tensor of size batch_size x 2 containing users and items' indices.
-        Returns: Tensor of size batch_size x embedding_dimension representing users' embeddings.
+        Get left hand side embeddings, usually using head and relationship.
+
+        :param input_tensor: Tensor of size batch_size x 3 containing (h, r, t) indices.
+        :return: Tensor of size batch_size x embedding_dimension representing left hand side embeddings.
         """
         pass
 
     @abc.abstractmethod
-    def get_all_users(self):
-        """Get all user embeddings in a CF dataset.
+    def get_rhs(self, input_tensor):
+        """
+        Get left hand side embeddings, usually using tail and relationship.
 
-        Returns: Tensor of size n_users x embedding_dimension representing embeddings for all users in the CF
+        :param input_tensor: Tensor of size batch_size x 3 containing (h, r, t) indices.
+        :return: Tensor of size batch_size x embedding_dimension representing left hand side embeddings.
         """
         pass
 
-    @abc.abstractmethod
-    def get_items(self, input_tensor):
-        """
-        Args: input_tensor: Tensor of size batch_size x 2 containing users and items' indices.
-        Returns: Tensor of size batch_size x embedding_dimension representing item entities' embeddings.
-        """
-        pass
-
-    @abc.abstractmethod
     def get_all_items(self):
-        """Get all item embeddings in a CF dataset.
+        """Just like get_rhs but using all items
 
         Returns: Tensor of size n_items x embedding_dimension representing embeddings for all items in the CF
         """
-        pass
-
-    def call(self, input_tensor):
-        """Forward pass of CF embedding models.
-
-        Args:
-          input_tensor: Tensor of size batch_size x 2 containing pairs' indices.
-          all_pairs: boolean to indicate whether to compute scores against all
-            possible item entities in the CF, or only individual pairs' scores.
-
-        Returns:
-          Tensor containing pairs scores. If eval_mode is False, this tensor has size batch_size x 1, otherwise it has
-          size batch_size x n_item where n_item is the total number of items in the CF.
-        """
-        user_embeds = self.get_users(input_tensor[:, 0])
-        item_embeds = self.get_items(input_tensor[:, 1])
-        predictions = self.score(user_embeds, item_embeds, all_pairs=False)
-        return predictions
+        input_tensor = np.repeat(self.item_ids, 3, axis=-1)
+        input_tensor[:, 1] = Relations.USER_ITEM.value
+        input_tensor = tf.convert_to_tensor(input_tensor)
+        return self.get_rhs(input_tensor)
 
     @abc.abstractmethod
-    def score(self, user_embeds, item_embeds, all_pairs):
-        """Computes a similarity score between user and item embeddings.
+    def similarity_score(self, lhs, rhs, all_items):
+        """
+        Computes a similarity score between left_hand_side and right_hand_side embeddings.
+          eval_mode:
 
-        Args:
-          user_embeds: Tensor of size B1 x embedding_dimension containing users' embeddings.
-          item_embeds: Tensor of size (B1 x) B2 x embedding_dimension containing items' embeddings
-          all_pairs: boolean to indicate whether to compute all pairs of scores or not. If False, B2 must be equal to 1.
-
-        Returns:
-          Tensor representing similarity scores. If eval_mode is False, this tensor
-          has size B1 x 1, otherwise it has size B1 x B2.
+        :param lhs: Tensor of size B1 x embedding_dimension containing left_hand_side embeddings.
+        :param rhs: Tensor of size B2 x embedding_dimension containing right_hand_side embeddings.
+        :param all_items:  boolean to indicate whether to compute all pairs of scores or not.
+        If False, B1 must be equal to B2.
+        :return: Tensor representing similarity scores. If all_items is False, this tensor has size B1 x 1,
+        otherwise it has size B1 x B2.
         """
         pass
 
-    def get_scores_targets(self, input_tensor):
-        """Computes pairs' scores as well as scores againts all possible entities.
-
-        Args:
-          input_tensor: Tensor of size batch_size x 2 containing pairs' indices.
-
-        Returns:
-          scores: Numpy array of size batch_size x n_items containing users'
-                  scores against all possible items in the CF.
-          targets: Numpy array of size batch_size x 1 containing pairs' scores.
+    def call(self, input_tensor, all_items=False):
         """
-        user_embeds = self.get_users(input_tensor[:, 0])
-        item_embeds = self.get_items(input_tensor[:, 1])
-        targets = self.score(user_embeds, item_embeds, all_pairs=False)
-        all_items = self.get_all_items()
-        scores = self.score(user_embeds, all_items, all_pairs=True)
-        return scores.numpy(), targets.numpy()
+        Forward pass of Collaborative embedding models.
+          
+        :param input_tensor: Tensor of size batch_size x 3 containing triples' indices: (head, relation, tail) 
+        :param all_items: boolean to indicate whether to compute scores against all items, or only individual
+        triples' scores.
+        :return: Tensor containing triple scores. If eval_mode is False, this tensor has size batch_size x 1, 
+        otherwise it has size batch_size x n_items 
+        """
+        lhs = self.get_lhs(input_tensor)
+        lhs_biases = self.bias_head(input_tensor[:, 0])
+        if all_items:
+            rhs = self.get_all_items()
+            rhs_biases = self.bias_tail(np.reshape(self.item_ids, (-1,)))
+        else:
+            rhs = self.get_rhs(input_tensor)
+            rhs_biases = self.bias_tail(input_tensor[:, -1])
+        predictions = self.score(lhs, lhs_biases, rhs, rhs_biases, all_items)
+        return predictions
+
+    def score(self, lhs, lhs_biases, rhs, rhs_biases, all_items):
+        """
+        Compute triple scores using embeddings and biases.
+        
+        :param lhs: B1 x embedding_dim 
+        :param lhs_biases: B1 x 1 
+        :param rhs: B2 x embedding_dim
+        :param rhs_biases: B2 x 1
+        :param all_items: boolean to indicate if should compute vs all rhs or just pairs of scores. If False then
+        B1 must be equal to B2 
+        :return: scores: B1 x 1 if all_items is False, else B1 x B2
+        """
+        score = self.similarity_score(lhs, rhs, all_items)
+        if all_items:
+            return score + lhs_biases + tf.transpose(rhs_biases)
+        return score + lhs_biases + rhs_biases
 
     def random_eval(self, split_data, samples, batch_size=500, num_rand=100, seed=1234):
         """Compute ranking-based evaluation metrics in both full and random settings.
@@ -159,7 +174,14 @@ class CFModel(tf.keras.Model, abc.ABC):
         ranks = np.ones(total_examples)
         ranks_random = np.ones(total_examples)
         for counter, input_tensor in enumerate(split_data.batch(batch_size)):
-            scores, targets = self.get_scores_targets(input_tensor)  # score: score to all; targets: score to valid/eval item
+            # builds triplet input with relation
+            relation = tf.constant(Relations.USER_ITEM.value, shape=(len(input_tensor), 1), dtype=tf.int64)
+            head = tf.expand_dims(input_tensor[:, 0], 1)
+            tail = tf.expand_dims(input_tensor[:, 1], 1)
+            triplet_input_tensor = tf.concat((head, relation, tail), axis=-1)
+
+            targets = self.call(triplet_input_tensor).numpy()
+            scores = self.call(triplet_input_tensor, all_items=True).numpy()
             scores_random = np.ones(shape=(scores.shape[0], num_rand))
             for i, query in enumerate(input_tensor):
                 query = query.numpy()
@@ -176,110 +198,3 @@ class CFModel(tf.keras.Model, abc.ABC):
             ranks_random[ini:end] += np.sum((scores_random >= targets), axis=1)
 
         return ranks, ranks_random
-
-    def get_avg_norm(self, data_name: str):
-        if data_name == "user":
-            return tf.reduce_mean(tf.norm(self.get_all_users(), axis=-1)).numpy()
-        elif data_name == "item":
-            return tf.reduce_mean(tf.norm(self.get_all_items(), axis=-1)).numpy()
-        else:
-            raise ValueError(f"{data_name} not present in model")
-
-
-class MultiRelationalCF(CFModel, abc.ABC):
-    def __init__(self, n_users, n_items, args):
-        super().__init__(n_users, n_items, args)
-        self.user_bias = tf.keras.layers.Embedding(
-            input_dim=n_users,
-            output_dim=1,
-            embeddings_initializer=tf.zeros_initializer(),
-            embeddings_regularizer=self.user_regularizer,
-            name='user_bias')
-        self.item_bias = tf.keras.layers.Embedding(
-            input_dim=n_items,
-            output_dim=1,
-            embeddings_initializer=tf.zeros_initializer(),
-            embeddings_regularizer=self.item_regularizer,
-            name='item_bias')
-        self.relation_embeds = tf.keras.layers.Embedding(
-            input_dim=3,
-            output_dim=self.dims,
-            embeddings_initializer=self.initializer,
-            embeddings_regularizer=self.item_regularizer,
-            name='relation_embeds')
-        self.relation_trans = tf.keras.layers.Embedding(
-            input_dim=3,
-            output_dim=self.dims,
-            embeddings_initializer=self.initializer,
-            embeddings_regularizer=self.item_regularizer,
-            name='relation_trans')
-        self.user_item_index = 0
-        self.item_user_index = 1
-        self.item_item_index = 2
-
-    def get_user_item_score(self, input_tensor, all_pairs=False):
-        """input batch has pairs of (uid, iid)"""
-        user_embeds = self.get_users(input_tensor[:, 0])
-        user_bias = self.user_bias(input_tensor[:, 0])
-
-        if all_pairs:
-            item_embeds = self.get_all_items()
-            item_bias = self.item_bias.embeddings
-        else:
-            item_embeds = self.get_items(input_tensor[:, 1])
-            item_bias = self.item_bias(input_tensor[:, 1])
-
-        rel_embeds = self.relation_embeds(self.user_item_index)
-        rel_trans = self.relation_trans(self.user_item_index)
-
-        score = self.multirel_score(head_embeds=user_embeds, tail_embeds=item_embeds, head_bias=user_bias,
-                                    tail_bias=item_bias, relation_embeds=rel_embeds, relation_trans=rel_trans,
-                                    all_pairs=all_pairs)
-        return score
-
-    def get_item_user_score(self, input_tensor):
-        """input batch has pairs of (uid, iid)"""
-        user_embeds = self.get_users(input_tensor[:, 0])
-        user_bias = self.user_bias(input_tensor[:, 0])
-
-        item_embeds = self.get_items(input_tensor[:, 1])
-        item_bias = self.item_bias(input_tensor[:, 1])
-
-        rel_embeds = self.relation_embeds(self.item_user_index)
-        rel_trans = self.relation_trans(self.item_user_index)
-
-        score = self.multirel_score(head_embeds=item_embeds, tail_embeds=user_embeds, head_bias=item_bias,
-                                    tail_bias=user_bias, relation_embeds=rel_embeds, relation_trans=rel_trans)
-        return score
-
-    def get_item_item_score(self, input_tensor):
-        """input batch has pairs of (iid, iid)"""
-        item_embed_a = self.get_items(input_tensor[:, 0])
-        item_bias_a = self.item_bias(input_tensor[:, 0])
-
-        item_embed_b = self.get_items(input_tensor[:, 1])
-        item_bias_b = self.item_bias(input_tensor[:, 1])
-
-        rel_embeds = self.relation_embeds(self.item_item_index)
-        rel_trans = self.relation_trans(self.item_item_index)
-
-        score = self.multirel_score(head_embeds=item_embed_a, tail_embeds=item_embed_b, head_bias=item_bias_a,
-                                    tail_bias=item_bias_b, relation_embeds=rel_embeds, relation_trans=rel_trans)
-        return score
-
-    @abc.abstractmethod
-    def multirel_score(self, head_embeds, tail_embeds, head_bias, tail_bias, relation_embeds, relation_trans,
-                       all_pairs=False):
-        pass
-
-    def get_scores_targets(self, input_tensor):
-        targets = self.get_user_item_score(input_tensor)
-        all = self.get_user_item_score(input_tensor, all_pairs=True)
-        return sigmoid(all).numpy(), sigmoid(targets).numpy()
-
-    def score(self, user_embeds, item_embeds, all_pairs):
-        return -1
-
-    def call(self, input_tensor):
-        """Forward pass of CF embedding models."""
-        return sigmoid(self.get_user_item_score(input_tensor))

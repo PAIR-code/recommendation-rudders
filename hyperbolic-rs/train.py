@@ -37,9 +37,11 @@ for dtype, flag_fn in flag_fns.items():
 FLAGS = flags.FLAGS
 
 
-def get_model(n_users, n_items):
+def get_model(n_users, n_items, id2iid):
     tf.keras.backend.set_floatx(FLAGS.dtype)
-    model = getattr(models, FLAGS.model)(n_users, n_items, FLAGS)
+    item_ids = list(id2iid.keys())
+    n_relations = len(list(models.Relations))
+    model = getattr(models, FLAGS.model)(n_users, n_items, n_relations, item_ids, FLAGS)
     model.build(input_shape=(1, 2))
     params = sum(np.prod(x.shape) for x in model.trainable_variables)
     logging.info(model.summary())
@@ -115,7 +117,7 @@ def main(_):
             dense_matrix = item_item_distance_matrix.toarray()
             item_item_distance_matrix = np.where(dense_matrix != 0, dense_matrix, np.ones_like(dense_matrix) * -1)
 
-    model = get_model(n_users, n_items)
+    model = get_model(n_users, n_items, data["id2iid"])
     optimizer = get_optimizer(FLAGS)
     loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS, item_distances=item_item_distance_matrix)
 

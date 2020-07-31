@@ -14,66 +14,69 @@
 
 from abc import ABC
 import tensorflow as tf
-from rudders.models.base import CFModel, MultiRelationalCF
+from rudders.models.base import CFModel
 
 
 class BaseEuclidean(CFModel, ABC):
     """Base model class for Euclidean embeddings."""
 
-    def get_users(self, indexes):
-        return self.user(indexes)
+    def get_lhs(self, input_tensor):
+        return self.entities(input_tensor[:, 0])
 
-    def get_all_users(self):
-        return self.user.embeddings
-
-    def get_items(self, indexes):
-        return self.item(indexes)
-
-    def get_all_items(self):
-        return self.item.embeddings
+    def get_rhs(self, input_tensor):
+        return self.entities(input_tensor[:, -1])
 
 
 class SMFactor(BaseEuclidean):
-    """Simple Matrix Factorization model."""
+    """Collaborative Metric Learning model based on Matrix Factorization."""
 
-    def score(self, user_embeds, item_embeds, all_pairs):
+    def __init__(self, n_users, n_items, n_relations, item_ids, args):
+        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias=False)
+        self.relations = None
+
+    def similarity_score(self, lhs, rhs, all_items):
         """Score based on dot product (cosine similarity)"""
-        user_embeds = tf.linalg.normalize(user_embeds, axis=-1)[0]
-        item_embeds = tf.linalg.normalize(item_embeds, axis=-1)[0]
-        if all_pairs:
-            cosine_sim = tf.matmul(user_embeds, tf.transpose(item_embeds))
-        else:
-            cosine_sim = tf.reduce_sum(user_embeds * item_embeds, axis=-1, keepdims=True)
-        return cosine_sim
-
-    def distance(self, embed_a, embed_b, all_pairs):
-        """Distance based on cosine distance"""
-        return 1 - self.score(embed_a, embed_b, all_pairs)
+        lhs = tf.linalg.normalize(lhs, axis=-1)[0]
+        rhs = tf.linalg.normalize(rhs, axis=-1)[0]
+        if all_items:
+            return tf.matmul(lhs, tf.transpose(rhs))
+        return tf.reduce_sum(lhs * rhs, axis=-1, keepdims=True)
 
 
 class DistEuclidean(BaseEuclidean):
-    """Simple Collaborative Metric Learning model."""
+    """Collaborative Metric Learning model based on Euclidean Distance."""
 
-    def score(self, user_embeds, item_embeds, all_pairs):
-        """Score based on squared euclidean distance"""
-        return -euclidean_sq_distance(user_embeds, item_embeds, all_pairs)
+    def __init__(self, n_users, n_items, n_relations, item_ids, args):
+        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias=False)
+        self.relations = None
 
-    def distance(self, embeds_a, embeds_b, all_pairs):
-        return tf.sqrt(euclidean_sq_distance(embeds_a, embeds_b, all_pairs))
+    def similarity_score(self, lhs, rhs, all_items):
+        return -euclidean_sq_distance(lhs, rhs, all_items)
 
 
-class MultiRelEuclidean(MultiRelationalCF, BaseEuclidean):
+class MultiRelEuclidean(BaseEuclidean):
 
-    def multirel_score(self, head_embeds, tail_embeds, head_bias, tail_bias, relation_embeds, relation_trans,
-                       all_pairs=False):
-        head_side = relation_trans * head_embeds        # h x n
-        tail_side = tail_embeds + relation_embeds       # t x n
-        if all_pairs:
-            sq_dist = euclidean_sq_distance(head_side, tail_side, all_pairs=True)   # h x t
-            tail_bias = tf.transpose(tail_bias)
-        else:
-            sq_dist = euclidean_sq_distance(head_side, tail_side, all_pairs=False)  # h x 1
-        return -sq_dist + head_bias + tail_bias
+    def __init__(self, n_users, n_items, n_relations, item_ids, args):
+        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias=True)
+        self.relation_transforms = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='relation_transforms')
+
+    def get_lhs(self, input_tensor):
+        heads = self.entities(input_tensor[:, 0])
+        relation_transforms = self.relation_transforms(input_tensor[:, 1])
+        return relation_transforms * heads
+
+    def get_rhs(self, input_tensor):
+        tails = self.entities(input_tensor[:, -1])
+        relation_additions = self.relations(input_tensor[:, 1])
+        return tails + relation_additions
+
+    def similarity_score(self, lhs, rhs, all_items):
+        return -euclidean_sq_distance(lhs, rhs, all_items)
 
 
 def euclidean_sq_distance(x, y, all_pairs=False):

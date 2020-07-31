@@ -50,8 +50,6 @@ class Runner:
             logging.info(f'Epoch {epoch} | train loss: {train_loss:.4f} | total time: {int(exec_time)} secs')
             with self.summary.as_default():
                 tf.summary.scalar('train/loss', train_loss, step=epoch)
-                tf.summary.scalar('train/user_avg_norm', self.model.get_avg_norm("user"), step=epoch)
-                tf.summary.scalar('train/item_avg_norm', self.model.get_avg_norm("item"), step=epoch)
                 tf.summary.scalar('train/lr', float(tf.keras.backend.get_value(self.optimizer.lr)), step=epoch)
                 if hasattr(self.model, 'c'):
                     tf.summary.scalar('train/curvature', self.model.get_c(), step=epoch)
@@ -143,7 +141,7 @@ class Runner:
         users = random.sample(list(self.samples.keys()), len(self.samples))[:n_users]
         user_tensor = tf.expand_dims(tf.convert_to_tensor(users), 1)
         input_tensor = tf.concat((user_tensor, tf.ones_like(user_tensor)), axis=1)
-        scores, _ = self.model.get_scores_targets(input_tensor)
+        scores = self.model(input_tensor, all_items=True)
         top_k = tf.math.top_k(scores, k=k_closest)[1].numpy()
 
         for i, user_index in enumerate(users):

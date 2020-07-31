@@ -24,11 +24,11 @@ from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='prep-notitle-hopdist0.75', help='Name of prep to store')
-flags.DEFINE_string('item', default='ml-1m', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
+flags.DEFINE_string('run_id', default='multi-ukeen-minuser5-minkeen2-maxkeen100-hopdist0.55', help='Name of prep to store')
+flags.DEFINE_string('item', default='keen', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
                                                 'interactions), or "ml-1m"')
-flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m')
-flags.DEFINE_string('item_item_file', default='data/prep/ml-1m/item_item_notitle_hop_distance_th0.75.pickle',
+flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/ml-1m')
+flags.DEFINE_string('item_item_file', default='data/prep/keen/item_item_hop_distance_th0.55.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=False, help='Shuffle the samples')
@@ -41,23 +41,30 @@ flags.DEFINE_integer('filter_most_popular', default=-1,
                      help='Filters out most popular items. If -1 it does not filter')
 
 
-def map_item_ids_to_sequential_ids(samples):
+def map_raw_ids_to_sequential_ids(samples):
     """
     For each unique user or item id, this function creates a mapping to a sequence of number starting in 0.
     This will be the index of the embeddings in the model.
+
+    Items ids will be from 0 to n_items - 1.
+    Users ids will be from n_items to n_items + n_users - 1
+    This condition is required to later build the distance matrix
 
     :param samples: dict of <user_id1>: [<item_id1>, <item_id2>, ...]
     :return: dicts of {<user_idX>: indexY} and {<item_idX>: indexW}
     """
     uid2id, iid2id = {}, {}
     sorted_samples = sorted(samples.items(), key=lambda x: x[0])
-    for uid, ints in sorted_samples:
-        if uid not in uid2id:
-            uid2id[uid] = len(uid2id)
+    # first sets items ids only
+    for _, ints in sorted_samples:
         sorted_ints = sorted(ints)
         for iid in sorted_ints:
             if iid not in iid2id:
                 iid2id[iid] = len(iid2id)
+    # users ids come after item ids
+    for uid, _ in sorted_samples:
+        if uid not in uid2id:
+            uid2id[uid] = len(uid2id) + len(iid2id)
 
     return uid2id, iid2id
 
@@ -186,7 +193,7 @@ def main(_):
         plot_graph(samples)
         return
 
-    uid2id, iid2id = map_item_ids_to_sequential_ids(samples)
+    uid2id, iid2id = map_raw_ids_to_sequential_ids(samples)
 
     id_samples = {}
     for uid, ints in samples.items():

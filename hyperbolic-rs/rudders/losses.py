@@ -15,100 +15,87 @@
 
 import abc
 import tensorflow as tf
+from rudders.models import Relations
 
 
 class LossFunction(abc.ABC):
     """Abstract loss function for CF embeddings."""
 
-    def __init__(self, n_users, n_items, args, **kwargs):
-        """Initialize CF loss function.
-
-        Args:
-          sizes: Tuple of size 2 containing (n_users, n_items).
-          neg_sample_size: Integer indicating the number of negative samples to use.
-          double_neg: Bool indicating whether or not to use double negative sampling.
-          margin: Float indicating the margin between a score for positive and negative examples.
+    @abc.abstractmethod
+    def calculate_loss(self, model, input_batch):
         """
-        self.n_users = n_users
-        self.n_items = n_items
+        :param model: CF embedding model.
+        :param input_batch: Tensor of size batch_size x 2 containing input pairs.
+        :return: Average loss within the input_batch.
+        """
+        pass
+
+
+class BCEwithNegativeSampleLoss(LossFunction, abc.ABC):
+    """Abstract BCE loss with negative sampling."""
+
+    def __init__(self, head_index, tail_index, relation_id, ini_neg_index, end_neg_index, args):
+        super().__init__()
+        self.head_index = head_index
+        self.tail_index = tail_index
+        self.relation_id = relation_id
+        self.ini_neg_index = ini_neg_index
+        self.end_neg_index = end_neg_index
         self.neg_sample_size = args.neg_sample_size
-        self.margin = tf.Variable(args.margin * tf.keras.backend.ones(1), trainable=False)
-
-    @abc.abstractmethod
-    def calculate_loss(self, model, input_batch):
-        """
-        Args:
-          model: tf.keras.Model CF embedding model.
-          input_batch: Tensor of size batch_size x 2 containing input pairs.
-
-        Returns:
-          Average loss within the input_batch.
-        """
-        pass
-
-
-class AbstractPairwiseHingeLoss(LossFunction, abc.ABC):
-    """Pairwise ranking hinge loss."""
-
-    def __init__(self, n_users, n_items, args, **kwargs):
-        super().__init__(n_users, n_items, args)
         self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-        self.gamma = tf.Variable(tf.keras.backend.ones(1), trainable=False)
+        self.gamma = tf.Variable(args.gamma * tf.keras.backend.ones(1), trainable=False)
 
     def calculate_loss(self, model, input_batch):
-        dist_to_pos = self.call_model(model, input_batch)
-        loss = self.bce(tf.ones_like(dist_to_pos), dist_to_pos)
+        triple_input_batch = self.build_positive_input_batch(input_batch)
+        score_to_pos = model(triple_input_batch)
+        loss = self.bce(tf.ones_like(score_to_pos), score_to_pos)
         for _ in range(self.neg_sample_size):
-            neg_idx = self.get_negative_sample_ids(input_batch)
-            # creates a new batch of neg_items and the same users
-            neg_input_batch = tf.concat((tf.expand_dims(input_batch[:, 0], 1), neg_idx), axis=1)
-            dist_to_neg = self.call_model(model, neg_input_batch)
-            loss = loss + self.bce(tf.zeros_like(dist_to_neg), dist_to_neg)
+            neg_triple_input_batch = self.build_negative_input_batch(input_batch)
+            score_to_neg = model(neg_triple_input_batch)
+            loss = loss + self.bce(tf.zeros_like(score_to_neg), score_to_neg)
         return loss
 
-    @abc.abstractmethod
-    def call_model(self, model, input_batch):
-        """Ask some score from the model. A different one depending on each loss"""
-        pass
+    def build_positive_input_batch(self, input_batch):
+        """From a batch x 2 input_batch tensor with (head, tail) builds a batch x 3 input batch of the form
+        (head, relation, tail)"""
+        relation = tf.constant(self.relation_id.value, shape=(len(input_batch), 1), dtype=tf.int64)
+        head = tf.expand_dims(input_batch[:, self.head_index], 1)
+        tail = tf.expand_dims(input_batch[:, self.tail_index], 1)
+        return tf.concat((head, relation, tail), axis=-1)
 
-    def get_negative_sample_ids(self, input_batch):
-        return tf.random.uniform((len(input_batch), 1), minval=0, maxval=self.n_items, dtype=input_batch.dtype)
+    def build_negative_input_batch(self, input_batch):
+        """From a batch x 2 input_batch tensor with (head, tail) builds a batch x 3 input batch of the form
+        (head, relation, corrupted_tail)"""
+        relation = tf.constant(self.relation_id.value, shape=(len(input_batch), 1), dtype=tf.int64)
+        head = tf.expand_dims(input_batch[:, self.head_index], 1)
+        corrupted_tail = tf.random.uniform((len(input_batch), 1),
+                                           minval=self.ini_neg_index,
+                                           maxval=self.end_neg_index,
+                                           dtype=input_batch.dtype)
+        return tf.concat((head, relation, corrupted_tail), axis=-1)
 
 
-class PairwiseHingeLoss(AbstractPairwiseHingeLoss):
-    """Pairwise ranking hinge loss."""
-    def call_model(self, model, input_batch):
-        return model(input_batch)
-
-
-class UserItemHingeLoss(AbstractPairwiseHingeLoss):
-    def call_model(self, model, input_batch):
-        return model.get_user_item_score(input_batch)
-
-
-class ItemUserHingeLoss(AbstractPairwiseHingeLoss):
+class UserItemBCELoss(BCEwithNegativeSampleLoss):
     def __init__(self, n_users, n_items, args, **kwargs):
-        super().__init__(n_users, n_items, args)
-        self.n_items = n_users
-
-    def call_model(self, model, input_batch):
-        return model.get_item_user_score(input_batch)
-
-    def calculate_loss(self, model, input_batch):
-        dist_to_pos = self.call_model(model, input_batch)
-        loss = self.bce(tf.ones_like(dist_to_pos), dist_to_pos)
-        for _ in range(self.neg_sample_size):
-            neg_idx = self.get_negative_sample_ids(input_batch)
-            # creates a new batch of neg_users and the same items
-            neg_input_batch = tf.concat((neg_idx, tf.expand_dims(input_batch[:, 1], 1)), axis=1)
-            dist_to_neg = self.call_model(model, neg_input_batch)
-            loss = loss + self.bce(tf.zeros_like(dist_to_neg), dist_to_neg)
-        return loss
+        # sets ini and end neg_indexes such that the negative samples are going to be items
+        ini_item = 0
+        end_item = n_items - 1
+        super().__init__(head_index=0, tail_index=1, relation_id=Relations.USER_ITEM,
+                         ini_neg_index=ini_item, end_neg_index=end_item, args=args)
 
 
-class ItemItemHingeLoss(LossFunction):
+class ItemUserBCELoss(BCEwithNegativeSampleLoss):
     def __init__(self, n_users, n_items, args, **kwargs):
-        super().__init__(n_users, n_items, args)
+        # sets ini and end neg_indexes such that the negative samples are going to be users
+        ini_user = n_items
+        end_user = n_items + n_users - 1
+        super().__init__(head_index=1, tail_index=0, relation_id=Relations.ITEM_USER,
+                         ini_neg_index=ini_user, end_neg_index=end_user, args=args)
+
+
+class ItemItemBCELoss(LossFunction):
+    def __init__(self, n_users, n_items, args, **kwargs):
+        super().__init__()
         self.item_distances = tf.keras.backend.constant(kwargs["item_distances"])
         # Keep small proportion of closest neighbors of each item to compute loss only over those
         # First set unreachable nodes to a large distance, then it looks for the indexes of min_k
@@ -117,23 +104,40 @@ class ItemItemHingeLoss(LossFunction):
         neighs_ids = tf.math.top_k(-valid_item_dists, k=int(len(self.item_distances) * args.neighbors))[1]
         self.neighbor_ids = tf.cast(neighs_ids, tf.int64)
         self.gamma = tf.Variable(args.semantic_gamma * tf.keras.backend.ones(1), trainable=False)
-        self.neg_sample_size = args.distortion_neg_sample_size
+        self.pos_sample_size = args.semantic_pos_sample_size
+        self.semantic_graph_weight = args.semantic_graph_weight
         self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=False)
 
     def calculate_loss(self, model, input_batch):
-        item_ids = tf.expand_dims(input_batch[:, 1], 1)
-        dst_index = self.get_neighbors_ids(item_ids)
-        item_item_input_batch = tf.concat((item_ids, dst_index), axis=1)
-        inverse_item_item_input_batch = tf.concat((dst_index, item_ids), axis=1)
         loss = tf.keras.backend.constant(0.0)
-        for item_item_batch in [item_item_input_batch, inverse_item_item_input_batch]:
-            space_distance = tf.keras.activations.sigmoid(model.get_item_item_score(item_item_batch))
-            graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, item_item_batch), 1)
+        for _ in range(self.pos_sample_size):
+            inverse_item_item_input_batch, item_item_input_batch = self.build_item_item_input(input_batch)
+            for item_item_batch in [item_item_input_batch, inverse_item_item_input_batch]:
+                model_score = model(item_item_batch)
+                # gets graph distance
+                item_src, item_dst = tf.expand_dims(item_item_batch[:, 0], 1), tf.expand_dims(item_item_batch[:, -1], 1)
+                item_item_ids = tf.concat((item_src, item_dst), axis=-1)
+                graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, item_item_ids), 1)
+                # It adds graph distance so it penalizes less the items far apart in the graph
+                weighted_logits = model_score + graph_distance / self.semantic_graph_weight
+                prob = tf.keras.activations.sigmoid(weighted_logits)
 
-            space_distance = tf.where(graph_distance > 0, space_distance, tf.ones_like(space_distance))
-
-            loss = loss + self.bce(tf.ones_like(space_distance), space_distance)
+                prob = tf.where(graph_distance > 0, prob, tf.ones_like(model_score))
+                loss = loss + self.bce(tf.ones_like(prob), prob)
         return loss
+
+    def build_item_item_input(self, input_batch):
+        """
+        Builds item item pairs with neighbor items
+        :param input_batch: is a batch x 2 tensor of (user, item) pairs.
+        :return: tensors of batch x 3 with (item, relation, neighbor_item) and (neighbor_item, relation, item)
+        """
+        item_ids = tf.expand_dims(input_batch[:, -1], 1)
+        dst_index = self.get_neighbors_ids(item_ids)
+        relation = tf.constant(Relations.ITEM_ITEM.value, shape=(len(input_batch), 1), dtype=tf.int64)
+        item_item_input_batch = tf.concat((item_ids, relation, dst_index), axis=1)
+        inverse_item_item_input_batch = tf.concat((dst_index, relation, item_ids), axis=1)
+        return inverse_item_item_input_batch, item_item_input_batch
 
     def get_neighbors_ids(self, src_index):
         neighbor_index_dst = tf.random.uniform((len(src_index), 1), minval=0, maxval=self.neighbor_ids.shape[-1],
@@ -142,92 +146,15 @@ class ItemItemHingeLoss(LossFunction):
         return tf.expand_dims(tf.gather_nd(self.neighbor_ids, neighbor_index), 1)
 
 
-class SemanticLoss(LossFunction):
-    def __init__(self, n_users, n_items, args, **kwargs):
-        super(SemanticLoss, self).__init__(n_users, n_items, args)
-        self.item_distances = tf.keras.backend.constant(kwargs["item_distances"])
-        # Keep small proportion of closest neighbors of each item to compute loss only over those
-        # First set unreachable nodes to a large distance, then it looks for the indexes of min_k
-        # (top_k of -distances) to use them in the loss calculation
-        valid_item_dists = tf.where(self.item_distances > 0, self.item_distances, tf.keras.backend.ones(1) * 1000)
-        neighs_ids = tf.math.top_k(-valid_item_dists, k=int(len(self.item_distances) * args.neighbors))[1]
-        self.neighbor_ids = tf.cast(neighs_ids, tf.int64)
-        self.gamma = tf.Variable(args.semantic_gamma * tf.keras.backend.ones(1), trainable=False)
-        self.distortion_neg_sample_size = args.distortion_neg_sample_size
-
-    def calculate_loss(self, model, input_batch):
-        loss = tf.keras.backend.constant(0.0)
-        src_index = input_batch[:, 1]
-        src_item_embeds = model.get_items(src_index)
-        for _ in range(self.distortion_neg_sample_size):
-            dst_index = self.get_dst_index(src_index)
-            dst_item_embeds = model.get_items(dst_index)
-            indexes = tf.concat((tf.expand_dims(src_index, 1), tf.expand_dims(dst_index, 1)), axis=1)
-
-            space_distance = model.distance(src_item_embeds, dst_item_embeds, all_pairs=False)
-            graph_distance = tf.expand_dims(tf.gather_nd(self.item_distances, indexes), 1)
-
-            space_distance = tf.where(graph_distance > 0, space_distance, tf.zeros_like(space_distance))
-            graph_distance = tf.where(graph_distance > 0, graph_distance, tf.ones_like(graph_distance))
-
-            this_loss = tf.math.exp(tf.pow(space_distance, 2) / graph_distance) - 1
-            loss = loss + tf.reduce_mean(this_loss)
-        return loss
-
-    def get_dst_index(self, src_index):
-        neighbor_index_dst = tf.random.uniform((len(src_index), 1), minval=0, maxval=self.neighbor_ids.shape[-1],
-                                               dtype=src_index.dtype)
-        neighbor_index = tf.concat((tf.expand_dims(src_index, 1), neighbor_index_dst), axis=1)
-        return tf.gather_nd(self.neighbor_ids, neighbor_index)
-
-
-class DistortionLoss(LossFunction):
-    """This loss can only be used with DistanceDistortionHyperbolic since the model needs to implement
-        the 'distortion' method"""
-
-    def __init__(self, n_users, n_items, args, **kwargs):
-        super(DistortionLoss, self).__init__(n_users, n_items, args)
-        self.gamma = tf.Variable(args.distortion_gamma * tf.keras.backend.ones(1), trainable=False)
-
-    def calculate_loss(self, model, input_batch):
-        distortion = model.distortion(input_batch, all_pairs=False)
-        for i in range(self.neg_sample_size):
-            neg_idx = tf.random.uniform((len(input_batch), 1), minval=0, maxval=self.n_items, dtype=input_batch.dtype)
-            neg_input_batch = tf.concat((tf.expand_dims(input_batch[:, 0], 1), neg_idx), axis=1)
-            distortion = distortion + model.distortion(neg_input_batch, all_pairs=False)
-
-        distortion_loss = tf.reduce_mean(distortion)
-        return distortion_loss
-
-
 class CompositeLoss(LossFunction):
     """This class allows to compose a loss function made of different loss functions, resulting in a
     multi-task loss with different criteria."""
 
     def __init__(self, n_users, n_items, args, **kwargs):
-        super(CompositeLoss, self).__init__(n_users, n_items, args)
-        self.losses = [PairwiseHingeLoss(n_users, n_items, args)]
-        if args.distortion_gamma > 0:
-            self.losses.append(DistortionLoss(n_users, n_items, args))
+        super().__init__()
+        self.losses = [UserItemBCELoss(n_users, n_items, args), ItemUserBCELoss(n_users, n_items, args)]
         if args.semantic_gamma > 0:
-            self.losses.append(SemanticLoss(n_users, n_items, args, **kwargs))
-
-    def calculate_loss(self, model, input_batch):
-        loss = tf.keras.backend.constant(0.0)
-        for loss_fn in self.losses:
-            loss = loss + loss_fn.gamma * loss_fn.calculate_loss(model, input_batch)
-        return loss
-
-
-class MultiRelCompositeLoss(LossFunction):
-    """This class allows to compose a loss function made of different loss functions, resulting in a
-    multi-task loss with different criteria."""
-
-    def __init__(self, n_users, n_items, args, **kwargs):
-        super().__init__(n_users, n_items, args)
-        self.losses = [UserItemHingeLoss(n_users, n_items, args), ItemUserHingeLoss(n_users, n_items, args)]
-        if args.semantic_gamma > 0:
-            self.losses.append(ItemItemHingeLoss(n_users, n_items, args, **kwargs))
+            self.losses.append(ItemItemBCELoss(n_users, n_items, args, **kwargs))
 
     def calculate_loss(self, model, input_batch):
         loss = tf.keras.backend.constant(0.0)
