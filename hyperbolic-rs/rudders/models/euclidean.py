@@ -35,9 +35,7 @@ class SMFactor(BaseEuclidean):
         self.relations = None
 
     def similarity_score(self, lhs, rhs, all_items):
-        """Score based on dot product (cosine similarity)"""
-        lhs = tf.linalg.normalize(lhs, axis=-1)[0]
-        rhs = tf.linalg.normalize(rhs, axis=-1)[0]
+        """Score based on dot product"""
         if all_items:
             return tf.matmul(lhs, tf.transpose(rhs))
         return tf.reduce_sum(lhs * rhs, axis=-1, keepdims=True)

@@ -18,8 +18,9 @@ from enum import Enum
 from rudders.models import regularizers
 
 
-# I do this because the relations are not defined in the preprocessing yet
+# TODO: define relations in preprocessing, which will simplify losses as well
 class Relations(Enum):
+    """Allowed types of relations that models support"""
     USER_ITEM = 0
     ITEM_USER = 1
     ITEM_ITEM = 2
@@ -27,12 +28,10 @@ class Relations(Enum):
 
 class CFModel(tf.keras.Model, abc.ABC):
     """Abstract collaborative filtering embedding model class.
+    Module to define basic operations in CF embedding models.
 
-    This implementation is based on Knowledge Graph embeddings models, in order to model different types
-    of relations between entities (users and items)
-
-    Module to define basic operations in CF embedding models, including embedding initialization, computing
-    embeddings and pairs' scores.
+    This implementation is based on Knowledge Graph embeddings models, in order to model
+    different types of relations between entities (users and items)
     """
 
     def __init__(self, n_users, n_items, n_relations, item_ids, args, train_bias=True):
@@ -90,9 +89,9 @@ class CFModel(tf.keras.Model, abc.ABC):
         pass
 
     def get_all_items(self):
-        """Just like get_rhs but using all items
+        """Identical to get_rhs but using all items
 
-        Returns: Tensor of size n_items x embedding_dimension representing embeddings for all items in the CF
+        :return: Tensor of size n_items x embedding_dimension representing embeddings for all items in the CF
         """
         input_tensor = np.repeat(self.item_ids, 3, axis=-1)
         input_tensor[:, 1] = Relations.USER_ITEM.value
@@ -153,21 +152,18 @@ class CFModel(tf.keras.Model, abc.ABC):
         return score + lhs_biases + rhs_biases
 
     def random_eval(self, split_data, samples, batch_size=500, num_rand=100, seed=1234):
-        """Compute ranking-based evaluation metrics in both full and random settings.
+        """
+        Compute ranking-based evaluation metrics in both full and random settings.
 
-        Args:
-          split_data: Tensor of size n_examples x 2 containing pairs' indices.
-          samples: Dict representing items to skip per user for evaluation in the filtered setting.
-          batch_size: batch size to use to compute scores.
-          num_rand: number of negative samples to draw.
-          seed: seed for random sampling.
-
-        Returns:
-        ranks: Numpy array of shape (n_examples, ) containing the rank of each
-          example in full setting (ranking against the full item corpus).
-        ranks_random: Numpy array of shape (n_examples, ) containing the rank of
-          each example in random setting (ranking against randomly selected
-          num_rand items).
+        :param split_data: Tensor of size n_examples x 2 containing pairs' indices.
+        :param samples: Dict representing items to skip per user for evaluation in the filtered setting.
+        :param batch_size: batch size to use to compute scores.
+        :param num_rand: number of negative samples to draw.
+        :param seed: seed for random sampling.
+        :return: ranks: Numpy array of shape (n_examples, ) containing the rank of each example in full
+         setting (ranking against the full item corpus).
+                ranks_random: Numpy array of shape (n_examples, ) containing the rank of  each example
+                in random setting (ranking against randomly selected num_rand items).
         """
         total_examples = tf.data.experimental.cardinality(split_data).numpy()
         batch_size = min(batch_size, total_examples)
