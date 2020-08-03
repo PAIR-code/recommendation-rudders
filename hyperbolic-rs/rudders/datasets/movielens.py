@@ -54,3 +54,23 @@ def build_movieid2title(dataset_path):
             line = line.strip("\n").split("::")
             movieid2title[line[0]] = line[1]
     return movieid2title
+
+
+def build_texts_from_movies(path_to_movie_dat):
+    """
+    Extracts genre text from movies.dat to create semantic embeddings
+
+    :param path_to_movie_dat:
+    :return: dict of text list keyed by movie_id
+    """
+    texts = {}
+    with open(path_to_movie_dat, "r", encoding="ISO-8859-1") as f:
+        for line in f:
+            movie_id, title_and_year, genres = line.strip("\n").split("::")
+            title = title_and_year[:-7]
+            # year = title_and_year[-5:-1]
+            sorted_genres = sorted(genres.split("|"))
+            texts[movie_id] = [title] + sorted_genres
+    return texts
+
+

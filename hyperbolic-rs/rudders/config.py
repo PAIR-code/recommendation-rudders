@@ -16,10 +16,9 @@ CONFIG = {
     'string': {
         'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
-        'dataset': ('Dataset (keen, gem or ml-1m)', 'keen'),
-        'prep_name': ('Name of prep file to load', 'ukeen-minint5-random'),
+        'dataset': ('Dataset (keen, gem or ml-1m)', 'ml-1m'),
+        'prep_name': ('Name of prep file to load', 'prep-hopdist0.85'),
         'logs_dir': ('Path to logs directory', 'logs/'),
-        'item_item_file': ('Name of item-item distance file', 'item_item_cosine_distance_th0.8.pickle'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
         'model': ('Model', 'DistEuclidean'),
         'loss_fn': ('Loss function to use', 'CompositeLoss'),
@@ -27,6 +26,7 @@ CONFIG = {
         'regularizer': ('Regularizer', 'L2Regularizer'),
         'optimizer': ('Optimizer', 'adam'),
         'dtype': ('Precision to use', 'float64'),
+        'results_file': ('Name of file to export results', 'results'),
     },
     'float': {
         'lr': ('Learning rate', 1e-3),
@@ -35,13 +35,13 @@ CONFIG = {
         'distortion_gamma': ('Weight for distortion-based loss. If distortion_gamma <= 0, distortion loss is not '
                              'computed', -1.),
         'semantic_gamma': ('Weight for item-item semantic-based loss. If semantic_gamma <= 0, semantic loss is not '
-                           'computed', 0.5),
-        'gamma': ('Weight for Hinge loss', 1),
+                           'computed', 1.),
+        'gamma': ('Weight for distortion loss', 1),
         'item_reg': ('Regularization weight for item embeddings', 0),
         'user_reg': ('Regularization weight for user embeddings', 0),
         'margin': ('Margin for hinge based models', 1),
         'curvature': ('Curvature in case of using hyperbolic space', 1.),
-        'neighbors': ('Proportion of neighbors to keep for semantic loss', 0.02)
+        'neighbors': ('Proportion of neighbors to keep for semantic loss', 0.01)
     },
     'integer': {
         'patience': ('Number of validation steps before early stopping', 10),
@@ -60,6 +60,5 @@ CONFIG = {
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
         'save_model': ('Whether to save the model weights', True),
-        'use_graph_weight': ('If True it uses distances in the graph. If not, all edges equal 1', False),
     }
 }

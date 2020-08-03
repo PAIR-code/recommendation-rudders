@@ -15,6 +15,7 @@
 import time
 import copy
 import tensorflow as tf
+import pandas as pd
 from absl import logging
 from pathlib import Path
 import random
@@ -88,8 +89,11 @@ class Runner:
         # validation metrics
         self.print_samples()
         logging.info(f"Final best performance from {best_epoch} epochs")
-        self.compute_metrics(self.dev, "dev", best_epoch, write_summary=False)
-        self.compute_metrics(self.test, "test", best_epoch, write_summary=False)
+        dev_metric_all, dev_metric_random = self.compute_metrics(self.dev, "dev", best_epoch, write_summary=False)
+        test_metric_all, test_metric_random = self.compute_metrics(self.test, "test", best_epoch, write_summary=False)
+
+        self.export_metric(dev_metric_all, dev_metric_random, "dev")
+        self.export_metric(test_metric_all, test_metric_random, "test")
 
     @tf.function
     def train_epoch(self, train_batch):
@@ -170,3 +174,15 @@ class Runner:
             new_lr = old_lr * self.args.lr_decay
             new_lr = max(new_lr, self.args.min_lr)
             tf.keras.backend.set_value(self.optimizer.lr, new_lr)
+
+    def export_metric(self, metric_all, metric_random, split):
+        out = {"timestamp": [datetime.now().strftime("%Y%m%d%H%M%S")], "run_id": [self.args.run_id]}
+        # copies all dict
+        for k, v in metric_all.items():
+            out[k] = [v]
+        # adds random metrics to out dict
+        for k, v in metric_random.items():
+            out[f"{k}_r"] = [v]
+
+        file = Path(self.args.logs_dir) / (self.args.results_file + f"-{split}.csv")
+        pd.DataFrame.from_dict(out).to_csv(file, mode="a", header=not file.exists())

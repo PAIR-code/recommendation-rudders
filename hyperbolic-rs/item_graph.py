@@ -22,19 +22,22 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.metrics import CosineSimilarity
 import tensorflow_hub as hub
-from preprocess import save_as_pickle
-from rudders.datasets.keen import get_keens
+from rudders.utils import save_as_pickle
+from rudders.datasets.keen import get_keens, build_texts_from_keens, build_texts_from_gems
+from rudders.datasets.movielens import build_texts_from_movies
 
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('file', default='data/keen/exports_2020-07-03_keens_and_gems.jsonl',
-                    help='Path to file with keen data')
-flags.DEFINE_string('item', default='keen', help='Item to create embeddings: keen or gem')
+flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m')
+flags.DEFINE_string('file', default='movies.dat',
+                    help='Path to file with textual data ("movies.dat" for ml-1m or '
+                         '"exports_2020-07-03_keens_and_gems.jsonl" for keen)')
+flags.DEFINE_string('item', default='keen', help='Item to create embeddings if dataset is keen: keen or gem')
 flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store results')
-flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
+flags.DEFINE_string('text_embeddings', default='data/prep/ml-1m/item_embeddings.csv', help='If provided, it takes embeddings from file')
+flags.DEFINE_float('threshold', default=0.75, help='Cosine similarity threshold to add edges')
 flags.DEFINE_string('use_model_url', default="https://tfhub.dev/google/universal-sentence-encoder-large/5",
                     help='URL of Universal Sentence Encoder Model')
-flags.DEFINE_float('threshold', default=0.65, help='Cosine similarity threshold to add edges')
 flags.DEFINE_integer('max_embedding_len', default=65536,
                      help='If there are less embeddings than max_embedding_len, it will compute the similarity'
                           'all at once using matrix multiplication. This is faster but much more memory expensive. '
@@ -44,37 +47,12 @@ flags.DEFINE_boolean('use_distance', default=False, help='Whether to use cosine 
 flags.DEFINE_boolean('plot', default=False, help='Whether to plot item-item graph or not')
 
 
-def get_data(path):
+def load_jsonl(path):
     data = []
     with open(path, "r") as f:
         for line in f:
             data.append(json.loads(line))
     return data
-
-
-def build_texts_from_keens(keens):
-    texts = {}
-    for kid, keen in keens.items():
-        keen_sents = [keen.description]
-        for gem in keen.gems:
-            keen_sents.append(gem.text)
-            keen_sents.append(gem.link_title)
-            keen_sents.append(gem.link_description)
-        keen_sents = [s for s in keen_sents if s]   # filters empty sentences
-        keen_sents = [keen.title] + keen_sents      # title is always the first element in the list
-        texts[kid] = keen_sents
-    return texts
-
-
-def build_texts_from_gems(keens):
-    texts = {}
-    for keen in keens.values():
-        for gem in keen.gems:
-            sents = [gem.text, gem.link_title, gem.link_description]
-            sents = [s for s in sents if s]   # filters empty sentences
-            if sents:
-                texts[gem.gem_id] = sents
-    return texts
 
 
 def build_item_embeds(item_text, use_url, weight_first_embedding=False):
@@ -193,20 +171,30 @@ def plot_graph(graph, dst_path):
 
 
 def main(_):
-    dst_path = Path(FLAGS.dst_path) / FLAGS.item
+    dst_path = Path(FLAGS.dst_path)
     if not FLAGS.text_embeddings:
-        data = get_data(FLAGS.file)
-        all_keens = get_keens(data)
+        text_file_path = Path(FLAGS.dataset_path) / FLAGS.file
 
-        # keeps keens with at least one gem
-        keens = {k: v for k, v in all_keens.items() if v.gems}
-        print(f"Total amount of keens: {len(all_keens)}")
-        print(f"Keen with at least one gem: {len(keens)}")
+        if "keen" in FLAGS.dataset_path:
+            dst_path = dst_path / FLAGS.item
+            data = load_jsonl(text_file_path)
+            all_keens = get_keens(data)
 
-        if FLAGS.item == "keen":
-            texts = build_texts_from_keens(keens)
+            # keeps keens with at least one gem
+            keens = {k: v for k, v in all_keens.items() if v.gems}
+            print(f"Total amount of keens: {len(all_keens)}")
+            print(f"Keen with at least one gem: {len(keens)}")
+
+            if FLAGS.item == "keen":
+                texts = build_texts_from_keens(keens)
+            else:
+                texts = build_texts_from_gems(keens)
+        elif "ml-1m" in FLAGS.dataset_path:
+            texts = build_texts_from_movies(text_file_path)
+            FLAGS.item = "ml-1m"
+            dst_path = dst_path / FLAGS.item
         else:
-            texts = build_texts_from_gems(keens)
+            raise ValueError(f"Unrecognized dataset_path: {FLAGS.dataset_path}")
 
         print(f"Items with text from {FLAGS.item} to encode with USE: {len(texts)}")
         print(list(texts.items())[:3])

@@ -17,13 +17,13 @@ from absl import app, flags
 from train import load_data
 import tensorflow as tf
 import numpy as np
-from rudders.utils import rank_to_metric_dict
+from rudders.utils import rank_to_metric_dict, sort_items_by_popularity
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('pop_prep_dir', default='data/prep', help='Path to data directory')
 flags.DEFINE_string('pop_dataset', default='keen', help='Dataset (keen, gem or ml-1m)')
 flags.DEFINE_string('pop_prep_name', default='ukeen-minint5-random', help='Name of prep file to load')
-flags.DEFINE_boolean('pop_debug', default=True, help='Uses 1000 examples for debugging purposes')
+flags.DEFINE_boolean('pop_debug', default=False, help='Uses 1000 examples for debugging purposes')
 
 
 def random_eval(pop_ranking, split_data, samples, batch_size=500, num_rand=100, seed=1234):
@@ -65,11 +65,17 @@ def random_eval(pop_ranking, split_data, samples, batch_size=500, num_rand=100, 
     return ranks, ranks_random
 
 
-def main(_):
-    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.pop_prep_dir, FLAGS.pop_dataset,
-                                                                  FLAGS.pop_prep_name, FLAGS.pop_debug)
-    sorted_items = sort_items_by_popularity(samples)
+def print_most_popular_items(data, sorted_item_degree, top_items=25):
+    id2iid, iid2name = data["id2iid"], data["iid2name"]
+    print(f"{top_items} most popular items")
+    for item_idx, pop in sorted_item_degree[:top_items]:
+        print(f"{pop} - {iid2name[id2iid[item_idx]]}")
 
+
+def main(_):
+    _, dev, test, samples, _, _, data = load_data(FLAGS.pop_prep_dir, FLAGS.pop_dataset, FLAGS.pop_prep_name,
+                                                  FLAGS.pop_debug)
+    sorted_items = sort_items_by_popularity(samples)
     print_most_popular_items(data, sorted_items)
 
     pop_ranking = np.ones((1, len(sorted_items)))
@@ -78,33 +84,12 @@ def main(_):
 
     random_items = 100
     for title, split in zip(["DEV", "TEST"], [dev, test]):
-
         rank_all, rank_random = random_eval(pop_ranking, split, samples, num_rand=random_items)
-
         metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
 
         print(f"Result for {title.upper()}")
         print(f"Random items {random_items}: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
         print("All items: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
-
-
-def sort_items_by_popularity(samples):
-    item_degree = {}
-    for uid, ints in samples.items():
-        for item_idx in ints:
-            if item_idx in item_degree:
-                item_degree[item_idx] += 1
-            else:
-                item_degree[item_idx] = 1
-    sorted_item_degree = sorted(item_degree.items(), key=lambda item: item[1], reverse=True)
-    return sorted_item_degree
-
-
-def print_most_popular_items(data, sorted_item_degree, top_items=25):
-    id2iid, iid2name = data["id2iid"], data["iid2name"]
-    print(f"{top_items} most popular items")
-    for item_idx, pop in sorted_item_degree[:top_items]:
-        print(f"{pop} - {iid2name[id2iid[item_idx]]}")
 
 
 if __name__ == '__main__':

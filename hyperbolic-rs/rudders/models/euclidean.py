@@ -37,14 +37,18 @@ class SMFactor(BaseEuclidean):
     """Simple Matrix Factorization model."""
 
     def score(self, user_embeds, item_embeds, all_pairs):
-        """Score based on dot product"""
+        """Score based on dot product (cosine similarity)"""
         user_embeds = tf.linalg.normalize(user_embeds, axis=-1)[0]
         item_embeds = tf.linalg.normalize(item_embeds, axis=-1)[0]
         if all_pairs:
-            score = tf.matmul(user_embeds, tf.transpose(item_embeds))
+            cosine_sim = tf.matmul(user_embeds, tf.transpose(item_embeds))
         else:
-            score = tf.reduce_sum(user_embeds * item_embeds, axis=-1, keepdims=True)
-        return score
+            cosine_sim = tf.reduce_sum(user_embeds * item_embeds, axis=-1, keepdims=True)
+        return cosine_sim
+
+    def distance(self, embed_a, embed_b, all_pairs):
+        """Distance based on cosine distance"""
+        return 1 - self.score(embed_a, embed_b, all_pairs)
 
 
 class DistEuclidean(BaseEuclidean):
@@ -81,4 +85,5 @@ def euclidean_sq_distance(x, y, all_pairs=False):
 
 
 def euclidean_distance(x, y, all_pairs=False):
-    return tf.math.sqrt(euclidean_sq_distance(x, y, all_pairs))
+    sq_dist = euclidean_sq_distance(x, y, all_pairs)
+    return tf.math.sqrt(tf.maximum(sq_dist, tf.zeros_like(sq_dist)))
