@@ -16,8 +16,8 @@ CONFIG = {
     'string': {
         'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
-        'dataset': ('Dataset (keen, gem or ml-1m)', 'keen'),
-        'prep_name': ('Name of prep file to load', 'multi-ukeen-minuser5-minkeen2-maxkeen150-hopdist0.55'),
+        'dataset': ('Dataset (keen, gem or ml-1m)', 'ml-1m'),
+        'prep_name': ('Name of prep file to load', 'prep-hopdist0.85'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
         'model': ('Model', 'DistHyperbolic'),

@@ -24,14 +24,14 @@ from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='multi-ukeen-minuser5-minkeen2-maxkeen150-hopdist0.55', help='Name of prep to store')
-flags.DEFINE_string('item', default='keen', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
+flags.DEFINE_string('run_id', default='prep-notitle-hopdist0.75', help='Name of prep to store')
+flags.DEFINE_string('item', default='ml-1m', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
                                                 'interactions), or "ml-1m"')
-flags.DEFINE_string('dataset_path', default='data/keen', help='Path to raw dataset: data/keen, data/ml-1m')
-flags.DEFINE_string('item_item_file', default='data/prep/keen/item_item_hop_distance_th0.55.pickle',
+flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m')
+flags.DEFINE_string('item_item_file', default='data/prep/ml-1m/item_item_notitle_hop_distance_th0.75.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
-flags.DEFINE_boolean('shuffle', default=True, help='Shuffle the samples')
+flags.DEFINE_boolean('shuffle', default=False, help='Shuffle the samples')
 flags.DEFINE_boolean('sparse', default=False, help='Stores item-item matrix as a sparse matrix')
 flags.DEFINE_integer('min_user_interactions', default=5, help='Users with less than this interactions are filtered')
 flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')
@@ -39,6 +39,8 @@ flags.DEFINE_integer('max_item_interactions', default=150, help='Items with more
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 flags.DEFINE_integer('filter_most_popular', default=-1,
                      help='Filters out most popular items. If -1 it does not filter')
+flags.DEFINE_float('min_matrix_distance', default=0.1, help='Minimum distance allowed in distance matrix. Values below'
+                                                            'this threshold will be clamped to min_distance')
 
 
 def map_raw_ids_to_sequential_ids(samples):
@@ -127,7 +129,7 @@ def load_item_item_distances(item_item_file_path):
     return data["item_item_distances"]
 
 
-def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False):
+def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False, min_distance=0.1):
     """
     Build a distance matrix according to the graph distance between the items, stored in the item_item_distances_dict
     The order of the matrix is given by the ids in iid2id.
@@ -141,6 +143,7 @@ def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False):
     :param iid2id: mapping of item id (unique alpha numeric value that identifies the item) and
     item index (0, 1, 2, ..)
     :param do_sparse: if True, the distance matrix is returned as a sparse matrix, else as a numpy array
+    :param min_distance: minimum distance in the distance matrix. Values below will be clamped to min_distance.
     """
     if do_sparse:
         distance_matrix = np.zeros((len(iid2id), len(iid2id)))
@@ -154,8 +157,7 @@ def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False):
         for dst_iid, distance in src_dist.items():
             if src_iid != dst_iid and dst_iid in iid2id:
                 dst_index = iid2id[dst_iid]
-                distance_matrix[src_index, dst_index] = max(distance, 0.1)  # set a minimum distance for stability
-
+                distance_matrix[src_index, dst_index] = max(distance, min_distance)
     if do_sparse:
         return sparse.csr_matrix(distance_matrix)
     return distance_matrix
@@ -209,7 +211,8 @@ def main(_):
     # if there is an item-item graph, we preprocess it
     if FLAGS.item_item_file:
         item_item_distances_dict = load_item_item_distances(FLAGS.item_item_file)
-        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=FLAGS.sparse)
+        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=FLAGS.sparse,
+                                                          min_distance=FLAGS.min_matrix_distance)
         data["item_item_distance_matrix"] = item_item_distance_matrix
 
     # creates directories to save preprocessed data
