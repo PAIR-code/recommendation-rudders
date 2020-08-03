@@ -1,3 +1,23 @@
+# Copyright 2017 The Rudders Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Script to export for visualization the learnt embeddings.
+This file takes as input the .h5 output of a trained model. It applies a
+dimensionality reduction technique to 2D in either Euclidean or Hyperbolic
+Space. Finally it plots the embeddings using matplotlib or it exports
+the coordinates of the embeddings in the appropriate format to visualize
+them with https://projector.tensorflow.org/"""
+
 import argparse
 from pathlib import Path
 import h5py
@@ -80,6 +100,8 @@ def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, 
     for i, embed in enumerate(user_embeds):
         coords.append("\t".join([str(x) for x in embed]))
 
+        # interactions are the items that each user is interacting with
+        # samples contain the ids of the items, and id2title the title of each item
         interactions = [id2title.get(item_id, "None").replace("\t", "") for item_id in samples[i]]
         interactions = "//".join(interactions)
 
@@ -156,6 +178,11 @@ def plot(filename, user_embeds, item_embeds, subsample=0.5, alpha=0.75, size=2):
     :param filename: to store the image
     :param user_embeds: Numpy array of shape (len(user_embeds), 2)
     :param item_embeds: Numpy array of shape (len(item_embeds), 2)
+    :param subsample: value in the range of [0, 1]. Proportion of users/items to export.
+    If subsample == 0 or subsample == 1, it will use all users/items
+    :param alpha: alpha parameter in scatter plot. Alpha of points to plot.
+    :param size: size of each point for scatter plot
+    :return:
     """
     if subsample > 0:
         user_embeds = user_embeds[:int(len(user_embeds) * subsample)]

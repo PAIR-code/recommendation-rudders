@@ -39,6 +39,8 @@ flags.DEFINE_integer('max_item_interactions', default=150, help='Items with more
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 flags.DEFINE_integer('filter_most_popular', default=-1,
                      help='Filters out most popular items. If -1 it does not filter')
+flags.DEFINE_float('min_matrix_distance', default=0.1, help='Minimum distance allowed in distance matrix. Values below'
+                                                            'this threshold will be clamped to min_distance')
 
 
 def map_item_ids_to_sequential_ids(samples):
@@ -120,7 +122,7 @@ def load_item_item_distances(item_item_file_path):
     return data["item_item_distances"]
 
 
-def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False):
+def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False, min_distance=0.1):
     """
     Build a distance matrix according to the graph distance between the items, stored in the item_item_distances_dict
     The order of the matrix is given by the ids in iid2id.
@@ -134,6 +136,7 @@ def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False):
     :param iid2id: mapping of item id (unique alpha numeric value that identifies the item) and
     item index (0, 1, 2, ..)
     :param do_sparse: if True, the distance matrix is returned as a sparse matrix, else as a numpy array
+    :param min_distance: minimum distance in the distance matrix. Values below will be clamped to min_distance.
     """
     if do_sparse:
         distance_matrix = np.zeros((len(iid2id), len(iid2id)))
@@ -147,7 +150,7 @@ def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False):
         for dst_iid, distance in src_dist.items():
             if src_iid != dst_iid and dst_iid in iid2id:
                 dst_index = iid2id[dst_iid]
-                distance_matrix[src_index, dst_index] = max(distance, 0.1)  # set a minimum distance for stability
+                distance_matrix[src_index, dst_index] = max(distance, min_distance)
 
     if do_sparse:
         return sparse.csr_matrix(distance_matrix)
@@ -202,7 +205,8 @@ def main(_):
     # if there is an item-item graph, we preprocess it
     if FLAGS.item_item_file:
         item_item_distances_dict = load_item_item_distances(FLAGS.item_item_file)
-        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=FLAGS.sparse)
+        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=FLAGS.sparse,
+                                                          min_distance=FLAGS.min_matrix_distance)
         data["item_item_distance_matrix"] = item_item_distance_matrix
 
     # creates directories to save preprocessed data
