@@ -53,6 +53,7 @@ CONFIG = {
         'neg_sample_size': ('Negative sample size, -1 to use loss without negative sampling', 1),
         'semantic_pos_sample_size': ('Negative sample size, -1 to use loss without negative sampling', 1),
         'seed': ('Random seed', 42),
+        'gpu_index': ('GPU index, in case of working with more than one', 0),
     },
     'boolean': {
         'train_c': ('Whether to train the hyperbolic curvature or not', False),

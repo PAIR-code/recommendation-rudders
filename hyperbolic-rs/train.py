@@ -104,7 +104,14 @@ def main(_):
     tf.config.experimental_run_functions_eagerly(FLAGS.debug)
 
     logging.info(f"Flags/config of this run:\n{get_flags_dict(FLAGS)}")
-    print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    logging.info("Num GPUs Available: ", len(gpus))
+    if len(gpus) > 1:
+        try:    # Restrict TensorFlow to only use the first GPU
+            logging.info("Setting GPU Index {FLAGS.gpu_index} only")
+            tf.config.experimental.set_visible_devices(gpus[FLAGS.gpu_index], 'GPU')
+        except RuntimeError as e:
+            logging.info(e)     # Visible devices must be set before GPUs have been initialized
 
     # load data
     train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.prep_name, 
