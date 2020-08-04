@@ -23,19 +23,19 @@ import tensorflow as tf
 from tensorflow.keras.metrics import CosineSimilarity
 import tensorflow_hub as hub
 from rudders.utils import save_as_pickle
-from rudders.datasets.keen import get_keens, build_texts_from_keens, build_texts_from_gems
-from rudders.datasets.movielens import build_texts_from_movies
+from rudders.datasets import keen, movielens, amazon
 
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m')
+flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dataset: data/keen, data/ml-1m')
 flags.DEFINE_string('file', default='movies.dat',
                     help='Path to file with textual data ("movies.dat" for ml-1m or '
                          '"exports_2020-07-03_keens_and_gems.jsonl" for keen)')
-flags.DEFINE_string('item', default='keen', help='Item to create embeddings if dataset is keen: keen or gem')
+flags.DEFINE_string('item', default='amzn-vgames', help='Item to create embeddings if dataset is keen: keen, gem, '
+                                                 'amzn-musicins or amzn-vgames')
 flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store results')
-flags.DEFINE_string('text_embeddings', default='data/prep/ml-1m/item_embeddings.csv', help='If provided, it takes embeddings from file')
-flags.DEFINE_float('threshold', default=0.75, help='Cosine similarity threshold to add edges')
+flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
+flags.DEFINE_float('threshold', default=0.55, help='Cosine similarity threshold to add edges')
 flags.DEFINE_string('use_model_url', default="https://tfhub.dev/google/universal-sentence-encoder-large/5",
                     help='URL of Universal Sentence Encoder Model')
 flags.DEFINE_integer('max_embedding_len', default=65536,
@@ -74,7 +74,7 @@ def build_item_embeds(item_text, use_url, weight_first_embedding=False):
         embs = use_model(sents)
 
         weights = np.ones([1, len(embs)])
-        if weight_first_embedding:  # gives higher weight to title in keen case
+        if weight_first_embedding:  # gives higher weight to first embedding
             weights[0, 0] = 2
         weights = tf.convert_to_tensor(weights, dtype=tf.float32)
         weights = tf.keras.activations.softmax(weights, axis=-1)
@@ -87,7 +87,7 @@ def build_item_embeds(item_text, use_url, weight_first_embedding=False):
 
 def export_text_embeddings(embeds, dst_path):
     """Export embeddings in CSV format emulating GloVe format"""
-    with open(str(dst_path / "item_embeddings.csv"), "w") as f:
+    with open(str(dst_path / "vgames_item_embeddings.csv"), "w") as f:
         for iid, vec in embeds.items():
             values = ",".join([str(x) for x in vec[0].numpy()])
             f.write(f"{iid},{values}\n")
@@ -178,7 +178,7 @@ def main(_):
         if "keen" in FLAGS.dataset_path:
             dst_path = dst_path / FLAGS.item
             data = load_jsonl(text_file_path)
-            all_keens = get_keens(data)
+            all_keens = keen.get_keens(data)
 
             # keeps keens with at least one gem
             keens = {k: v for k, v in all_keens.items() if v.gems}
@@ -186,22 +186,25 @@ def main(_):
             print(f"Keen with at least one gem: {len(keens)}")
 
             if FLAGS.item == "keen":
-                texts = build_texts_from_keens(keens)
+                texts = keen.build_texts_from_keens(keens)
             else:
-                texts = build_texts_from_gems(keens)
+                texts = keen.build_texts_from_gems(keens)
         elif "ml-1m" in FLAGS.dataset_path:
-            texts = build_texts_from_movies(text_file_path)
+            texts = movielens.build_texts_from_movies(text_file_path)
             FLAGS.item = "ml-1m"
             dst_path = dst_path / FLAGS.item
+        elif "amazon" in FLAGS.dataset_path:
+            texts = amazon.build_text_from_items(Path(FLAGS.dataset_path), FLAGS.item)
+            dst_path = dst_path / "amazon"
         else:
             raise ValueError(f"Unrecognized dataset_path: {FLAGS.dataset_path}")
 
         print(f"Items with text from {FLAGS.item} to encode with USE: {len(texts)}")
         print(list(texts.items())[:3])
 
-        embeds = build_item_embeds(texts, FLAGS.use_model_url, weight_first_embedding=FLAGS.item == "keen")
+        weight_first_embed = FLAGS.item == "keen" or "amazon" in FLAGS.dataset_path
+        embeds = build_item_embeds(texts, FLAGS.use_model_url, weight_first_embedding=weight_first_embed)
         export_text_embeddings(embeds, dst_path)
-
     else:
         embeds = load_text_embeddings(FLAGS.text_embeddings)
 
@@ -217,11 +220,15 @@ def main(_):
     if FLAGS.plot:
         plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
 
-    all_pairs = nx.all_pairs_dijkstra(graph, weight="weight" if FLAGS.use_distance else None)
+    all_pairs = nx.all_pairs_dijkstra(graph, weight="weight" if FLAGS.use_distance else None, cutoff=10)
     all_distances = {n: dist for n, (dist, path) in all_pairs}
 
     result = {"item_item_distances": all_distances}
-    file_name = f'item_item_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}'
+    if "amazon" in FLAGS.dataset_path:
+        item_name = FLAGS.item.split("-")[-1]
+        file_name = f'{item_name}_{item_name}_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}'
+    else:
+        file_name = f'item_item_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}'
     nx.write_weighted_edgelist(graph, str(dst_path / (file_name + ".edgelist")))
     save_as_pickle(dst_path / (file_name + ".pickle"), result)
 

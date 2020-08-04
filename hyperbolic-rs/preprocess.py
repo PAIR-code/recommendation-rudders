@@ -19,16 +19,18 @@ import numpy as np
 import random
 from scipy import sparse
 from pathlib import Path
-from rudders.datasets import movielens, keen
+from rudders.datasets import movielens, keen, amazon
 from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='prep-notitle-hopdist0.75', help='Name of prep to store')
-flags.DEFINE_string('item', default='ml-1m', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
-                                                'interactions), or "ml-1m"')
-flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m')
-flags.DEFINE_string('item_item_file', default='data/prep/ml-1m/item_item_notitle_hop_distance_th0.75.pickle',
+flags.DEFINE_string('run_id', default='multi-prep-notitle-hopdist0.55', help='Name of prep to store')
+flags.DEFINE_string('item', default='ml-1m', help='Item can be "keen" (user-keen interactions), '
+                                                          '"gem" (keen-gem interactions), "ml-1m", '
+                                                          '"amzn-musicins", "amzn-vgames"')
+flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m, '
+                                                               'data/amazon')
+flags.DEFINE_string('item_item_file', default='data/prep/ml-1m/item_item_notitle_hop_distance_th0.55.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=False, help='Shuffle the samples')
@@ -83,17 +85,17 @@ def create_splits(samples, do_random=False, seed=42):
         for each user.
     """
     train, dev, test = [], [], []
-    for uid, items in samples.items():
+    for uid, ints in samples.items():
         if do_random:
             random.seed(seed)
-            random.shuffle(items)
-        if len(items) >= 3:
-            test.append([uid, items[-1]])
-            dev.append([uid, items[-2]])
-            for iid in items[:-2]:
+            random.shuffle(ints)
+        if len(ints) >= 3:
+            test.append([uid, ints[-1]])
+            dev.append([uid, ints[-2]])
+            for iid in ints[:-2]:
                 train.append([uid, iid])
         else:
-            for iid in items:
+            for iid in ints:
                 train.append([uid, iid])
 
     return {
@@ -181,6 +183,9 @@ def main(_):
     elif FLAGS.item == "ml-1m":
         samples = movielens.movielens_to_dict(dataset_path)
         iid2name = movielens.build_movieid2title(dataset_path)
+    elif "amzn" in FLAGS.item:
+        samples = amazon.load_interactions(dataset_path, FLAGS.item)
+        iid2name = amazon.build_itemid2name(dataset_path, FLAGS.item)
     else:
         raise ValueError(f"Unknown item: {FLAGS.item}")
 
@@ -199,12 +204,12 @@ def main(_):
 
     id_samples = {}
     for uid, ints in samples.items():
-        if FLAGS.item != "ml-1m":
+        if FLAGS.item == "keen" or FLAGS.item == "gem":
             ints = sorted(ints)
         id_samples[uid2id[uid]] = [iid2id[iid] for iid in ints]
 
     data = create_splits(id_samples, do_random=FLAGS.shuffle, seed=FLAGS.seed)
-    data["iid2name"] = iid2name
+    data["iid2name"] = {iid: iid2name.get(iid, "None") for iid in iid2id}
     data["id2uid"] = {v: k for k, v in uid2id.items()}
     data["id2iid"] = {v: k for k, v in iid2id.items()}
 
