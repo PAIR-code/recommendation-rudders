@@ -18,7 +18,7 @@ from absl import app, flags, logging
 import numpy as np
 import tensorflow as tf
 import pickle
-from scipy import sparse
+from rudders.relations import Relations
 from rudders.config import CONFIG
 from rudders.utils import set_seed, setup_logger
 import rudders.models as models
@@ -37,10 +37,9 @@ for dtype, flag_fn in flag_fns.items():
 FLAGS = flags.FLAGS
 
 
-def get_model(n_users, n_items, id2iid):
+def get_model(n_users, n_items, n_relations, id2iid):
     tf.keras.backend.set_floatx(FLAGS.dtype)
     item_ids = list(id2iid.keys())
-    n_relations = len(list(models.Relations))
     model = getattr(models, FLAGS.model)(n_users, n_items, n_relations, item_ids, FLAGS)
     model.build(input_shape=(1, 2))
     params = sum(np.prod(x.shape) for x in model.trainable_variables)
@@ -49,14 +48,37 @@ def get_model(n_users, n_items, id2iid):
     return model
 
 
-def load_data(prep_path, dataset_name, prep_name, debug):
-    file_path = Path(prep_path) / dataset_name / f'{prep_name}.pickle'
+def filter_relations(train, args):
+    """
+    Filters out relations of the train data according to args
+
+    :param train: train split represented as a numpy array of train_len x 3 with (head, relation, tail)
+    :param args: namespace with information about which relations should filter
+    :return: filtered_train: numpy array of final_train_len x 3 only with allowed relations
+            n_relations: amount of allowed relations
+    """
+    allowed_relations = {Relations.USER_ITEM.value}     # User Item is always required
+    if args.use_semantic_relation:
+        allowed_relations.add(Relations.SEMANTIC.value)
+    if args.use_cobuy_relation:
+        allowed_relations.add(Relations.COBUY.value)
+    if args.use_coview_relation:
+        allowed_relations.add(Relations.COVIEW.value)
+    if args.use_category_relation:
+        allowed_relations.add(Relations.CATEGORY.value)
+    filtered_train = [triplet for triplet in train if triplet[1] in allowed_relations]
+    return np.array(filtered_train).astype(np.int64), max(allowed_relations) + 1
+
+
+def load_data(args):
+    file_path = Path(args.prep_dir) / args.dataset / f'{args.prep_name}.pickle'
     logging.info(f"Loading data from {file_path}")
     with tf.io.gfile.GFile(str(file_path), 'rb') as f:
         data = pickle.load(f)
 
     # splits
-    train = data["train"] if not debug else data["train"][:1000].astype(np.int64)
+    train = data["train"] if not args.debug else data["train"][:1000].astype(np.int64)
+    train, n_relations = filter_relations(train, args)
     buffer_size = train.shape[0]
     train = tf.data.Dataset.from_tensor_slices(train)
     train.shuffle(buffer_size=buffer_size, reshuffle_each_iteration=True)
@@ -70,7 +92,7 @@ def load_data(prep_path, dataset_name, prep_name, debug):
     for v in samples.values(): all_items.update(v)
     n_items = len(all_items)
     logging.info(f'Dataset stats: n_users: {n_users}, n_items: {n_items}')
-    return train, dev, test, samples, n_users, n_items, data
+    return train, dev, test, samples, n_users, n_items, n_relations, data
 
 
 def save_config(logs_dir, run_id):
@@ -114,19 +136,11 @@ def main(_):
             logging.info(e)     # Visible devices must be set before GPUs have been initialized
 
     # load data
-    train, dev, test, samples, n_users, n_items, data = load_data(FLAGS.prep_dir, FLAGS.dataset, FLAGS.prep_name, 
-                                                                  FLAGS.debug)
+    train, dev, test, samples, n_users, n_items, n_relations, data = load_data(FLAGS)
 
-    item_item_distance_matrix = None
-    if FLAGS.semantic_gamma > 0:    # if there is no semantic component in the loss it doesn't need to load the matrix
-        item_item_distance_matrix = data["item_item_distance_matrix"]
-        if sparse.issparse(item_item_distance_matrix):
-            dense_matrix = item_item_distance_matrix.toarray()
-            item_item_distance_matrix = np.where(dense_matrix != 0, dense_matrix, np.ones_like(dense_matrix) * -1)
-
-    model = get_model(n_users, n_items, data["id2iid"])
+    model = get_model(n_users, n_items, n_relations, data["id2iid"])
     optimizer = get_optimizer(FLAGS)
-    loss_fn = getattr(losses, FLAGS.loss_fn)(n_users, n_items, FLAGS, item_distances=item_item_distance_matrix)
+    loss_fn = getattr(losses, FLAGS.loss_fn)(ini_neg_index=0, end_neg_index=n_users + n_items - 1, args=FLAGS)
 
     runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples,
                     id2uid=data["id2uid"], id2iid=data["id2iid"], iid2name=data["iid2name"])

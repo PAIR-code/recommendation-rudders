@@ -31,11 +31,11 @@ flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dat
 flags.DEFINE_string('file', default='movies.dat',
                     help='Path to file with textual data ("movies.dat" for ml-1m or '
                          '"exports_2020-07-03_keens_and_gems.jsonl" for keen)')
-flags.DEFINE_string('item', default='amzn-vgames', help='Item to create embeddings if dataset is keen: keen, gem, '
+flags.DEFINE_string('item', default='amzn-musicins', help='Item to create embeddings if dataset is keen: keen, gem, '
                                                  'amzn-musicins or amzn-vgames')
 flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store results')
-flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
-flags.DEFINE_float('threshold', default=0.55, help='Cosine similarity threshold to add edges')
+flags.DEFINE_string('text_embeddings', default='data/prep/amazon/musicins_item_embeddings.csv', help='If provided, it takes embeddings from file')
+flags.DEFINE_float('threshold', default=0.6, help='Cosine similarity threshold to add edges')
 flags.DEFINE_string('use_model_url', default="https://tfhub.dev/google/universal-sentence-encoder-large/5",
                     help='URL of Universal Sentence Encoder Model')
 flags.DEFINE_integer('max_embedding_len', default=65536,
@@ -43,8 +43,9 @@ flags.DEFINE_integer('max_embedding_len', default=65536,
                           'all at once using matrix multiplication. This is faster but much more memory expensive. '
                           'If not, it will compute it "on the fly", which does not take as much memory but it is'
                           'way slower.')
-flags.DEFINE_boolean('use_distance', default=False, help='Whether to use cosine distance as weight or each edge is 1')
+flags.DEFINE_boolean('use_distance', default=True, help='Whether to use cosine distance as weight or each edge is 1')
 flags.DEFINE_boolean('plot', default=False, help='Whether to plot item-item graph or not')
+flags.DEFINE_boolean('debug', default=True, help='Debug mode with very few embeddings')
 
 
 def load_jsonl(path):
@@ -87,7 +88,7 @@ def build_item_embeds(item_text, use_url, weight_first_embedding=False):
 
 def export_text_embeddings(embeds, dst_path):
     """Export embeddings in CSV format emulating GloVe format"""
-    with open(str(dst_path / "vgames_item_embeddings.csv"), "w") as f:
+    with open(str(dst_path / "item_embeddings.csv"), "w") as f:
         for iid, vec in embeds.items():
             values = ",".join([str(x) for x in vec[0].numpy()])
             f.write(f"{iid},{values}\n")
@@ -170,6 +171,22 @@ def plot_graph(graph, dst_path):
     plt.savefig(str(dst_path))
 
 
+def get_neighbors_with_distances(graph):
+    """
+    Gets the closest neighbors from each node in the graph and returns it as a dictionary
+
+    :param graph:
+    :return: dict of nodes: [(neigh, distance)]
+    """
+    neighs_with_dists = {}
+    for src_node in tqdm(graph.nodes(), total=len(graph), desc="neighs_and_dists"):
+        neighs = [(dst_nei, edge["weight"]) for dst_nei, edge in graph[src_node].items()]
+        if neighs:
+            neighs_with_dists[src_node] = neighs
+    print(f"Nodes without neighbors: {len(graph) - len(neighs_with_dists)}/{len(graph)}")
+    return neighs_with_dists
+
+
 def main(_):
     dst_path = Path(FLAGS.dst_path)
     if not FLAGS.text_embeddings:
@@ -208,6 +225,9 @@ def main(_):
     else:
         embeds = load_text_embeddings(FLAGS.text_embeddings)
 
+    if FLAGS.debug:
+        embeds = {k: v for k, v in list(embeds.items())[:50]}
+
     if len(embeds) < FLAGS.max_embedding_len:
         item_ids, cossim_matrix = build_cossim_matrix(embeds)
         graph = build_graph(item_ids, cossim_matrix, FLAGS.threshold, FLAGS.use_distance)
@@ -220,10 +240,9 @@ def main(_):
     if FLAGS.plot:
         plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
 
-    all_pairs = nx.all_pairs_dijkstra(graph, weight="weight" if FLAGS.use_distance else None, cutoff=10)
-    all_distances = {n: dist for n, (dist, path) in all_pairs}
+    neighs_and_dists = get_neighbors_with_distances(graph)
+    result = {"item_item_distances": neighs_and_dists}
 
-    result = {"item_item_distances": all_distances}
     if "amazon" in FLAGS.dataset_path:
         item_name = FLAGS.item.split("-")[-1]
         file_name = f'{item_name}_{item_name}_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}'

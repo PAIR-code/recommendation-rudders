@@ -93,3 +93,12 @@ def save_as_pickle(save_path, data):
     """
     with open(str(save_path), 'wb') as fp:
         pickle.dump(data, fp)
+
+
+def jaccard_similarity(iter_a, iter_b):
+    """Computes the Jaccard similarity between two iterables"""
+    set_a = set(iter_a)
+    set_b = set(iter_b)
+    if not set_a and not set_b:
+        return 0.
+    return len(set_a.intersection(set_b)) / len(set_a.union(set_b))

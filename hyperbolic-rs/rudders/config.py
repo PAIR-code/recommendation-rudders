@@ -16,12 +16,12 @@ CONFIG = {
     'string': {
         'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
-        'dataset': ('Dataset (keen, gem or ml-1m)', 'ml-1m'),
-        'prep_name': ('Name of prep file to load', 'multi-prep-hopdist0.75'),
+        'dataset': ('Dataset (keen, gem, ml-1m or amazon)', 'amazon'),
+        'prep_name': ('Name of prep file to load', 'musicins-top10'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
         'model': ('Model', 'MultiRelHyperbolic'),
-        'loss_fn': ('Loss function to use', 'BCECompositeLoss'),
+        'loss_fn': ('Loss function to use', 'BCELoss'),
         'initializer': ('Which initializer to use', 'RandomUniform'),
         'regularizer': ('Regularizer', 'L2Regularizer'),
         'optimizer': ('Optimizer', 'adam'),
@@ -61,5 +61,9 @@ CONFIG = {
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
         'save_model': ('Whether to save the model weights', True),
+        'use_semantic_relation': ('Whether to use this relation or not', True),
+        'use_cobuy_relation': ('Whether to use this relation or not', True),
+        'use_coview_relation': ('Whether to use this relation or not', True),
+        'use_category_relation': ('Whether to use this relation or not', True),
     }
 }

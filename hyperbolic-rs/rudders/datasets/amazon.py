@@ -40,8 +40,17 @@ def load_interactions_file(filepath):
                 samples[uid] = [(iid, timestamp)]
     sorted_samples = {}
     for uid, ints in samples.items():
+        # since a user can interact with the same items several time, the pair (user, item_id)
+        # can appear both in train and test and we want to avoid this. Therefore we delete
+        # repetitions and keep only the first interaction
         sorted_ints = sorted(ints, key=lambda p: p[1])
-        sorted_samples[uid] = [pair[0] for pair in sorted_ints]
+        unique_iid_ints = set()
+        filtered_ints = []
+        for iid, _ in sorted_ints:
+            if iid not in unique_iid_ints:
+                unique_iid_ints.add(iid)
+                filtered_ints.append(iid)
+        sorted_samples[uid] = filtered_ints
     return sorted_samples
 
 
@@ -67,7 +76,7 @@ def build_itemid2name(dataset_path, item_key):
     """
     metadata_file = FILES[item_key][1]
     with gzip.open(str(dataset_path / metadata_file), 'r') as f:
-        return {meta["asin"]: meta["title"] for meta in map(json.loads, f)}
+        return {meta["asin"]: meta.get("title", "None") for meta in map(json.loads, f)}
 
 
 def load_reviews(filepath, revs_to_keep=10):
@@ -93,7 +102,7 @@ def load_reviews(filepath, revs_to_keep=10):
     return reviews
 
 
-def load_metadata(filepath):
+def load_metadata_as_text(filepath):
     """
     :param filepath: file to amazon item metadata file
     :return: dict of iid: metadata as one string
@@ -138,7 +147,7 @@ def build_text_from_items(dataset_path, item_key):
 
     metadata_file = FILES[item_key][1]
     print(f"Loading amazon metadata from {dataset_path / metadata_file}")
-    metadata = load_metadata(dataset_path / metadata_file)
+    metadata = load_metadata_as_text(dataset_path / metadata_file)
 
     # We are only interested in the iids in texts, metadata is much larger
     no_meta = 0
@@ -150,3 +159,28 @@ def build_text_from_items(dataset_path, item_key):
 
     print(f"Items with no metadata {no_meta}: {no_meta * 100 / len(texts):.2f}%")
     return texts
+
+
+class AmazonItem:
+    def __init__(self, metadata):
+        """
+        :param metadata: dict extracted from json file with amazon item metadata
+        """
+        self.id = metadata["asin"]
+        self.cobuys = metadata.get("also_buy", [])
+        self.coviews = metadata.get("also_view", [])
+        self.categories = metadata.get("category", [])
+
+
+def load_metadata(dataset_path, item_key):
+    """
+    Loads metadata as a dict
+
+    :param dataset_path: path to amazon dataset
+    :param item_key: key to index FILES dict
+    :return: dict of dicts with metadata
+    """
+    filepath = dataset_path / FILES[item_key][1]
+    print(f"Loading amazon metadata from {filepath}")
+    with gzip.open(filepath, 'r') as f:
+        return [AmazonItem(line) for line in map(json.loads, f)]

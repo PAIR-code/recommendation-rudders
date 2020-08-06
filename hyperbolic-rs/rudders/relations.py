@@ -12,5 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rudders.models.euclidean import DistEuclidean, SMFactor, MultiRelEuclidean
-from rudders.models.hyperbolic import DistHyperbolic, MultiRelHyperbolic
+from enum import Enum
+
+
+class Relations(Enum):
+    """Allowed types of relations that models support"""
+    USER_ITEM = 0
+    SEMANTIC = 1
+    COBUY = 2
+    COVIEW = 3
+    CATEGORY = 4

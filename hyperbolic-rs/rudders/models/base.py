@@ -14,16 +14,8 @@
 import abc
 import numpy as np
 import tensorflow as tf
-from enum import Enum
+from rudders.relations import Relations
 from rudders.models import regularizers
-
-
-# TODO: define relations in preprocessing, which will simplify losses as well
-class Relations(Enum):
-    """Allowed types of relations that models support"""
-    USER_ITEM = 0
-    ITEM_USER = 1
-    ITEM_ITEM = 2
 
 
 class CFModel(tf.keras.Model, abc.ABC):
@@ -170,14 +162,8 @@ class CFModel(tf.keras.Model, abc.ABC):
         ranks = np.ones(total_examples)
         ranks_random = np.ones(total_examples)
         for counter, input_tensor in enumerate(split_data.batch(batch_size)):
-            # builds triplet input with relation
-            relation = tf.constant(Relations.USER_ITEM.value, shape=(len(input_tensor), 1), dtype=tf.int64)
-            head = tf.expand_dims(input_tensor[:, 0], 1)
-            tail = tf.expand_dims(input_tensor[:, 1], 1)
-            triplet_input_tensor = tf.concat((head, relation, tail), axis=-1)
-
-            targets = self.call(triplet_input_tensor).numpy()
-            scores = self.call(triplet_input_tensor, all_items=True).numpy()
+            targets = self.call(input_tensor).numpy()
+            scores = self.call(input_tensor, all_items=True).numpy()
             scores_random = np.ones(shape=(scores.shape[0], num_rand))
             for i, query in enumerate(input_tensor):
                 query = query.numpy()

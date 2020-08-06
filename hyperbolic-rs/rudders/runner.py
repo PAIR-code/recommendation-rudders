@@ -39,7 +39,7 @@ class Runner:
         self.summary = tf.summary.create_file_writer(args.logs_dir + f"/summary/{args.run_id}")
 
     def run(self):
-        best_hr_at_10 = best_epoch = early_stopping_counter = 0
+        best_hr_at_10 = best_epoch = early_stopping_counter = -1
         best_weights = None
 
         for epoch in range(1, self.args.max_epochs + 1):
@@ -120,7 +120,8 @@ class Runner:
 
     def compute_metrics(self, split, title, epoch, write_summary=True):
         random_items = 100
-        rank_all, rank_random = self.model.random_eval(split, self.samples, num_rand=random_items)
+        rank_all, rank_random = self.model.random_eval(split, self.samples, num_rand=random_items,
+                                                       batch_size=self.args.batch_size)
         metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
 
         logging.info(f"Result at epoch {epoch} in {title.upper()}")
