@@ -82,6 +82,26 @@ class BCELoss(NegativeSampleLoss):
         return loss
 
 
+class BCESplitLoss(NegativeSampleLoss):
+    """Binary Cross Entropy loss.
+    The probability of the triplet being true is given by sigma(score(head, relation, tail))
+    This loss aims to maximize the probability of positive samples and minimize the one of
+    negative samples.
+    """
+    def __init__(self, ini_neg_index, end_neg_index, args):
+        super().__init__(ini_neg_index, end_neg_index, args)
+        self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+
+    def calculate_loss(self, model, input_batch):
+        pos_score = model(input_batch)
+        loss = self.bce(tf.ones_like(pos_score), pos_score)
+        for _ in range(self.neg_sample_size):
+            neg_input_batch = self.build_negative_input_batch(input_batch)
+            neg_score = model(neg_input_batch)
+            loss = loss + self.bce(tf.zeros_like(pos_score), neg_score)
+        return loss
+
+
 class HingeLoss(NegativeSampleLoss):
     """Hinge triple loss based on scoring positve samples higher than negative samples."""
     def __init__(self, ini_neg_index, end_neg_index, args):
