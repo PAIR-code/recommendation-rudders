@@ -32,11 +32,7 @@ CONFIG = {
         'lr': ('Learning rate', 1e-3),
         'lr_decay': ('Learning rate decay', 0.96),
         'min_lr': ('Minimum learning rate decay', 1e-5),
-        'semantic_gamma': ('Weight for item-item semantic-based loss. If semantic_gamma <= 0, semantic loss is not '
-                           'computed', 1.),
         'gamma': ('Weight for distortion loss', 1),
-        'semantic_graph_weight': ('Weight to divide graph distance in semantic loss. The larger, items far away '
-                                  'in the graph will be more penalized', 1),
         'entity_reg': ('Regularization weight for entity embeddings', 0),
         'relation_reg': ('Regularization weight for relation embeddings', 0),
         'hinge_margin': ('Margin for hinge based models', 1),
@@ -51,7 +47,6 @@ CONFIG = {
         'dims': ('Embeddings dimension', 32),
         'batch_size': ('Batch size', 1000),
         'neg_sample_size': ('Negative sample size, -1 to use loss without negative sampling', 1),
-        'semantic_pos_sample_size': ('Negative sample size, -1 to use loss without negative sampling', 1),
         'seed': ('Random seed', 42),
         'gpu_index': ('GPU index, in case of working with more than one', 0),
     },
