@@ -37,7 +37,6 @@ CONFIG = {
         'relation_reg': ('Regularization weight for relation embeddings', 0),
         'hinge_margin': ('Margin for hinge based models', 1),
         'curvature': ('Curvature in case of using hyperbolic space', 1.),
-        'neighbors': ('Proportion of neighbors to keep for semantic loss', 0.01),
     },
     'integer': {
         'patience': ('Number of validation steps before early stopping', 10),
@@ -56,9 +55,9 @@ CONFIG = {
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
         'save_model': ('Whether to save the model weights', True),
-        'use_semantic_relation': ('Whether to use this relation or not', True),
-        'use_cobuy_relation': ('Whether to use this relation or not', True),
-        'use_coview_relation': ('Whether to use this relation or not', True),
-        'use_category_relation': ('Whether to use this relation or not', True),
+        'use_semantic_relation': ('Whether to use this relation or not', False),
+        'use_cobuy_relation': ('Whether to use this relation or not', False),
+        'use_coview_relation': ('Whether to use this relation or not', False),
+        'use_category_relation': ('Whether to use this relation or not', False),
     }
 }

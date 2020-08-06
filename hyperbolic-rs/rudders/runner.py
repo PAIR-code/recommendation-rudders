@@ -20,6 +20,7 @@ from absl import logging
 from pathlib import Path
 import random
 from datetime import datetime
+from rudders.relations import Relations
 from rudders.utils import rank_to_metric_dict
 
 
@@ -141,7 +142,7 @@ class Runner:
         random.seed(datetime.now())
         users = random.sample(list(self.samples.keys()), len(self.samples))[:n_users]
         user_tensor = tf.expand_dims(tf.convert_to_tensor(users), 1)
-        input_tensor = tf.concat((user_tensor, tf.ones_like(user_tensor)), axis=1)
+        input_tensor = tf.concat((user_tensor, tf.ones_like(user_tensor) * Relations.USER_ITEM.value), axis=1)
         scores = self.model(input_tensor, all_items=True)
         top_k = tf.math.top_k(scores, k=k_closest)[1].numpy()
 
