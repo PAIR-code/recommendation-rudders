@@ -37,10 +37,10 @@ for dtype, flag_fn in flag_fns.items():
 FLAGS = flags.FLAGS
 
 
-def get_model(n_users, n_items, n_relations, id2iid):
+def get_model(n_entities, n_relations, id2iid):
     tf.keras.backend.set_floatx(FLAGS.dtype)
     item_ids = list(id2iid.keys())
-    model = getattr(models, FLAGS.model)(n_users, n_items, n_relations, item_ids, FLAGS)
+    model = getattr(models, FLAGS.model)(n_entities, n_relations, item_ids, FLAGS)
     model.build(input_shape=(1, 2))
     params = sum(np.prod(x.shape) for x in model.trainable_variables)
     logging.info(model.summary())
@@ -48,7 +48,7 @@ def get_model(n_users, n_items, n_relations, id2iid):
     return model
 
 
-def filter_relations(train, args):
+def setup_relations(train, args):
     """
     Filters out relations of the train data according to args
 
@@ -59,20 +59,29 @@ def filter_relations(train, args):
     """
     allowed_relations = {Relations.USER_ITEM.value}     # User Item is always required
     if args.use_semantic_relation:
-        allowed_relations.add(Relations.SEMANTIC.value)
+        allowed_relations.add(Relations.SEM_LOW_SIM.value)
+        allowed_relations.add(Relations.SEM_MEDIUM_SIM.value)
+        allowed_relations.add(Relations.SEM_HIGH_SIM.value)
     if args.use_cobuy_relation:
         allowed_relations.add(Relations.COBUY.value)
     if args.use_coview_relation:
         allowed_relations.add(Relations.COVIEW.value)
     if args.use_category_relation:
         allowed_relations.add(Relations.CATEGORY.value)
+    if args.use_brand_relation:
+        allowed_relations.add(Relations.BRAND.value)
     filtered_train = [triplet for triplet in train if triplet[1] in allowed_relations]
+
+    n_relations = max(allowed_relations) + 1
+    if args.invert_relations:
+        filtered_train += [(tail, rel + n_relations, head) for head, rel, tail in filtered_train]
+        n_relations *= 2
 
     if args.unique_relation:
         filtered_train = [(head, Relations.USER_ITEM.value, tail) for head, relation, tail in filtered_train]
-        allowed_relations = {Relations.USER_ITEM.value}
+        n_relations = 1
 
-    return np.array(filtered_train).astype(np.int64), max(allowed_relations) + 1
+    return np.array(filtered_train).astype(np.int64), n_relations
 
 
 def load_data(args):
@@ -83,7 +92,7 @@ def load_data(args):
 
     # splits
     train = data["train"] if not args.debug else data["train"][:1000].astype(np.int64)
-    train, n_relations = filter_relations(train, args)
+    train, n_relations = setup_relations(train, args)
     buffer_size = train.shape[0]
     train = tf.data.Dataset.from_tensor_slices(train)
     train.shuffle(buffer_size=buffer_size, reshuffle_each_iteration=True)
@@ -92,12 +101,7 @@ def load_data(args):
 
     # metadata
     samples = data["samples"]
-    n_users = len(samples)
-    all_items = set()
-    for v in samples.values(): all_items.update(v)
-    n_items = len(all_items)
-    logging.info(f'Dataset stats: n_users: {n_users}, n_items: {n_items}')
-    return train, dev, test, samples, n_users, n_items, n_relations, buffer_size, data
+    return train, dev, test, samples, n_relations, buffer_size, data
 
 
 def save_config(logs_dir, run_id):
@@ -124,6 +128,13 @@ def get_optimizer(args):
     return getattr(tf.keras.optimizers, args.optimizer)(learning_rate=args.lr)
 
 
+def get_quantities(data):
+    n_users = len(data["id2uid"])
+    n_items = len(data["id2iid"])
+    n_entities = data["n_entities"]
+    return n_users, n_items, n_entities
+
+
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=FLAGS.debug)
     logs_dir = Path(FLAGS.logs_dir)
@@ -141,11 +152,12 @@ def main(_):
             logging.info(e)     # Visible devices must be set before GPUs have been initialized
 
     # load data
-    train, dev, test, samples, n_users, n_items, n_relations, train_len, data = load_data(FLAGS)
+    train, dev, test, samples, n_relations, train_len, data = load_data(FLAGS)
+    n_users, n_items, n_entities = get_quantities(data)
 
-    model = get_model(n_users, n_items, n_relations, data["id2iid"])
+    model = get_model(n_entities, n_relations, data["id2iid"])
     optimizer = get_optimizer(FLAGS)
-    loss_fn = getattr(losses, FLAGS.loss_fn)(ini_neg_index=0, end_neg_index=n_users + n_items - 1, args=FLAGS)
+    loss_fn = getattr(losses, FLAGS.loss_fn)(ini_neg_index=0, end_neg_index=n_entities - 1, args=FLAGS)
     logging.info(f"Train split size: {train_len}, relations: {n_relations}")
 
     runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples,

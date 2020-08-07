@@ -22,10 +22,10 @@ from pathlib import Path
 from rudders.relations import Relations
 from rudders.datasets import movielens, keen, amazon
 from rudders.config import CONFIG
-from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle, jaccard_similarity
+from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='musicins-top50', help='Name of prep to store')
+flags.DEFINE_string('run_id', default='musicins-top10', help='Name of prep to store')
 flags.DEFINE_string('item', default='amzn-musicins', help='Item can be "keen" (user-keen interactions), '
                                                           '"gem" (keen-gem interactions), "ml-1m", '
                                                           '"amzn-musicins", "amzn-vgames"')
@@ -40,7 +40,7 @@ flags.DEFINE_boolean('add_extra_relations', default=True, help='For the amazon d
 flags.DEFINE_integer('min_user_interactions', default=5, help='Users with less than this interactions are filtered')
 flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')
 flags.DEFINE_integer('max_item_interactions', default=150, help='Items with more than this interactions are filtered')
-flags.DEFINE_integer('similarity_items_per_item', default=50, help='Amount of similarity items to add per item')
+flags.DEFINE_integer('similarity_items_per_item', default=10, help='Amount of similarity items to add per item')
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 flags.DEFINE_integer('filter_most_popular', default=-1,
                      help='Filters out most popular items. If -1 it does not filter')
@@ -124,12 +124,6 @@ def create_splits(samples, relation_id, do_random=False, seed=42):
     }
 
 
-def build_item_user_triplets(user_item_triplets):
-    """Given user-item triplets it inverts them creating item-user triplets, using the same relation since we
-    consider it symmetric"""
-    return [(item_id, relation, user_id) for user_id, relation, item_id in user_item_triplets]
-
-
 def load_item_item_distances(item_item_file_path):
     """Loads item-item distances that were precomputed with item_graph.py."""
     print(f"Loading data from {item_item_file_path}")
@@ -138,36 +132,35 @@ def load_item_item_distances(item_item_file_path):
     return data["item_item_distances"]
 
 
-def map_and_sort_distances(item_item_distances_dict, iid2id):
+def build_item_item_triplets(item_item_distances_dict, iid2id, top_k):
     """
-    Sorts distances and returns them
-    :param item_item_distances_dict: dict of src_iid: {dst_iid: distance} with graph distances
-    :param iid2id: dict of iids
-    :return: dict of iid: list of (iid, dist) ordered
-    """
-    sorted_dists = {}
-    for src_iid, dists in item_item_distances_dict.items():
-        if src_iid not in iid2id:
-            continue
-        dists = [(iid2id[dst_iid], d) for dst_iid, d in dists if dst_iid in iid2id]
-        sorted_dists[iid2id[src_iid]] = sorted(dists, key=lambda t: t[1])
-    return sorted_dists
+    Builds item item triples from the item-item distances
 
-
-def build_item_item_triplets(item_item_distances_dict, relation_id, top_k):
-    """
-    Builds item item triples from the sorted item-item distances
-
-    :param item_item_distances_dict: dict of src_iid: [(dst_iid, distance)] sorted by distance
-    :param relation_id: relation index
-    :param top_k: adds closest top_k items per item
+    :param item_item_distances_dict: dict of src_iid: [(dst_iid, distance)]
+    :param iid2id: dict of item ids
+    :param top_k: adds top_k items per item at most
     :return:
     """
     triplets = set()
     for src_iid, dists in tqdm(item_item_distances_dict.items(), desc="item_item_triplets"):
-        for dst_iid, _ in dists[:top_k]:
-            triplets.add((src_iid, relation_id, dst_iid))
-            triplets.add((dst_iid, relation_id, src_iid))
+        if src_iid not in iid2id:
+            continue
+        src_id = iid2id[src_iid]
+        sorted_dists = sorted(dists, key=lambda t: t[1])
+        added = 0
+        for dst_iid, cos_dist in sorted_dists:
+            if dst_iid not in iid2id or cos_dist > 0.3:
+                continue
+            dst_id = iid2id[dst_iid]
+            if cos_dist <= 0.1:
+                triplets.add((src_id, Relations.SEM_HIGH_SIM.value, dst_id))
+            elif 0.2 >= cos_dist > 0.1:
+                triplets.add((src_id, Relations.SEM_MEDIUM_SIM.value, dst_id))
+            else:   # 0.3 >= cos_dist > 0.2
+                triplets.add((src_id, Relations.SEM_LOW_SIM.value, dst_id))
+            added += 1
+            if added >= top_k:
+                break
     return list(triplets)
 
 
@@ -198,36 +191,53 @@ def get_co_triplets(item_metas, get_aspect_func, iid2id, relation_id):
             if co_rel_id in iid2id:
                 tail_id = iid2id[co_rel_id]
                 triplets.add((head_id, relation_id, tail_id))
-                triplets.add((tail_id, relation_id, head_id))
     return list(triplets)
 
 
-def get_category_triplets(item_metas, iid2id, relation_id, top_k=10, threshold=0.5):
+def get_category_triplets(item_metas, cat2id, iid2id, relation_id):
     """
-    Builds triplets based on categorical labels. It computes Jaccard similarity and if
-    the similarity is above the threshold, it adds the triple
+    Builds triplets based on categorical labels.
+    For each item: (item, has_category, category)
 
     :param item_metas: list of amazon metadata objects
+    :param cat2id: dict of category ids
     :param iid2id: dict of item ids
-    :param relation_id: relation index
-    :param top_k: tries to add only top_k items per item
-    :param threshold: pairs with Jaccard similarity below threshold are discarded
+    :param relation_id: relation index for has_category relation
     :return: list of triplets
     """
     triplets = set()
-    for it_meta_a in tqdm(item_metas, desc="category_triplets"):
-        sims = [(it_meta_b.id, jaccard_similarity(it_meta_a.categories, it_meta_b.categories))
-                for it_meta_b in item_metas]
-        sims = [(id_b, jac_sim) for id_b, jac_sim in sims if jac_sim >= threshold]
-        sims = sorted(sims, key=lambda x: x[1], reverse=True)
-        for it_meta_b_id, _ in sims[:top_k]:
-            if it_meta_a.id == it_meta_b_id:
-                continue
-            head_id = iid2id[it_meta_a.id]
-            tail_id = iid2id[it_meta_b_id]
-            triplets.add((head_id, relation_id, tail_id))
-            triplets.add((tail_id, relation_id, head_id))
+    for it_meta in item_metas:
+        for cat in it_meta.categories:
+            item_id = iid2id[it_meta.id]
+            cat_id = cat2id[cat]
+            triplets.add((item_id, relation_id, cat_id))
     return list(triplets)
+
+
+def get_brand_triplets(item_metas, brand2id, iid2id, relation_id):
+    """
+    Builds triplets based on brands.
+    For each item: (item, has_brand, brand)
+
+    :param item_metas: list of amazon metadata objects
+    :param brand2id: dict of brand ids
+    :param iid2id: dict of item ids
+    :param relation_id: relation index for has_brand relation
+    :return: list of triplets
+    """
+    triplets = set()
+    for it_meta in item_metas:
+        if it_meta.brand:
+            item_id = iid2id[it_meta.id]
+            brand_id = brand2id[it_meta.brand]
+            triplets.add((item_id, relation_id, brand_id))
+    return list(triplets)
+
+
+def get_cat2id(item_metas, n_entities):
+    """Extracts all categories from item metada and maps them to an id"""
+    categories = set([cat for it_meta in item_metas for cat in it_meta.categories])
+    return {cate: n_entities + i for i, cate in enumerate(categories)}
 
 
 def main(_):
@@ -278,19 +288,12 @@ def main(_):
     data["id2uid"] = {v: k for k, v in uid2id.items()}
     data["id2iid"] = {v: k for k, v in iid2id.items()}
     print(f"User item interaction triplets: {len(data['train'])}")
-
-    # inverts user-item relation
-    item_user_triplets = build_item_user_triplets(data['train'])
-    add_to_train_split(data, item_user_triplets)
-    print(f"Added item-user triplets: {len(item_user_triplets)}")
+    n_entities = len(uid2id) + len(iid2id)
 
     # if there is an item-item graph, we preprocess it
     if FLAGS.item_item_file:
         item_item_distances_dict = load_item_item_distances(FLAGS.item_item_file)
-        item_item_distances_dict = map_and_sort_distances(item_item_distances_dict, iid2id)
-        print("Creating semantic triplets")
-        item_item_triplets = build_item_item_triplets(item_item_distances_dict, Relations.SEMANTIC.value,
-                                                      FLAGS.similarity_items_per_item)
+        item_item_triplets = build_item_item_triplets(item_item_distances_dict, iid2id, FLAGS.similarity_items_per_item)
         add_to_train_split(data, item_item_triplets)
         print(f"Added item-item similarity triplets: {len(item_item_triplets)}")
 
@@ -310,11 +313,23 @@ def main(_):
         print(f"Added co-view triplets: {len(coview_triplets)}")
 
         # category relations
-        category_triplets = get_category_triplets(item_metas, iid2id, Relations.CATEGORY.value,
-                                                  top_k=FLAGS.similarity_items_per_item)
+        cat2id = get_cat2id(item_metas, n_entities)
+        category_triplets = get_category_triplets(item_metas, cat2id, iid2id, Relations.CATEGORY.value)
         add_to_train_split(data, category_triplets)
         print(f"Added categorical triplets: {len(category_triplets)}")
+        n_entities += len(cat2id)
+        data["id2cat"] = {cid: cat for cat, cid in cat2id.items()}
 
+        # brand relations
+        all_brands = set([it_meta.brand for it_meta in item_metas if it_meta.brand])
+        brand2id = {br: n_entities + i for i, br in enumerate(all_brands)}
+        brand_triplets = get_brand_triplets(item_metas, brand2id, iid2id, Relations.BRAND.value)
+        add_to_train_split(data, brand_triplets)
+        print(f"Added brand triplets: {len(brand_triplets)}")
+        n_entities += len(brand2id)
+        data["id2brand"] = {bid: brand for brand, bid in brand2id.items()}
+
+    data["n_entities"] = n_entities
     # creates directories to save preprocessed data
     print(f"Final training split: {len(data['train'])} triplets")
     prep_path = Path(CONFIG["string"]["prep_dir"][1])

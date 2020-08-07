@@ -170,6 +170,7 @@ class AmazonItem:
         self.cobuys = metadata.get("also_buy", [])
         self.coviews = metadata.get("also_view", [])
         self.categories = metadata.get("category", [])
+        self.brand = metadata.get("brand", "")
 
 
 def load_metadata(dataset_path, item_key):

@@ -55,10 +55,12 @@ CONFIG = {
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
         'save_model': ('Whether to save the model weights', True),
+        'invert_relations': ('For each triple (h, r, t) it also adds (t, r^-1, h)', True),
         'use_semantic_relation': ('Whether to use this relation or not', False),
         'use_cobuy_relation': ('Whether to use this relation or not', False),
-        'use_coview_relation': ('Whether to use this relation or not', False),
+        'use_coview_relation': ('Whether to use this relation or not', True),
         'use_category_relation': ('Whether to use this relation or not', False),
+        'use_brand_relation': ('Whether to use this relation or not', True),
         'unique_relation': ('Whether to convert allowed relations into only one', False),
     }
 }

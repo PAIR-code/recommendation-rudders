@@ -26,14 +26,13 @@ class CFModel(tf.keras.Model, abc.ABC):
     different types of relations between entities (users and items)
     """
 
-    def __init__(self, n_users, n_items, n_relations, item_ids, args, train_bias=True):
+    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=True):
         super().__init__()
         self.dims = args.dims
         self.item_ids = np.reshape(np.array(item_ids), (-1, 1))
         self.initializer = getattr(tf.keras.initializers, args.initializer)(minval=-0.01, maxval=0.01)
         self.entity_regularizer = getattr(regularizers, args.regularizer)(args.entity_reg)
         self.relation_regularizer = getattr(regularizers, args.regularizer)(args.relation_reg)
-        n_entities = n_users + n_items
         self.entities = tf.keras.layers.Embedding(
             input_dim=n_entities,
             output_dim=self.dims,
@@ -143,11 +142,12 @@ class CFModel(tf.keras.Model, abc.ABC):
             return score + lhs_biases + tf.transpose(rhs_biases)
         return score + lhs_biases + rhs_biases
 
-    def random_eval(self, split_data, samples, batch_size=500, num_rand=100, seed=1234):
+    def random_eval(self, split_data, excluded_items, samples, batch_size=500, num_rand=100, seed=1234):
         """
         Compute ranking-based evaluation metrics in both full and random settings.
 
-        :param split_data: Tensor of size n_examples x 2 containing pairs' indices.
+        :param split_data: Dataset with tensor of size n_examples x 3 containing pairs' indices.
+        :param excluded_items: List of item ids to be excluded from the evaluation
         :param samples: Dict representing items to skip per user for evaluation in the filtered setting.
         :param batch_size: batch size to use to compute scores.
         :param num_rand: number of negative samples to draw.
@@ -161,9 +161,11 @@ class CFModel(tf.keras.Model, abc.ABC):
         batch_size = min(batch_size, total_examples)
         ranks = np.ones(total_examples)
         ranks_random = np.ones(total_examples)
+
         for counter, input_tensor in enumerate(split_data.batch(batch_size)):
             targets = self.call(input_tensor).numpy()
             scores = self.call(input_tensor, all_items=True).numpy()
+            scores[:, excluded_items] = -1e6
             scores_random = np.ones(shape=(scores.shape[0], num_rand))
             for i, query in enumerate(input_tensor):
                 query = query.numpy()

@@ -30,8 +30,8 @@ class BaseEuclidean(CFModel, ABC):
 class SMFactor(BaseEuclidean):
     """Collaborative Metric Learning model based on Matrix Factorization."""
 
-    def __init__(self, n_users, n_items, n_relations, item_ids, args):
-        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias=False)
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args, train_bias=False)
         self.relations = None
 
     def similarity_score(self, lhs, rhs, all_items):
@@ -44,8 +44,8 @@ class SMFactor(BaseEuclidean):
 class DistEuclidean(BaseEuclidean):
     """Collaborative Metric Learning model based on Euclidean Distance."""
 
-    def __init__(self, n_users, n_items, n_relations, item_ids, args):
-        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias=False)
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args, train_bias=False)
         self.relations = None
 
     def similarity_score(self, lhs, rhs, all_items):
@@ -54,8 +54,8 @@ class DistEuclidean(BaseEuclidean):
 
 class MultiRelEuclidean(BaseEuclidean):
 
-    def __init__(self, n_users, n_items, n_relations, item_ids, args):
-        super().__init__(n_users, n_items, n_relations, item_ids, args, train_bias=True)
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
         self.relation_transforms = tf.keras.layers.Embedding(
             input_dim=n_relations,
             output_dim=self.dims,

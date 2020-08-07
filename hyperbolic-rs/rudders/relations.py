@@ -18,7 +18,10 @@ from enum import Enum
 class Relations(Enum):
     """Allowed types of relations that models support"""
     USER_ITEM = 0
-    SEMANTIC = 1
-    COBUY = 2
-    COVIEW = 3
-    CATEGORY = 4
+    COBUY = 1
+    COVIEW = 2
+    CATEGORY = 3
+    BRAND = 4
+    SEM_HIGH_SIM = 5
+    SEM_MEDIUM_SIM = 6
+    SEM_LOW_SIM = 7

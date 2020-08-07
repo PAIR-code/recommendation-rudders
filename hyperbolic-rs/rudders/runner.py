@@ -38,6 +38,8 @@ class Runner:
         self.id2iid = id2iid
         self.iid2name = iid2name
         self.summary = tf.summary.create_file_writer(args.logs_dir + f"/summary/{args.run_id}")
+        self.excluded_dev = self.get_excluded_item_ids(self.dev)
+        self.excluded_test = self.get_excluded_item_ids(self.test)
 
     def run(self):
         best_hr_at_10 = best_epoch = early_stopping_counter = -1
@@ -63,7 +65,7 @@ class Runner:
                     tf.summary.scalar('dev/loss', dev_loss, step=epoch)
 
                 # compute validation metrics
-                metric_all, _ = self.compute_metrics(self.dev, "dev", epoch)
+                metric_all, _ = self.compute_metrics(self.dev, self.excluded_dev, "dev", epoch)
 
                 # early stopping
                 hr_at_10 = metric_all["HR@10"]
@@ -88,8 +90,10 @@ class Runner:
         # validation metrics
         self.print_samples()
         logging.info(f"Final best performance from {best_epoch} epochs")
-        dev_metric_all, dev_metric_random = self.compute_metrics(self.dev, "dev", best_epoch, write_summary=False)
-        test_metric_all, test_metric_random = self.compute_metrics(self.test, "test", best_epoch, write_summary=False)
+        dev_metric_all, dev_metric_random = self.compute_metrics(self.dev, self.excluded_dev, "dev", best_epoch,
+                                                                 write_summary=False)
+        test_metric_all, test_metric_random = self.compute_metrics(self.test, self.excluded_test, "test", best_epoch,
+                                                                   write_summary=False)
 
         self.export_metric(dev_metric_all, dev_metric_random, "dev")
         self.export_metric(test_metric_all, test_metric_random, "test")
@@ -119,9 +123,9 @@ class Runner:
 
         return total_loss / counter
 
-    def compute_metrics(self, split, title, epoch, write_summary=True):
+    def compute_metrics(self, split, excluded_items, title, epoch, write_summary=True):
         random_items = 100
-        rank_all, rank_random = self.model.random_eval(split, self.samples, num_rand=random_items,
+        rank_all, rank_random = self.model.random_eval(split, excluded_items, self.samples, num_rand=random_items,
                                                        batch_size=self.args.batch_size)
         metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
 
@@ -186,3 +190,14 @@ class Runner:
 
         file = Path(self.args.logs_dir) / (self.args.results_file + f"-{split}.csv")
         pd.DataFrame.from_dict(out).to_csv(file, mode="a", header=not file.exists())
+
+    def get_excluded_item_ids(self, split):
+        """
+        The evaluation is made only over the items that appear in the split.
+        This method collect the ids of all the items that DO NOT appear in the split, so they can be
+        excluded from the evaluation
+        :param split: Dataset with tensor of triplets
+        :return: list of excluded items
+        """
+        target_item_ids = [triplet[-1].item() for triplet in list(split.as_numpy_iterator())]
+        return list(set(self.id2iid.keys()) - set(target_item_ids))
