@@ -76,7 +76,7 @@ def build_itemid2name(dataset_path, item_key):
     """
     metadata_file = FILES[item_key][1]
     with gzip.open(str(dataset_path / metadata_file), 'r') as f:
-        return {meta["asin"]: meta.get("title", "None") for meta in map(json.loads, f)}
+        return {meta["asin"]: meta.get("title", "None")[:100] for meta in map(json.loads, f)}
 
 
 def load_reviews(filepath, revs_to_keep=10):
