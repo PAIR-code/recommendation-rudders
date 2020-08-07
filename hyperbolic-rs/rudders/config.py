@@ -59,5 +59,6 @@ CONFIG = {
         'use_cobuy_relation': ('Whether to use this relation or not', False),
         'use_coview_relation': ('Whether to use this relation or not', False),
         'use_category_relation': ('Whether to use this relation or not', False),
+        'unique_relation': ('Whether to convert allowed relations into only one', False),
     }
 }

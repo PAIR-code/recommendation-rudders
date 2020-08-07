@@ -67,6 +67,11 @@ def filter_relations(train, args):
     if args.use_category_relation:
         allowed_relations.add(Relations.CATEGORY.value)
     filtered_train = [triplet for triplet in train if triplet[1] in allowed_relations]
+
+    if args.unique_relation:
+        filtered_train = [(head, Relations.USER_ITEM.value, tail) for head, relation, tail in filtered_train]
+        allowed_relations = {Relations.USER_ITEM.value}
+
     return np.array(filtered_train).astype(np.int64), max(allowed_relations) + 1
 
 
@@ -92,7 +97,7 @@ def load_data(args):
     for v in samples.values(): all_items.update(v)
     n_items = len(all_items)
     logging.info(f'Dataset stats: n_users: {n_users}, n_items: {n_items}')
-    return train, dev, test, samples, n_users, n_items, n_relations, data
+    return train, dev, test, samples, n_users, n_items, n_relations, buffer_size, data
 
 
 def save_config(logs_dir, run_id):
@@ -136,11 +141,12 @@ def main(_):
             logging.info(e)     # Visible devices must be set before GPUs have been initialized
 
     # load data
-    train, dev, test, samples, n_users, n_items, n_relations, data = load_data(FLAGS)
+    train, dev, test, samples, n_users, n_items, n_relations, train_len, data = load_data(FLAGS)
 
     model = get_model(n_users, n_items, n_relations, data["id2iid"])
     optimizer = get_optimizer(FLAGS)
     loss_fn = getattr(losses, FLAGS.loss_fn)(ini_neg_index=0, end_neg_index=n_users + n_items - 1, args=FLAGS)
+    logging.info(f"Train split size: {train_len}, relations: {n_relations}")
 
     runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples,
                     id2uid=data["id2uid"], id2iid=data["id2iid"], iid2name=data["iid2name"])
