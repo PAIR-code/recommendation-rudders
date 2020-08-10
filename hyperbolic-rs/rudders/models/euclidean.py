@@ -14,25 +14,27 @@
 
 from abc import ABC
 import tensorflow as tf
-from rudders.models.base import CFModel
+from rudders.models.base import CFModel, BaseChami
+from rudders.emath import euclidean_sq_distance
 
 
 class BaseEuclidean(CFModel, ABC):
     """Base model class for Euclidean embeddings."""
 
-    def get_lhs(self, input_tensor):
-        return self.entities(input_tensor[:, 0])
-
     def get_rhs(self, input_tensor):
         return self.entities(input_tensor[:, -1])
 
+    def similarity_score(self, lhs, rhs, all_items):
+        return -euclidean_sq_distance(lhs, rhs, all_items)
 
-class SMFactor(BaseEuclidean):
-    """Collaborative Metric Learning model based on Matrix Factorization."""
 
-    def __init__(self, n_entities, n_relations, item_ids, args):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias=False)
-        self.relations = None
+class CTDecomp(BaseEuclidean):
+    """Canonical tensor decomposition."""
+
+    def get_lhs(self, input_tensor):
+        entities = self.entities(input_tensor[:, 0])
+        relations = self.relations(input_tensor[:, 1])
+        return tf.multiply(entities, relations)
 
     def similarity_score(self, lhs, rhs, all_items):
         """Score based on dot product"""
@@ -41,18 +43,21 @@ class SMFactor(BaseEuclidean):
         return tf.reduce_sum(lhs * rhs, axis=-1, keepdims=True)
 
 
-class DistEuclidean(BaseEuclidean):
-    """Collaborative Metric Learning model based on Euclidean Distance."""
+class TransE(BaseEuclidean):
+    """Model based on Euclidean Translations (Bordes et al. 2013).
+    To establish a closer comparison with the hyperbolic model, we make minor modifications
+    from the original Bordes' model.
+     - No L2 normalization is applied on the entity embeddings
+     - The loss is based on squared Euclidean distance instead of 'just' Euclidean distance
+    """
 
-    def __init__(self, n_entities, n_relations, item_ids, args):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias=False)
-        self.relations = None
-
-    def similarity_score(self, lhs, rhs, all_items):
-        return -euclidean_sq_distance(lhs, rhs, all_items)
+    def get_lhs(self, input_tensor):
+        entities = self.entities(input_tensor[:, 0])
+        relations = self.relations(input_tensor[:, 1])
+        return entities + relations
 
 
-class MultiRelEuclidean(BaseEuclidean):
+class MuREuclidean(BaseEuclidean):
 
     def __init__(self, n_entities, n_relations, item_ids, args):
         super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
@@ -73,32 +78,11 @@ class MultiRelEuclidean(BaseEuclidean):
         relation_additions = self.relations(input_tensor[:, 1])
         return tails + relation_additions
 
-    def similarity_score(self, lhs, rhs, all_items):
-        return -euclidean_sq_distance(lhs, rhs, all_items)
 
+class ChamiEuclidean(BaseChami, BaseEuclidean):
+    """Euclidean attention model that combines reflections and rotations from Chami et al. 2020."""
 
-def euclidean_sq_distance(x, y, all_pairs=False):
-    """Computes Euclidean squared distance.
-
-    Args:
-      x: Tensor of size B1 x d
-      y: Tensor of size (B1 x) B2 x d if rhs_dep_lhs = False (True)
-      all_pairs: boolean indicating whether to compute all pairwise distances or not. If eval_mode=False, must
-      have B1=B2.
-
-    Returns:
-      Tensor of size B1 x B2 if eval_mode=True, otherwise Tensor of size B1 x 1.
-    """
-    x2 = tf.math.reduce_sum(x * x, axis=-1, keepdims=True)
-    y2 = tf.math.reduce_sum(y * y, axis=-1, keepdims=True)
-    if all_pairs:
-        y2 = tf.transpose(y2)
-        xy = tf.linalg.matmul(x, y, transpose_b=True)
-    else:
-        xy = tf.math.reduce_sum(x * y, axis=-1, keepdims=True)
-    return x2 + y2 - 2 * xy
-
-
-def euclidean_distance(x, y, all_pairs=False):
-    sq_dist = euclidean_sq_distance(x, y, all_pairs)
-    return tf.math.sqrt(tf.maximum(sq_dist, tf.zeros_like(sq_dist)))
+    def get_lhs(self, input_tensor):
+        head_embeds = self.get_heads(input_tensor)
+        rel_embeds = self.relations(input_tensor[:, 1])
+        return head_embeds + rel_embeds

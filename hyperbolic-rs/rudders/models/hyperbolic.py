@@ -14,14 +14,14 @@
 
 from abc import ABC
 import tensorflow as tf
-from rudders.models.base import CFModel
+from rudders.models.base import CFModel, BaseChami
 from rudders import hmath
 
 
 class BaseHyperbolic(CFModel, ABC):
     """Base model class for hyperbolic embeddings with parameters defined in tangent space."""
 
-    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=True):
+    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=False):
         super().__init__(n_entities, n_relations, item_ids, args, train_bias)
         # inits c to a value that will result in softplus(c) == curvature
         init_value = tf.math.log(tf.math.exp(tf.keras.backend.constant(args.curvature)) - 1)
@@ -29,9 +29,6 @@ class BaseHyperbolic(CFModel, ABC):
 
     def get_c(self):
         return tf.math.softplus(self.c)
-
-    def get_lhs(self, input_tensor):
-        return hmath.expmap0(self.entities(input_tensor[:, 0]), self.get_c())
 
     def get_rhs(self, input_tensor):
         return hmath.expmap0(self.entities(input_tensor[:, -1]), self.get_c())
@@ -43,13 +40,17 @@ class BaseHyperbolic(CFModel, ABC):
         return -hmath.hyp_distance(lhs, rhs, self.get_c())**2
 
 
-class DistHyperbolic(BaseHyperbolic):
-    def __init__(self, n_entities, n_relations, item_ids, args):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias=False)
-        self.relations = None
+class TransH(BaseHyperbolic):
+    """Model based on hyperbolic translation with parameters defined in tangent space."""
+
+    def get_lhs(self, input_tensor):
+        c = self.get_c()
+        head = hmath.expmap0(self.entities(input_tensor[:, 0]), c)
+        relations = hmath.expmap0(self.relations(input_tensor[:, 1]), c)
+        return hmath.mobius_add(head, relations, c)
 
 
-class MultiRelHyperbolic(BaseHyperbolic):
+class MuRHyperbolic(BaseHyperbolic):
     def __init__(self, n_entities, n_relations, item_ids, args):
         super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
         self.relation_transforms = tf.keras.layers.Embedding(
@@ -68,3 +69,13 @@ class MultiRelHyperbolic(BaseHyperbolic):
         tails = hmath.expmap0(self.entities(input_tensor[:, -1]), self.get_c())
         relation_additions = hmath.expmap0(self.relations(input_tensor[:, 1]), self.get_c())
         return hmath.mobius_add(tails, relation_additions, self.get_c())
+
+
+class ChamiHyperbolic(BaseChami, BaseHyperbolic):
+    """Hyperbolic attention model that combines reflections and rotations from Chami et al. 2020."""
+
+    def get_lhs(self, input_tensor):
+        c = self.get_c()
+        head_embeds = hmath.expmap0(self.get_heads(input_tensor), c)
+        relation_embeds = hmath.expmap0(self.relations(input_tensor[:, 1]), c)
+        return hmath.mobius_add(head_embeds, relation_embeds, c)

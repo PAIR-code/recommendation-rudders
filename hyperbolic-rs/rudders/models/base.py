@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import abc
+
 import numpy as np
 import tensorflow as tf
 from rudders.relations import Relations
 from rudders.models import regularizers
+from rudders.emath import apply_rotation, apply_reflection
 
 
 class CFModel(tf.keras.Model, abc.ABC):
@@ -26,11 +28,11 @@ class CFModel(tf.keras.Model, abc.ABC):
     different types of relations between entities (users and items)
     """
 
-    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=True):
+    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=False):
         super().__init__()
         self.dims = args.dims
         self.item_ids = np.reshape(np.array(item_ids), (-1, 1))
-        self.initializer = getattr(tf.keras.initializers, args.initializer)(minval=-0.01, maxval=0.01)
+        self.initializer = getattr(tf.keras.initializers, args.initializer)
         self.entity_regularizer = getattr(regularizers, args.regularizer)(args.entity_reg)
         self.relation_regularizer = getattr(regularizers, args.regularizer)(args.relation_reg)
         self.entities = tf.keras.layers.Embedding(
@@ -182,3 +184,56 @@ class CFModel(tf.keras.Model, abc.ABC):
             ranks_random[ini:end] += np.sum((scores_random >= targets), axis=1)
 
         return ranks, ranks_random
+
+
+class BaseChami(CFModel, abc.ABC):
+    """Euclidean attention model that combines reflections and rotations from Chami et al. 2020."""
+
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
+
+        self.reflections = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='reflection_weights')
+
+        self.rotations = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='rotation_weights')
+
+        self.attention_vec = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='attention_embeddings')
+        self.scale = tf.keras.backend.ones(1) / np.sqrt(self.dims)
+
+    def reflect_entities(self, entity, ref):
+        queries = apply_reflection(ref, entity)
+        return tf.reshape(queries, (-1, 1, self.dims))
+
+    def rotate_entities(self, entity, rot):
+        queries = apply_rotation(rot, entity)
+        return tf.reshape(queries, (-1, 1, self.dims))
+
+    def get_heads(self, input_tensor):
+        heads = self.entities(input_tensor[:, 0])
+        rotations = self.rotations(input_tensor[:, 1])
+        reflections = self.reflections(input_tensor[:, 1])
+        attn_vec = self.attention_vec(input_tensor[:, 1])
+        ref_q = self.reflect_entities(heads, reflections)
+        rot_q = self.rotate_entities(heads, rotations)
+
+        # self-attention mechanism
+        cands = tf.concat([ref_q, rot_q], axis=1)
+        attn_vec = tf.reshape(attn_vec, (-1, 1, self.dims))
+        att_weights = tf.reduce_sum(attn_vec * cands * self.scale, axis=-1, keepdims=True)
+        att_weights = tf.nn.softmax(att_weights, axis=1)
+        res = tf.reduce_sum(att_weights * cands, axis=1)
+        return res

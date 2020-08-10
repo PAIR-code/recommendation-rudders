@@ -15,7 +15,7 @@ import tensorflow as tf
 import numpy as np
 from collections import namedtuple
 from unittest.mock import MagicMock
-from rudders.models import DistEuclidean
+from rudders.models import TransE
 from rudders.losses import BCEUserItemLoss, BCEItemItemLoss, BCECompositeLoss
 from rudders.utils import set_seed
 
@@ -57,7 +57,7 @@ class TestLoss(tf.test.TestCase):
         self.item_ids = [0, 1]
 
     def get_model(self, n_users, n_items):
-        return DistEuclidean(n_users, n_items, self.n_relations, self.item_ids, self.flags)
+        return TransE(n_users, n_items, self.n_relations, self.item_ids, self.flags)
 
     def test_high_score_pos_low_score_neg_low_loss(self):
         """Loss: margin + dist_pos - dist_neg"""
