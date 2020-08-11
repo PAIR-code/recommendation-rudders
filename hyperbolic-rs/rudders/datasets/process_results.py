@@ -16,7 +16,7 @@ import argparse
 import pandas as pd
 from pathlib import Path
 RUN_ID = "run_id"
-HR_AT_10 = "HR@10"
+HR_AT_10 = "HR@10_r"
 
 
 if __name__ == '__main__':

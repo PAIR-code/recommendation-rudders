@@ -65,10 +65,10 @@ class Runner:
                     tf.summary.scalar('dev/loss', dev_loss, step=epoch)
 
                 # compute validation metrics
-                metric_all, _ = self.compute_metrics(self.dev, self.excluded_dev, "dev", epoch)
+                _, metric_random = self.compute_metrics(self.dev, self.excluded_dev, "dev", epoch)
 
                 # early stopping
-                hr_at_10 = metric_all["HR@10"]
+                hr_at_10 = metric_random["HR@10"]
                 if hr_at_10 > best_hr_at_10:
                     best_hr_at_10 = hr_at_10
                     early_stopping_counter = 0
