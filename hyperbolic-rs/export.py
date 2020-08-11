@@ -99,7 +99,6 @@ def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, 
     meta, coords = ["type\ttitle\tinteractions\tclosest"], []
     for i, embed in enumerate(user_embeds):
         coords.append("\t".join([str(x) for x in embed]))
-
         # interactions are the items that each user is interacting with
         # samples contain the ids of the items, and id2title the title of each item
         interactions = [id2title.get(item_id, "None").replace("\t", "") for item_id in samples[i]]

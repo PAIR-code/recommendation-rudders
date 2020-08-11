@@ -43,23 +43,30 @@ flags.DEFINE_float('min_matrix_distance', default=0.1, help='Minimum distance al
                                                             'this threshold will be clamped to min_distance')
 
 
-def map_item_ids_to_sequential_ids(samples):
+def map_raw_ids_to_sequential_ids(samples):
     """
     For each unique user or item id, this function creates a mapping to a sequence of number starting in 0.
     This will be the index of the embeddings in the model.
+
+    Items ids will be from 0 to n_items - 1.
+    Users ids will be from n_items to n_items + n_users - 1
+    This condition is required to later build the distance matrix
 
     :param samples: dict of <user_id1>: [<item_id1>, <item_id2>, ...]
     :return: dicts of {<user_idX>: indexY} and {<item_idX>: indexW}
     """
     uid2id, iid2id = {}, {}
     sorted_samples = sorted(samples.items(), key=lambda x: x[0])
-    for uid, ints in sorted_samples:
-        if uid not in uid2id:
-            uid2id[uid] = len(uid2id)
+    # first sets items ids only
+    for _, ints in sorted_samples:
         sorted_ints = sorted(ints)
         for iid in sorted_ints:
             if iid not in iid2id:
                 iid2id[iid] = len(iid2id)
+    # users ids come after item ids
+    for uid, _ in sorted_samples:
+        if uid not in uid2id:
+            uid2id[uid] = len(uid2id) + len(iid2id)
 
     return uid2id, iid2id
 
@@ -151,7 +158,6 @@ def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False, min
             if src_iid != dst_iid and dst_iid in iid2id:
                 dst_index = iid2id[dst_iid]
                 distance_matrix[src_index, dst_index] = max(distance, min_distance)
-
     if do_sparse:
         return sparse.csr_matrix(distance_matrix)
     return distance_matrix
@@ -189,7 +195,7 @@ def main(_):
         plot_graph(samples)
         return
 
-    uid2id, iid2id = map_item_ids_to_sequential_ids(samples)
+    uid2id, iid2id = map_raw_ids_to_sequential_ids(samples)
 
     id_samples = {}
     for uid, ints in samples.items():

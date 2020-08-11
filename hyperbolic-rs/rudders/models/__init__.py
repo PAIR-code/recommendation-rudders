@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rudders.models.euclidean import DistEuclidean, SMFactor
-from rudders.models.hyperbolic import DistHyperbolic, DistanceHyperbolicDistortion, \
-    DistanceHyperbolicTangentSpaceDistortion
+from rudders.models.base import Relations
+from rudders.models.euclidean import DistEuclidean, SMFactor, MultiRelEuclidean
+from rudders.models.hyperbolic import DistHyperbolic, MultiRelHyperbolic
