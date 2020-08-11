@@ -13,7 +13,9 @@
 # limitations under the License.
 """Loss functions for CF with support for optional negative sampling."""
 import abc
+
 import tensorflow as tf
+from rudders.models import Relations
 
 
 class LossFunction(abc.ABC):
@@ -94,3 +96,14 @@ class HingeLoss(NegativeSampleLoss):
             neg_score = model(neg_input_batch)
             loss = loss + tf.reduce_mean(tf.nn.relu(self.margin - pos_score + neg_score))
         return loss
+
+
+class HingeCompositeLoss(CompositeLoss):
+    """This class allows to compose a loss function made of different loss functions, resulting in a
+    multi-task loss with different criteria."""
+
+    def __init__(self, n_users, n_items, args, **kwargs):
+        super().__init__()
+        self.losses = [HingeUserItemLoss(n_users, n_items, args), HingeItemUserLoss(n_users, n_items, args)]
+        if args.semantic_gamma > 0:
+            self.losses.append(HingeItemItemLoss(n_users, n_items, args, **kwargs))

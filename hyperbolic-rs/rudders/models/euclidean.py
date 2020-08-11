@@ -30,7 +30,7 @@ class BaseEuclidean(CFModel, ABC):
 
 class CTDecomp(BaseEuclidean):
     """Canonical tensor decomposition."""
-
+    
     def get_lhs(self, input_tensor):
         entities = self.entities(input_tensor[:, 0])
         relations = self.relations(input_tensor[:, 1])

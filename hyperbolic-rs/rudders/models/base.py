@@ -20,6 +20,14 @@ from rudders.models import regularizers
 from rudders.emath import apply_rotation, apply_reflection
 
 
+# TODO: define relations in preprocessing, which will simplify losses as well
+class Relations(Enum):
+    """Allowed types of relations that models support"""
+    USER_ITEM = 0
+    ITEM_USER = 1
+    ITEM_ITEM = 2
+
+
 class CFModel(tf.keras.Model, abc.ABC):
     """Abstract collaborative filtering embedding model class.
     Module to define basic operations in CF embedding models.
