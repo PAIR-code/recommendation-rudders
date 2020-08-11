@@ -51,6 +51,7 @@ class TransH(BaseHyperbolic):
 
 
 class MuRHyperbolic(BaseHyperbolic):
+    """Model based on Balazevic et al. (2019) for multi relational graph embeddings"""
     def __init__(self, n_entities, n_relations, item_ids, args):
         super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
         self.relation_transforms = tf.keras.layers.Embedding(
