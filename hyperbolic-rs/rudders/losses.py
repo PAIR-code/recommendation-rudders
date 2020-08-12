@@ -68,7 +68,7 @@ class BCELoss(NegativeSampleLoss):
     """
     def __init__(self, ini_neg_index, end_neg_index, args):
         super().__init__(ini_neg_index, end_neg_index, args)
-        self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.SUM)
 
     def calculate_loss(self, model, input_batch):
         pos_score = model(input_batch)
@@ -77,7 +77,8 @@ class BCELoss(NegativeSampleLoss):
             neg_input_batch = self.build_negative_input_batch(input_batch)
             neg_score = model(neg_input_batch)
             loss = loss + self.bce(tf.zeros_like(pos_score), neg_score)
-        return loss
+        n_samples = len(input_batch) * (1 + self.neg_sample_size)
+        return loss / n_samples
 
 
 class HingeLoss(NegativeSampleLoss):
