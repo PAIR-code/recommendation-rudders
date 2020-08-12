@@ -77,7 +77,7 @@ class BCELoss(NegativeSampleLoss):
             neg_input_batch = self.build_negative_input_batch(input_batch)
             neg_score = model(neg_input_batch)
             loss = loss + self.bce(tf.zeros_like(pos_score), neg_score)
-        n_samples = len(input_batch) * (1 + self.neg_sample_size)
+        n_samples = tf.cast(len(input_batch) * (1 + self.neg_sample_size), tf.float64)
         return loss / n_samples
 
 
