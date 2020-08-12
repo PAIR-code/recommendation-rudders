@@ -20,7 +20,7 @@ CONFIG = {
         'prep_name': ('Name of prep file to load', 'musicins-top10'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
-        'model': ('Model', 'ChamiHyperbolic'),
+        'model': ('Model', 'RotatE'),
         'loss_fn': ('Loss function to use', 'BCELoss'),
         'initializer': ('Which initializer to use', 'GlorotNormal'),
         'regularizer': ('Regularizer', 'L2Regularizer'),

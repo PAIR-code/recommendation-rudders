@@ -28,8 +28,8 @@ class BaseEuclidean(CFModel, ABC):
         return -euclidean_sq_distance(lhs, rhs, all_items)
 
 
-class CTDecomp(BaseEuclidean):
-    """Canonical tensor decomposition."""
+class SimpleFactor(BaseEuclidean):
+    """Simple factorization of entity and relation embeddings."""
     
     def get_lhs(self, input_tensor):
         entities = self.entities(input_tensor[:, 0])
