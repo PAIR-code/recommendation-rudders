@@ -71,12 +71,12 @@ def build_item_embeds(item_text, use_url, weight_first_embedding=False):
     """
     use_model = hub.load(use_url)
     result = {}
+    first_embed_weight = 2 if weight_first_embedding else 1     # gives higher weight to first embedding
     for iid, sents in tqdm(item_text.items(), total=len(item_text)):
         embs = use_model(sents)
 
         weights = np.ones([1, len(embs)])
-        if weight_first_embedding:  # gives higher weight to first embedding
-            weights[0, 0] = 2
+        weights[0, 0] = first_embed_weight
         weights = tf.convert_to_tensor(weights, dtype=tf.float32)
         weights = tf.keras.activations.softmax(weights, axis=-1)
         item_embeds = tf.transpose(weights) * embs

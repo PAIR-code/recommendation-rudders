@@ -17,11 +17,13 @@ from enum import Enum
 
 class Relations(Enum):
     """Allowed types of relations that models support"""
-    USER_ITEM = 0
-    COBUY = 1
-    COVIEW = 2
-    CATEGORY = 3
-    BRAND = 4
-    SEM_HIGH_SIM = 5
-    SEM_MEDIUM_SIM = 6
-    SEM_LOW_SIM = 7
+    USER_ITEM = 0               # user item interactions
+    COBUY = 1                   # items that were co-bought with other items
+    COVIEW = 2                  # items that were co-viewed with other items
+    CATEGORY = 3                # item has-category categ_name relation
+    BRAND = 4                   # item has-brand brand_name relation
+    # semantic similarity between items.
+    # It is measured as the cosine similarity between semantic item embeddings
+    SEM_HIGH_SIM = 5            # high semantic similarity: cosine similarity between 0.9 and 1
+    SEM_MEDIUM_SIM = 6          # medium semantic similarity: cosine similarity between 0.8 and 0.9
+    SEM_LOW_SIM = 7             # low semantic similarity: cosine similarity between 0.7 and 0.8

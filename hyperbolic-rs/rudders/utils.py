@@ -93,3 +93,16 @@ def save_as_pickle(save_path, data):
     """
     with open(str(save_path), 'wb') as fp:
         pickle.dump(data, fp)
+
+
+def add_to_train_split(data, triplets):
+    """
+    Adds the given list of triplets to the training data.
+    Modifies data in-place.
+    Post-condition: train data has added triplets
+    :param data: splits with train data
+    :param triplets: list of triplets
+    """
+    train = data["train"]
+    triplets = np.array(triplets).astype('int64')
+    data["train"] = np.concatenate((train, triplets), axis=0)

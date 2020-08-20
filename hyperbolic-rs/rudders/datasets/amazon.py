@@ -14,7 +14,6 @@
 """File with amazon dataset specific functions to collect user-item interactions"""
 import json
 import gzip
-from pathlib import Path
 
 # Dictionary with item key: (reviews_file, item_metadata)
 FILES = {

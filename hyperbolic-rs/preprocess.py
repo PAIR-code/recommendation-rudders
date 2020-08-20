@@ -20,12 +20,12 @@ import random
 from tqdm import tqdm
 from pathlib import Path
 from rudders.relations import Relations
-from rudders.datasets import movielens, keen, amazon
+from rudders.datasets import movielens, keen, amazon, amazon_relations
 from rudders.config import CONFIG
-from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
+from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle, add_to_train_split
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='musicins-top10', help='Name of prep to store')
+flags.DEFINE_string('run_id', default='foobar', help='Name of prep to store')
 flags.DEFINE_string('item', default='amzn-musicins', help='Item can be "keen" (user-keen interactions), '
                                                           '"gem" (keen-gem interactions), "ml-1m", '
                                                           '"amzn-musicins", "amzn-vgames"')
@@ -164,82 +164,6 @@ def build_item_item_triplets(item_item_distances_dict, iid2id, top_k):
     return list(triplets)
 
 
-def add_to_train_split(data, triplets):
-    """
-    Adds the given list of triplets to the training data
-    :param data: splits with train data
-    :param triplets: list of triplets
-    """
-    train = data["train"]
-    triplets = np.array(triplets).astype('int64')
-    data["train"] = np.concatenate((train, triplets), axis=0)
-
-
-def get_co_triplets(item_metas, get_aspect_func, iid2id, relation_id):
-    """
-    Creates triplets based on co_buy or co_view relations taken from metadata
-    :param item_metas: list of amazon metadata objects
-    :param get_aspect_func: a function that extract either co_buy or co_view data
-    :param iid2id: dict of item ids
-    :param relation_id: relation index
-    :return: list of triplets
-    """
-    triplets = set()
-    for item in item_metas:
-        head_id = iid2id[item.id]
-        for co_rel_id in get_aspect_func(item):
-            if co_rel_id in iid2id:
-                tail_id = iid2id[co_rel_id]
-                triplets.add((head_id, relation_id, tail_id))
-    return list(triplets)
-
-
-def get_category_triplets(item_metas, cat2id, iid2id, relation_id):
-    """
-    Builds triplets based on categorical labels.
-    For each item: (item, has_category, category)
-
-    :param item_metas: list of amazon metadata objects
-    :param cat2id: dict of category ids
-    :param iid2id: dict of item ids
-    :param relation_id: relation index for has_category relation
-    :return: list of triplets
-    """
-    triplets = set()
-    for it_meta in item_metas:
-        for cat in it_meta.categories:
-            item_id = iid2id[it_meta.id]
-            cat_id = cat2id[cat]
-            triplets.add((item_id, relation_id, cat_id))
-    return list(triplets)
-
-
-def get_brand_triplets(item_metas, brand2id, iid2id, relation_id):
-    """
-    Builds triplets based on brands.
-    For each item: (item, has_brand, brand)
-
-    :param item_metas: list of amazon metadata objects
-    :param brand2id: dict of brand ids
-    :param iid2id: dict of item ids
-    :param relation_id: relation index for has_brand relation
-    :return: list of triplets
-    """
-    triplets = set()
-    for it_meta in item_metas:
-        if it_meta.brand:
-            item_id = iid2id[it_meta.id]
-            brand_id = brand2id[it_meta.brand]
-            triplets.add((item_id, relation_id, brand_id))
-    return list(triplets)
-
-
-def get_cat2id(item_metas, n_entities):
-    """Extracts all categories from item metada and maps them to an id"""
-    categories = set([cat for it_meta in item_metas for cat in it_meta.categories])
-    return {cate: n_entities + i for i, cate in enumerate(categories)}
-
-
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=True)
     dataset_path = Path(FLAGS.dataset_path)
@@ -299,35 +223,7 @@ def main(_):
 
     if "amzn" in FLAGS.item and FLAGS.add_extra_relations:
         print("Adding extra relations")
-        item_metas = amazon.load_metadata(dataset_path, FLAGS.item)
-        item_metas = [it_meta for it_meta in item_metas if it_meta.id in iid2id]
-
-        # co buy relations
-        cobuy_triplets = get_co_triplets(item_metas, lambda x: x.cobuys, iid2id, Relations.COBUY.value)
-        add_to_train_split(data, cobuy_triplets)
-        print(f"Added co-buy triplets: {len(cobuy_triplets)}")
-
-        # co view relations
-        coview_triplets = get_co_triplets(item_metas, lambda x: x.coviews, iid2id, Relations.COVIEW.value)
-        add_to_train_split(data, coview_triplets)
-        print(f"Added co-view triplets: {len(coview_triplets)}")
-
-        # category relations
-        cat2id = get_cat2id(item_metas, n_entities)
-        category_triplets = get_category_triplets(item_metas, cat2id, iid2id, Relations.CATEGORY.value)
-        add_to_train_split(data, category_triplets)
-        print(f"Added categorical triplets: {len(category_triplets)}")
-        n_entities += len(cat2id)
-        data["id2cat"] = {cid: cat for cat, cid in cat2id.items()}
-
-        # brand relations
-        all_brands = set([it_meta.brand for it_meta in item_metas if it_meta.brand])
-        brand2id = {br: n_entities + i for i, br in enumerate(all_brands)}
-        brand_triplets = get_brand_triplets(item_metas, brand2id, iid2id, Relations.BRAND.value)
-        add_to_train_split(data, brand_triplets)
-        print(f"Added brand triplets: {len(brand_triplets)}")
-        n_entities += len(brand2id)
-        data["id2brand"] = {bid: brand for brand, bid in brand2id.items()}
+        n_entities = amazon_relations.load_relations(data, dataset_path, FLAGS.item, iid2id, n_entities)
 
     data["n_entities"] = n_entities
     # creates directories to save preprocessed data
