@@ -126,7 +126,7 @@ class Runner:
     def compute_metrics(self, split, excluded_items, title, epoch, write_summary=True):
         random_items = 100
         rank_all, rank_random = self.model.random_eval(split, excluded_items, self.samples, num_rand=random_items,
-                                                       batch_size=self.args.batch_size)
+                                                       batch_size=self.args.eval_batch_size)
         metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
 
         logging.info(f"Result at epoch {epoch} in {title.upper()}")

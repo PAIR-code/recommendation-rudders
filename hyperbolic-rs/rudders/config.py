@@ -45,6 +45,7 @@ CONFIG = {
         'max_epochs': ('Maximum number of epochs to train for', 12),
         'dims': ('Embeddings dimension', 32),
         'batch_size': ('Batch size', 1000),
+        'eval_batch_size': ('Eval Batch size', 1024),
         'neg_sample_size': ('Negative sample size, -1 to use loss without negative sampling', 1),
         'seed': ('Random seed', 42),
         'gpu_index': ('GPU index, in case of working with more than one', 0),
