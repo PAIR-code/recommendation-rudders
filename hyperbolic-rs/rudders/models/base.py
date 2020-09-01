@@ -12,18 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import abc
+
 import numpy as np
 import tensorflow as tf
-from enum import Enum
+from rudders.relations import Relations
 from rudders.models import regularizers
-
-
-# TODO: define relations in preprocessing, which will simplify losses as well
-class Relations(Enum):
-    """Allowed types of relations that models support"""
-    USER_ITEM = 0
-    ITEM_USER = 1
-    ITEM_ITEM = 2
+from rudders.emath import apply_rotation, apply_reflection
 
 
 class CFModel(tf.keras.Model, abc.ABC):
@@ -34,14 +28,13 @@ class CFModel(tf.keras.Model, abc.ABC):
     different types of relations between entities (users and items)
     """
 
-    def __init__(self, n_users, n_items, n_relations, item_ids, args, train_bias=True):
+    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=False):
         super().__init__()
         self.dims = args.dims
         self.item_ids = np.reshape(np.array(item_ids), (-1, 1))
-        self.initializer = getattr(tf.keras.initializers, args.initializer)(minval=-0.01, maxval=0.01)
+        self.initializer = getattr(tf.keras.initializers, args.initializer)
         self.entity_regularizer = getattr(regularizers, args.regularizer)(args.entity_reg)
         self.relation_regularizer = getattr(regularizers, args.regularizer)(args.relation_reg)
-        n_entities = n_users + n_items
         self.entities = tf.keras.layers.Embedding(
             input_dim=n_entities,
             output_dim=self.dims,
@@ -151,11 +144,12 @@ class CFModel(tf.keras.Model, abc.ABC):
             return score + lhs_biases + tf.transpose(rhs_biases)
         return score + lhs_biases + rhs_biases
 
-    def random_eval(self, split_data, samples, batch_size=500, num_rand=100, seed=1234):
+    def random_eval(self, split_data, excluded_items, samples, batch_size=500, num_rand=100, seed=1234):
         """
         Compute ranking-based evaluation metrics in both full and random settings.
 
-        :param split_data: Tensor of size n_examples x 2 containing pairs' indices.
+        :param split_data: Dataset with tensor of size n_examples x 3 containing pairs' indices.
+        :param excluded_items: List of item ids to be excluded from the evaluation
         :param samples: Dict representing items to skip per user for evaluation in the filtered setting.
         :param batch_size: batch size to use to compute scores.
         :param num_rand: number of negative samples to draw.
@@ -169,15 +163,11 @@ class CFModel(tf.keras.Model, abc.ABC):
         batch_size = min(batch_size, total_examples)
         ranks = np.ones(total_examples)
         ranks_random = np.ones(total_examples)
-        for counter, input_tensor in enumerate(split_data.batch(batch_size)):
-            # builds triplet input with relation
-            relation = tf.constant(Relations.USER_ITEM.value, shape=(len(input_tensor), 1), dtype=tf.int64)
-            head = tf.expand_dims(input_tensor[:, 0], 1)
-            tail = tf.expand_dims(input_tensor[:, 1], 1)
-            triplet_input_tensor = tf.concat((head, relation, tail), axis=-1)
 
-            targets = self.call(triplet_input_tensor).numpy()
-            scores = self.call(triplet_input_tensor, all_items=True).numpy()
+        for counter, input_tensor in enumerate(split_data.batch(batch_size)):
+            targets = self.call(input_tensor).numpy()
+            scores = self.call(input_tensor, all_items=True).numpy()
+            scores[:, excluded_items] = -1e6
             scores_random = np.ones(shape=(scores.shape[0], num_rand))
             for i, query in enumerate(input_tensor):
                 query = query.numpy()
@@ -194,3 +184,56 @@ class CFModel(tf.keras.Model, abc.ABC):
             ranks_random[ini:end] += np.sum((scores_random >= targets), axis=1)
 
         return ranks, ranks_random
+
+
+class BaseChami(CFModel, abc.ABC):
+    """Euclidean attention model that combines reflections and rotations from Chami et al. 2020."""
+
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
+
+        self.reflections = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='reflection_weights')
+
+        self.rotations = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='rotation_weights')
+
+        self.attention_vec = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='attention_embeddings')
+        self.scale = tf.keras.backend.ones(1) / np.sqrt(self.dims)
+
+    def reflect_entities(self, entity, ref):
+        queries = apply_reflection(ref, entity)
+        return tf.reshape(queries, (-1, 1, self.dims))
+
+    def rotate_entities(self, entity, rot):
+        queries = apply_rotation(rot, entity)
+        return tf.reshape(queries, (-1, 1, self.dims))
+
+    def get_heads(self, input_tensor):
+        heads = self.entities(input_tensor[:, 0])
+        rotations = self.rotations(input_tensor[:, 1])
+        reflections = self.reflections(input_tensor[:, 1])
+        attn_vec = self.attention_vec(input_tensor[:, 1])
+        ref_q = self.reflect_entities(heads, reflections)
+        rot_q = self.rotate_entities(heads, rotations)
+
+        # self-attention mechanism
+        cands = tf.concat([ref_q, rot_q], axis=1)
+        attn_vec = tf.reshape(attn_vec, (-1, 1, self.dims))
+        att_weights = tf.reduce_sum(attn_vec * cands * self.scale, axis=-1, keepdims=True)
+        att_weights = tf.nn.softmax(att_weights, axis=1)
+        res = tf.reduce_sum(att_weights * cands, axis=1)
+        return res

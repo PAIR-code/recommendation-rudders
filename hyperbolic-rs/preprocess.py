@@ -17,30 +17,50 @@ import pickle
 import tensorflow as tf
 import numpy as np
 import random
-from scipy import sparse
+from tqdm import tqdm
 from pathlib import Path
-from rudders.datasets import movielens, keen
+from rudders.relations import Relations
+from rudders.datasets import movielens, keen, amazon, amazon_relations
 from rudders.config import CONFIG
-from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle
+from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle, add_to_train_split
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='prep-notitle-hopdist0.75', help='Name of prep to store')
-flags.DEFINE_string('item', default='ml-1m', help='Item can be "keen" (user-keen interactions), "gem" (keen-gem '
-                                                'interactions), or "ml-1m"')
-flags.DEFINE_string('dataset_path', default='data/ml-1m', help='Path to raw dataset: data/keen, data/ml-1m')
-flags.DEFINE_string('item_item_file', default='data/prep/ml-1m/item_item_notitle_hop_distance_th0.75.pickle',
+flags.DEFINE_string('run_id', default='foobar', help='Name of prep to store')
+flags.DEFINE_string('item', default='amzn-musicins', help='Item can be "keen" (user-keen interactions), '
+                                                          '"gem" (keen-gem interactions), "ml-1m", '
+                                                          '"amzn-musicins", "amzn-vgames"')
+flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dataset: data/keen, data/ml-1m, '
+                                                               'data/amazon')
+flags.DEFINE_string('item_item_file', default='data/prep/amazon/musicins_musicins_cosine_distance_th0.6.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
-flags.DEFINE_boolean('shuffle', default=False, help='Shuffle the samples')
-flags.DEFINE_boolean('sparse', default=False, help='Stores item-item matrix as a sparse matrix')
+flags.DEFINE_boolean('shuffle', default=False, help='Whether to shuffle the interactions or not')
+flags.DEFINE_boolean('add_extra_relations', default=True, help='For the amazon dataset, adds co-buy, co-view and'
+                                                                'categorical similarity relations')
 flags.DEFINE_integer('min_user_interactions', default=5, help='Users with less than this interactions are filtered')
 flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')
 flags.DEFINE_integer('max_item_interactions', default=150, help='Items with more than this interactions are filtered')
+flags.DEFINE_integer('similarity_items_per_item', default=10, help='Amount of similarity items to add per item')
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 flags.DEFINE_integer('filter_most_popular', default=-1,
                      help='Filters out most popular items. If -1 it does not filter')
-flags.DEFINE_float('min_matrix_distance', default=0.1, help='Minimum distance allowed in distance matrix. Values below'
-                                                            'this threshold will be clamped to min_distance')
+
+
+def plot_graph(samples):
+    """Plot user-item graph, setting different colors for items and users."""
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    graph = nx.Graph()
+    for uid, ints in samples.items():
+        for iid in ints:
+            graph.add_edge(uid, iid)
+
+    color_map = ["red" if node in samples else "blue" for node in graph]
+    fig = plt.figure()
+    pos = nx.spring_layout(graph, iterations=100)
+    nx.draw(graph, pos, ax=fig.add_subplot(111), node_size=20, node_color=color_map)
+    plt.show()
 
 
 def map_raw_ids_to_sequential_ids(samples):
@@ -71,11 +91,12 @@ def map_raw_ids_to_sequential_ids(samples):
     return uid2id, iid2id
 
 
-def create_splits(samples, do_random=False, seed=42):
+def create_splits(samples, relation_id, do_random=False, seed=42):
     """
     Splits (user, item) dataset to train, dev and test.
 
     :param samples: Dict of sorted examples.
+    :param relation_id: number that identifies the user-item interaction relation to form the triplets
     :param do_random: Bool whether to extract dev and test by random sampling. If False, dev, test are the last two
         items per user.
     :return: examples: Dictionary with 'train','dev','test' splits as numpy arrays
@@ -83,19 +104,18 @@ def create_splits(samples, do_random=False, seed=42):
         for each user.
     """
     train, dev, test = [], [], []
-    for uid, items in samples.items():
+    for uid, ints in samples.items():
         if do_random:
             random.seed(seed)
-            random.shuffle(items)
-        if len(items) >= 3:
-            test.append([uid, items[-1]])
-            dev.append([uid, items[-2]])
-            for iid in items[:-2]:
-                train.append([uid, iid])
+            random.shuffle(ints)
+        if len(ints) >= 3:
+            test.append((uid, relation_id, ints[-1]))
+            dev.append((uid, relation_id, ints[-2]))
+            for iid in ints[:-2]:
+                train.append((uid, relation_id, iid))
         else:
-            for iid in items:
-                train.append([uid, iid])
-
+            for iid in ints:
+                train.append((uid, relation_id, iid))
     return {
         'samples': samples,
         'train': np.array(train).astype('int64'),
@@ -104,63 +124,44 @@ def create_splits(samples, do_random=False, seed=42):
     }
 
 
-def plot_graph(samples):
-    """Plot user-item graph, setting different colors for items and users."""
-    import networkx as nx
-    import matplotlib.pyplot as plt
-
-    graph = nx.Graph()
-    for uid, ints in samples.items():
-        for iid in ints:
-            graph.add_edge(uid, iid)
-
-    color_map = ["red" if node in samples else "blue" for node in graph]
-    fig = plt.figure()
-    pos = nx.spring_layout(graph, iterations=100)
-    nx.draw(graph, pos, ax=fig.add_subplot(111), node_size=20, node_color=color_map)
-    plt.show()
-
-
 def load_item_item_distances(item_item_file_path):
-    """Loads item-item distances that were precomputed with item_graph.py"""
+    """Loads item-item distances that were precomputed with item_graph.py."""
     print(f"Loading data from {item_item_file_path}")
     with tf.io.gfile.GFile(str(item_item_file_path), 'rb') as f:
         data = pickle.load(f)
     return data["item_item_distances"]
 
 
-def build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=False, min_distance=0.1):
+def build_item_item_triplets(item_item_distances_dict, iid2id, top_k):
     """
-    Build a distance matrix according to the graph distance between the items, stored in the item_item_distances_dict
-    The order of the matrix is given by the ids in iid2id.
-    This is, the distance between the item with numerical indexes i and j is in the position distance_matrix[i, j]
+    Builds item item triples from the item-item distances
 
-    The distance to unconnected nodes or the distance from a node to itself is 0 if the matrix is sparse, or -1
-    if the matrix is dense.
-
-    :param item_item_distances_dict: dictionary that has the precomputed distances between pairs of items,
-    if there is a path between them in the semantic graph.
-    :param iid2id: mapping of item id (unique alpha numeric value that identifies the item) and
-    item index (0, 1, 2, ..)
-    :param do_sparse: if True, the distance matrix is returned as a sparse matrix, else as a numpy array
-    :param min_distance: minimum distance in the distance matrix. Values below will be clamped to min_distance.
+    :param item_item_distances_dict: dict of src_iid: [(dst_iid, distance)]
+    :param iid2id: dict of item ids
+    :param top_k: adds top_k items per item at most
+    :return:
     """
-    if do_sparse:
-        distance_matrix = np.zeros((len(iid2id), len(iid2id)))
-    else:
-        distance_matrix = np.ones((len(iid2id), len(iid2id))) * -1
-
-    for src_iid, src_index in iid2id.items():
-        if src_iid not in item_item_distances_dict:
+    triplets = set()
+    for src_iid, dists in tqdm(item_item_distances_dict.items(), desc="item_item_triplets"):
+        if src_iid not in iid2id:
             continue
-        src_dist = item_item_distances_dict[src_iid]
-        for dst_iid, distance in src_dist.items():
-            if src_iid != dst_iid and dst_iid in iid2id:
-                dst_index = iid2id[dst_iid]
-                distance_matrix[src_index, dst_index] = max(distance, min_distance)
-    if do_sparse:
-        return sparse.csr_matrix(distance_matrix)
-    return distance_matrix
+        src_id = iid2id[src_iid]
+        sorted_dists = sorted(dists, key=lambda t: t[1])
+        added = 0
+        for dst_iid, cos_dist in sorted_dists:
+            if dst_iid not in iid2id or cos_dist > 0.3:
+                continue
+            dst_id = iid2id[dst_iid]
+            if cos_dist <= 0.1:
+                triplets.add((src_id, Relations.SEM_HIGH_SIM.value, dst_id))
+            elif 0.2 >= cos_dist > 0.1:
+                triplets.add((src_id, Relations.SEM_MEDIUM_SIM.value, dst_id))
+            else:   # 0.3 >= cos_dist > 0.2
+                triplets.add((src_id, Relations.SEM_LOW_SIM.value, dst_id))
+            added += 1
+            if added >= top_k:
+                break
+    return list(triplets)
 
 
 def main(_):
@@ -181,6 +182,9 @@ def main(_):
     elif FLAGS.item == "ml-1m":
         samples = movielens.movielens_to_dict(dataset_path)
         iid2name = movielens.build_movieid2title(dataset_path)
+    elif "amzn" in FLAGS.item:
+        samples = amazon.load_interactions(dataset_path, FLAGS.item)
+        iid2name = amazon.build_itemid2name(dataset_path, FLAGS.item)
     else:
         raise ValueError(f"Unknown item: {FLAGS.item}")
 
@@ -199,23 +203,31 @@ def main(_):
 
     id_samples = {}
     for uid, ints in samples.items():
-        if FLAGS.item != "ml-1m":
+        if FLAGS.item == "keen" or FLAGS.item == "gem":
             ints = sorted(ints)
         id_samples[uid2id[uid]] = [iid2id[iid] for iid in ints]
 
-    data = create_splits(id_samples, do_random=FLAGS.shuffle, seed=FLAGS.seed)
-    data["iid2name"] = iid2name
+    data = create_splits(id_samples, Relations.USER_ITEM.value, do_random=FLAGS.shuffle, seed=FLAGS.seed)
+    data["iid2name"] = {iid: iid2name.get(iid, "None") for iid in iid2id}
     data["id2uid"] = {v: k for k, v in uid2id.items()}
     data["id2iid"] = {v: k for k, v in iid2id.items()}
+    print(f"User item interaction triplets: {len(data['train'])}")
+    n_entities = len(uid2id) + len(iid2id)
 
     # if there is an item-item graph, we preprocess it
     if FLAGS.item_item_file:
         item_item_distances_dict = load_item_item_distances(FLAGS.item_item_file)
-        item_item_distance_matrix = build_distance_matrix(item_item_distances_dict, iid2id, do_sparse=FLAGS.sparse,
-                                                          min_distance=FLAGS.min_matrix_distance)
-        data["item_item_distance_matrix"] = item_item_distance_matrix
+        item_item_triplets = build_item_item_triplets(item_item_distances_dict, iid2id, FLAGS.similarity_items_per_item)
+        add_to_train_split(data, item_item_triplets)
+        print(f"Added item-item similarity triplets: {len(item_item_triplets)}")
 
+    if "amzn" in FLAGS.item and FLAGS.add_extra_relations:
+        print("Adding extra relations")
+        n_entities = amazon_relations.load_relations(data, dataset_path, FLAGS.item, iid2id, n_entities)
+
+    data["n_entities"] = n_entities
     # creates directories to save preprocessed data
+    print(f"Final training split: {len(data['train'])} triplets")
     prep_path = Path(CONFIG["string"]["prep_dir"][1])
     prep_path.mkdir(parents=True, exist_ok=True)
     to_save_dir = prep_path / FLAGS.dataset_path.split("/")[-1]
