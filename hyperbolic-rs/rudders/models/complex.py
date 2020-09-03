@@ -51,7 +51,11 @@ class ComplexProd(BaseComplex):
 
 
 class RotatE(BaseComplex):
-    """Complex embeddings with rotations. Taken from Sun et al. 2019"""
+    """
+    Model based on:
+        "RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space"
+        Sun et al. 2019
+    """
 
     def get_lhs(self, input_tensor):
         head = self.entities(input_tensor[:, 0])

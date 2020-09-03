@@ -25,7 +25,7 @@ import tensorflow as tf
 import pickle
 import numba
 import numpy as np
-from rudders.hmath import expmap0, hyp_distance_all_pairs
+from rudders.math.hyperb import expmap0, hyp_distance_all_pairs
 from rudders.models.euclidean import euclidean_distance
 import os
 import matplotlib as mpl

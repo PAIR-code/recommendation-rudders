@@ -56,6 +56,10 @@ class Runner:
                 tf.summary.scalar('train/lr', float(tf.keras.backend.get_value(self.optimizer.lr)), step=epoch)
                 if hasattr(self.model, 'c'):
                     tf.summary.scalar('train/curvature', self.model.get_c(), step=epoch)
+                if hasattr(self.model, 'ui_weights'):
+                    ui_weights = self.model.ui_weights(tf.convert_to_tensor(list(self.id2uid)))
+                    ui_weights = tf.keras.activations.sigmoid(ui_weights)
+                    tf.summary.scalar('train/avg_sigmoid_ui_weights', tf.reduce_mean(ui_weights).numpy().item(), step=epoch)
 
             if epoch % self.args.validate == 0:
                 dev_loss = self.validate()

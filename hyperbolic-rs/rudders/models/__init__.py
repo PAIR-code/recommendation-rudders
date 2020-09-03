@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rudders.models.euclidean import TransE, SimpleFactor, MuREuclidean, ChamiEuclidean
-from rudders.models.hyperbolic import TransH, MuRHyperbolic, ChamiHyperbolic
-from rudders.models.complex import ComplexProd, RotatE
+from rudders.models.euclidean import *
+from rudders.models.hyperbolic import *
+from rudders.models.complex import *

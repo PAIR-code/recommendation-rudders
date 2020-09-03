@@ -14,11 +14,11 @@
 
 from abc import ABC
 import tensorflow as tf
-from rudders.models.base import CFModel, BaseChami
-from rudders import hmath
+from rudders.models.base import CFModel, MuRBase, RotRefBase, UserAttentiveBase
+import rudders.math.hyperb as hmath
 
 
-class BaseHyperbolic(CFModel, ABC):
+class CFHyperbolicBase(CFModel, ABC):
     """Base model class for hyperbolic embeddings with parameters defined in tangent space."""
 
     def __init__(self, n_entities, n_relations, item_ids, args, train_bias=False):
@@ -36,12 +36,18 @@ class BaseHyperbolic(CFModel, ABC):
     def similarity_score(self, lhs, rhs, all_items):
         """Score based on square hyperbolic distance"""
         if all_items:
-            return -hmath.hyp_distance_all_pairs(lhs, rhs, self.get_c())**2
-        return -hmath.hyp_distance(lhs, rhs, self.get_c())**2
+            return -hmath.hyp_distance_all_pairs(lhs, rhs, self.get_c()) ** 2
+        return -hmath.hyp_distance(lhs, rhs, self.get_c()) ** 2
 
 
-class TransH(BaseHyperbolic):
-    """Model based on hyperbolic translation with parameters defined in tangent space."""
+class TransH(CFHyperbolicBase):
+    """
+    Model based on:
+        "Translating Embeddings for Modeling Multi-relational Data"
+        Bordes et al. 2013
+    Parameters are defined in tangent space and mapped onto the Poincare Ball
+    before applying the Mobius addition
+    """
 
     def get_lhs(self, input_tensor):
         c = self.get_c()
@@ -50,20 +56,11 @@ class TransH(BaseHyperbolic):
         return hmath.mobius_add(head, relations, c)
 
 
-class MuRHyperbolic(BaseHyperbolic):
-    """Model based on Balazevic et al. (2019) for multi relational graph embeddings"""
-    def __init__(self, n_entities, n_relations, item_ids, args):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
-        self.relation_transforms = tf.keras.layers.Embedding(
-            input_dim=n_relations,
-            output_dim=self.dims,
-            embeddings_initializer=self.initializer,
-            embeddings_regularizer=self.relation_regularizer,
-            name='relation_transforms')
+class MuRHyperbolic(MuRBase, CFHyperbolicBase):
 
     def get_lhs(self, input_tensor):
         tg_heads = self.entities(input_tensor[:, 0])
-        tg_relation_transforms = self.relation_transforms(input_tensor[:, 1])
+        tg_relation_transforms = self.transforms(input_tensor[:, 1])
         return hmath.expmap0(tg_relation_transforms * tg_heads, self.get_c())
 
     def get_rhs(self, input_tensor):
@@ -72,7 +69,7 @@ class MuRHyperbolic(BaseHyperbolic):
         return hmath.mobius_add(tails, relation_additions, self.get_c())
 
 
-class ChamiHyperbolic(BaseChami, BaseHyperbolic):
+class RotRefHyperbolic(RotRefBase, CFHyperbolicBase):
     """Hyperbolic attention model that combines reflections and rotations from Chami et al. 2020."""
 
     def get_lhs(self, input_tensor):
@@ -80,3 +77,24 @@ class ChamiHyperbolic(BaseChami, BaseHyperbolic):
         head_embeds = hmath.expmap0(self.get_heads(input_tensor), c)
         relation_embeds = hmath.expmap0(self.relations(input_tensor[:, 1]), c)
         return hmath.mobius_add(head_embeds, relation_embeds, c)
+
+
+class UserAttentiveHyperbolic(UserAttentiveBase, CFHyperbolicBase):
+
+    def similarity_score(self, lhs, rhs, all_items):
+        """Score based on square hyperbolic distance"""
+        if all_items:
+            return -hmath.hyp_distance_batch_rhs(lhs, rhs, self.get_c()) ** 2
+        return -hmath.hyp_distance(lhs, rhs, self.get_c()) ** 2
+
+    def get_lhs(self, input_tensor):
+        heads = super().get_lhs(input_tensor)
+        return hmath.expmap0(heads, self.get_c())
+
+    def get_rhs(self, input_tensor):
+        tails = super().get_rhs(input_tensor)
+        return hmath.expmap0(tails, self.get_c())
+
+    def get_all_items(self, input_tensor):
+        all_items = super().get_all_items(input_tensor)
+        return hmath.expmap0(all_items, self.get_c())

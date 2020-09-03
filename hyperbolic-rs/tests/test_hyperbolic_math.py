@@ -15,7 +15,7 @@
 Hyperbolic distance were verified with https://github.com/geoopt/geoopt"""
 import tensorflow as tf
 import numpy as np
-from rudders import hmath
+from rudders.math import hyperb
 from rudders.utils import set_seed
 
 
@@ -34,7 +34,7 @@ class TestHyperbolicMath(tf.test.TestCase):
     def test_distance_to_same_point_is_zero(self):
         a = self.get_point([[0.5, 0.25]])
 
-        result = hmath.hyp_distance(a, a, self.c)
+        result = hyperb.hyp_distance(a, a, self.c)
 
         expected = tf.convert_to_tensor([[0.]], dtype=tf.float64)
         self.assertAllClose(expected, result)
@@ -43,7 +43,7 @@ class TestHyperbolicMath(tf.test.TestCase):
         x = self.get_point([[-0.62972, -0.28971]])
         y = self.get_point([[0.37216, -0.38184]])
 
-        result = hmath.hyp_distance(x, y, self.c)
+        result = hyperb.hyp_distance(x, y, self.c)
 
         expected = tf.convert_to_tensor([[2.55035745]], dtype=tf.float64)
         self.assertAllClose(expected, result)
@@ -52,8 +52,8 @@ class TestHyperbolicMath(tf.test.TestCase):
         x = self.get_point([[-0.62972, -0.28971]])
         y = self.get_point([[0.37216, -0.38184]])
 
-        result_xy = hmath.hyp_distance(x, y, self.c)
-        result_yx = hmath.hyp_distance(y, x, self.c)
+        result_xy = hyperb.hyp_distance(x, y, self.c)
+        result_yx = hyperb.hyp_distance(y, x, self.c)
 
         self.assertAllClose(result_xy, result_yx)
 
@@ -61,7 +61,7 @@ class TestHyperbolicMath(tf.test.TestCase):
         x = tf.clip_by_norm(tf.random.uniform((1000, 32), dtype=tf.float64), clip_norm=0.99999, axes=-1)
         y = tf.clip_by_norm(tf.random.uniform((1000, 32), dtype=tf.float64), clip_norm=0.99999, axes=-1)
 
-        result = hmath.hyp_distance(x, y, self.c)
+        result = hyperb.hyp_distance(x, y, self.c)
 
         self.assertAllGreaterEqual(result, 0)
 
@@ -69,7 +69,7 @@ class TestHyperbolicMath(tf.test.TestCase):
         x = tf.repeat(self.get_point([[-0.62972, -0.28971]]), repeats=3, axis=0)
         y = tf.repeat(self.get_point([[0.37216, -0.38184]]), repeats=10, axis=0)
 
-        result = hmath.hyp_distance_all_pairs(x, y, self.c)
+        result = hyperb.hyp_distance_all_pairs(x, y, self.c)
 
         expected = tf.convert_to_tensor([[2.55035745]], dtype=tf.float64)
         expected = tf.repeat(expected, repeats=3, axis=0)
