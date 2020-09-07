@@ -20,7 +20,7 @@ HR_AT_10 = "HR@10_r"
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="export.py")
+    parser = argparse.ArgumentParser(description="process_results.py")
     parser.add_argument("--file", required=True, help="Path to model to load")
     args = parser.parse_args()
 
