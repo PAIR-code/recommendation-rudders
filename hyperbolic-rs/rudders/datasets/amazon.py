@@ -15,12 +15,6 @@
 import json
 import gzip
 
-# Dictionary with item key: (reviews_file, item_metadata)
-FILES = {
-    "amzn-musicins": ("Musical_Instruments_5.json.gz", "meta_Musical_Instruments.json.gz"),
-    "amzn-vgames": ("Video_Games_5.json.gz", "meta_Video_Games.json.gz")
-}
-
 
 def load_interactions_file(filepath):
     """
@@ -28,7 +22,7 @@ def load_interactions_file(filepath):
     :return: dict of uid: interactions, sorted by ascending date
     """
     samples = {}
-    with gzip.open(filepath, 'r') as f:
+    with gzip.open(str(filepath), 'r') as f:
         for review in map(json.loads, f):
             uid = review["reviewerID"]
             iid = review["asin"]
@@ -53,28 +47,24 @@ def load_interactions_file(filepath):
     return sorted_samples
 
 
-def load_interactions(dataset_path, item_key):
+def load_interactions(reviews_file):
     """
     Loads the interaction file extracted from users' reviews
 
-    :param dataset_path: path to amazon dataset
-    :param item_key: key to index FILES dict
+    :param reviews_file: path to amazon 5-core files
     :return: dict of uid: interactions, sorted by ascending date
     """
-    reviews_file = FILES[item_key][0]
-    return load_interactions_file(dataset_path / reviews_file)
+    return load_interactions_file(reviews_file)
 
 
-def build_itemid2name(dataset_path, item_key):
+def build_itemid2name(metadata_file):
     """
     Loads item titles and creates a dictionary
 
-    :param dataset_path: path to amazon dataset
-    :param item_key: key to index FILES dict
+    :param metadata_file: path to amazon product metadata file
     :return: dict of iid: item_title
     """
-    metadata_file = FILES[item_key][1]
-    with gzip.open(str(dataset_path / metadata_file), 'r') as f:
+    with gzip.open(str(metadata_file), 'r') as f:
         return {meta["asin"]: meta.get("title", "None")[:100] for meta in map(json.loads, f)}
 
 
@@ -126,7 +116,7 @@ def load_metadata_as_text(filepath):
     return metadata
 
 
-def build_text_from_items(dataset_path, item_key):
+def build_text_from_items(dataset_path, reviews_file, metadata_file):
     """
     Build the text that represents each item.
     The text is made of:
@@ -140,13 +130,13 @@ def build_text_from_items(dataset_path, item_key):
     :param item_key: key to index FILES dict
     :return: dict of iid: list of text for each item
     """
-    reviews_file = FILES[item_key][0]
-    print(f"Loading amazon reviews from {dataset_path / reviews_file}")
-    texts = load_reviews(dataset_path / reviews_file)
+    reviews_file = dataset_path / reviews_file
+    print(f"Loading amazon reviews from {reviews_file}")
+    texts = load_reviews(reviews_file)
 
-    metadata_file = FILES[item_key][1]
-    print(f"Loading amazon metadata from {dataset_path / metadata_file}")
-    metadata = load_metadata_as_text(dataset_path / metadata_file)
+    metadata_file = dataset_path / metadata_file
+    print(f"Loading amazon metadata from {metadata_file}")
+    metadata = load_metadata_as_text(metadata_file)
 
     # We are only interested in the iids in texts, metadata is much larger
     no_meta = 0
@@ -172,15 +162,13 @@ class AmazonItem:
         self.brand = metadata.get("brand", "")
 
 
-def load_metadata(dataset_path, item_key):
+def load_metadata(metadata_file):
     """
     Loads metadata as a dict
 
-    :param dataset_path: path to amazon dataset
-    :param item_key: key to index FILES dict
+    :param metadata_file: path to amazon products metadata file
     :return: dict of dicts with metadata
     """
-    filepath = dataset_path / FILES[item_key][1]
-    print(f"Loading amazon metadata from {filepath}")
-    with gzip.open(filepath, 'r') as f:
+    print(f"Loading amazon metadata from {metadata_file}")
+    with gzip.open(str(metadata_file), 'r') as f:
         return [AmazonItem(line) for line in map(json.loads, f)]

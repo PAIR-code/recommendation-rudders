@@ -28,13 +28,14 @@ from rudders.datasets import keen, movielens, amazon
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dataset: data/keen, data/ml-1m')
+flags.DEFINE_string('item', default='amazon', help='Item to create embeddings: keen, gem, ml-1m, amazon')
 flags.DEFINE_string('file', default='movies.dat',
-                    help='Path to file with textual data ("movies.dat" for ml-1m or '
-                         '"exports_2020-07-03_keens_and_gems.jsonl" for keen)')
-flags.DEFINE_string('item', default='amzn-musicins', help='Item to create embeddings if dataset is keen: keen, gem, '
-                                                 'amzn-musicins or amzn-vgames')
-flags.DEFINE_string('dst_path', default='data/prep', help='Path to dir to store results')
-flags.DEFINE_string('text_embeddings', default='data/prep/amazon/musicins_item_embeddings.csv', help='If provided, it takes embeddings from file')
+                    help='Path to file with textual data if item != amazon. Ex: "movies.dat" for ml-1m')
+flags.DEFINE_string('amazon_reviews', default='Musical_Instruments_5.json.gz',
+                    help='Name of the 5-core amazon reviews file')
+flags.DEFINE_string('amazon_meta', default='meta_Musical_Instruments.json.gz',
+                    help='Name of the 5-core amazon reviews file')
+flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
 flags.DEFINE_float('threshold', default=0.6, help='Cosine similarity threshold to add edges')
 flags.DEFINE_string('use_model_url', default="https://tfhub.dev/google/universal-sentence-encoder-large/5",
                     help='URL of Universal Sentence Encoder Model')
@@ -86,9 +87,9 @@ def build_item_embeds(item_text, use_url, weight_first_embedding=False):
     return result
 
 
-def export_text_embeddings(embeds, dst_path):
+def export_text_embeddings(embeds, dst_path, item):
     """Export embeddings in CSV format emulating GloVe format"""
-    with open(str(dst_path / "item_embeddings.csv"), "w") as f:
+    with open(str(dst_path / f"{item}_text_embeddings.csv"), "w") as f:
         for iid, vec in embeds.items():
             values = ",".join([str(x) for x in vec[0].numpy()])
             f.write(f"{iid},{values}\n")
@@ -173,7 +174,7 @@ def plot_graph(graph, dst_path):
 
 def get_neighbors_with_distances(graph):
     """
-    Gets the closest neighbors from each node in the graph and returns it as a dictionary
+    Gets the neighbors from each node in the graph and returns it as a dictionary
 
     :param graph:
     :return: dict of nodes: [(neigh, distance)]
@@ -188,12 +189,11 @@ def get_neighbors_with_distances(graph):
 
 
 def main(_):
-    dst_path = Path(FLAGS.dst_path)
+    dataset_path = Path(FLAGS.dataset_path)
     if not FLAGS.text_embeddings:
-        text_file_path = Path(FLAGS.dataset_path) / FLAGS.file
+        text_file_path = dataset_path / FLAGS.file
 
-        if "keen" in FLAGS.dataset_path:
-            dst_path = dst_path / FLAGS.item
+        if FLAGS.item == "keen":
             data = load_jsonl(text_file_path)
             all_keens = keen.get_keens(data)
 
@@ -206,22 +206,19 @@ def main(_):
                 texts = keen.build_texts_from_keens(keens)
             else:
                 texts = keen.build_texts_from_gems(keens)
-        elif "ml-1m" in FLAGS.dataset_path:
+        elif FLAGS.item == "ml-1m":
             texts = movielens.build_texts_from_movies(text_file_path)
-            FLAGS.item = "ml-1m"
-            dst_path = dst_path / FLAGS.item
-        elif "amazon" in FLAGS.dataset_path:
-            texts = amazon.build_text_from_items(Path(FLAGS.dataset_path), FLAGS.item)
-            dst_path = dst_path / "amazon"
+        elif FLAGS.item == "amazon":
+            texts = amazon.build_text_from_items(dataset_path, FLAGS.amazon_reviews, FLAGS.amazon_meta)
         else:
-            raise ValueError(f"Unrecognized dataset_path: {FLAGS.dataset_path}")
+            raise ValueError(f"Unrecognized item: {FLAGS.item}")
 
         print(f"Items with text from {FLAGS.item} to encode with USE: {len(texts)}")
         print(list(texts.items())[:3])
 
         weight_first_embed = FLAGS.item == "keen" or "amazon" in FLAGS.dataset_path
         embeds = build_item_embeds(texts, FLAGS.use_model_url, weight_first_embedding=weight_first_embed)
-        export_text_embeddings(embeds, dst_path)
+        export_text_embeddings(embeds, dataset_path, FLAGS.item)
     else:
         embeds = load_text_embeddings(FLAGS.text_embeddings)
 
@@ -238,18 +235,18 @@ def main(_):
 
     print(f"Graph info:\n{nx.info(graph)}")
     if FLAGS.plot:
-        plot_graph(graph, dst_path / f'item_item_graph_th{FLAGS.threshold}.png')
+        plot_graph(graph, dataset_path / f'{FLAGS.item}_{FLAGS.item}_graph_th{FLAGS.threshold}.png')
 
     neighs_and_dists = get_neighbors_with_distances(graph)
     result = {"item_item_distances": neighs_and_dists}
 
-    if "amazon" in FLAGS.dataset_path:
-        item_name = FLAGS.item.split("-")[-1]
-        file_name = f'{item_name}_{item_name}_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}'
+    if FLAGS.item == "amazon":
+        item_name = FLAGS.amazon_reviews.split("5")[0][:-1]
+        file_name = f'{item_name}_{item_name}_{"cos" if FLAGS.use_distance else "hop"}dist_th{FLAGS.threshold}'
     else:
-        file_name = f'item_item_{"cosine" if FLAGS.use_distance else "hop"}_distance_th{FLAGS.threshold}'
-    nx.write_weighted_edgelist(graph, str(dst_path / (file_name + ".edgelist")))
-    save_as_pickle(dst_path / (file_name + ".pickle"), result)
+        file_name = f'{FLAGS.item}_{FLAGS.item}_{"cos" if FLAGS.use_distance else "hop"}dist_th{FLAGS.threshold}'
+    nx.write_weighted_edgelist(graph, str(dataset_path / (file_name + ".edgelist")))
+    save_as_pickle(dataset_path / (file_name + ".pickle"), result)
 
 
 if __name__ == '__main__':
