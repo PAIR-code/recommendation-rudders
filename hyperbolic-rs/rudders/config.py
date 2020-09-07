@@ -32,7 +32,6 @@ CONFIG = {
         'lr': ('Learning rate', 1e-3),
         'lr_decay': ('Learning rate decay', 0.96),
         'min_lr': ('Minimum learning rate decay', 1e-5),
-        'gamma': ('Weight for distortion loss', 1),
         'entity_reg': ('Regularization weight for entity embeddings', 0),
         'relation_reg': ('Regularization weight for relation embeddings', 0),
         'hinge_margin': ('Margin for hinge based models', 1),

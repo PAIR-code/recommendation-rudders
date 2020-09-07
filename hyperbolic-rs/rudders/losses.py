@@ -46,7 +46,6 @@ class NegativeSampleLoss(LossFunction, abc.ABC):
         self.ini_neg_index = ini_neg_index
         self.end_neg_index = end_neg_index
         self.neg_sample_size = args.neg_sample_size
-        self.gamma = tf.Variable(args.gamma * tf.keras.backend.ones(1), trainable=False)
 
     def build_negative_input_batch(self, input_batch):
         """From a batch x 3 input_batch tensor with (head, relation, tail) builds a batch x 3 input batch of the form
