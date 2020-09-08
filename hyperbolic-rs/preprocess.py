@@ -32,19 +32,21 @@ flags.DEFINE_string('amazon_reviews', default='Musical_Instruments_5.json.gz',
                     help='Name of the 5-core amazon reviews file')
 flags.DEFINE_string('amazon_meta', default='meta_Musical_Instruments.json.gz',
                     help='Name of the 5-core amazon reviews file')
-flags.DEFINE_string('item_item_file', default='musicins_musicins_cosine_distance_th0.6.pickle',
+flags.DEFINE_string('item_item_file', default='Musical_Instruments_Musical_Instruments_cosdist_th0.6.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=False, help='Whether to shuffle the interactions or not')
-flags.DEFINE_boolean('add_extra_relations', default=True, help='For the amazon dataset, adds co-buy, co-view and'
-                                                                'categorical similarity relations')
-flags.DEFINE_integer('min_user_interactions', default=5, help='Users with less than this interactions are filtered')
-flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')
-flags.DEFINE_integer('max_item_interactions', default=150, help='Items with more than this interactions are filtered')
+flags.DEFINE_boolean('add_extra_relations', default=True, help='For the amazon dataset, adds extra relations')
+flags.DEFINE_integer('min_user_interactions', default=5,
+                     help='Keens users with less than min_user_interactions are filtered')
+flags.DEFINE_integer('min_item_interactions', default=2,
+                     help='Keens/gems with less than this interactions are filtered')
+flags.DEFINE_integer('max_item_interactions', default=150,
+                     help='Keens/gems with more than this interactions are filtered')
 flags.DEFINE_integer('similarity_items_per_item', default=10, help='Amount of similarity items to add per item')
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 flags.DEFINE_integer('filter_most_popular', default=-1,
-                     help='Filters out most popular items. If -1 it does not filter')
+                     help='Filters out most popular keens/gems. If -1 it does not filter')
 
 
 def plot_graph(samples):
@@ -224,7 +226,7 @@ def main(_):
 
     if "amazon" in FLAGS.item and FLAGS.add_extra_relations:
         print("Adding extra relations")
-        n_entities = amazon_relations.load_relations(data, dataset_path, FLAGS.item, iid2id, n_entities)
+        n_entities = amazon_relations.load_relations(dataset_path / FLAGS.amazon_meta, data, iid2id, n_entities)
 
     data["n_entities"] = n_entities
     # creates directories to save preprocessed data

@@ -236,10 +236,20 @@ class RotRefBase(CFModel, abc.ABC):
         self.scale = tf.keras.backend.ones(1) / np.sqrt(self.dims)
 
     def reflect_entities(self, entity, ref):
+        """
+        :param entity: bs x dims: entity embeddings
+        :param ref: bs x dims: reflection weights
+        :return: reflected_entity_embeddings: bs x 1 x dims
+        """
         queries = apply_reflection(ref, entity)
         return tf.reshape(queries, (-1, 1, self.dims))
 
     def rotate_entities(self, entity, rot):
+        """
+        :param entity: bs x dims: entity embeddings
+        :param rot: bs x dims: rotation weights
+        :return: rotated_entity_embeddings: bs x 1 x dims
+        """
         queries = apply_rotation(rot, entity)
         return tf.reshape(queries, (-1, 1, self.dims))
 

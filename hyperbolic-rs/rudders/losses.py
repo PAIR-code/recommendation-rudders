@@ -48,8 +48,8 @@ class NegativeSampleLoss(LossFunction, abc.ABC):
         self.neg_sample_size = args.neg_sample_size
 
     def build_negative_input_batch(self, input_batch):
-        """From a batch x 3 input_batch tensor with (head, relation, tail) builds a batch x 3 input batch of the form
-        (head, relation, corrupted_tail)"""
+        """From a batch x 3 input_batch tensor with (head, relation, tail) builds a
+        batch x 3 input batch of the form (head, relation, corrupted_tail)"""
         head = tf.expand_dims(input_batch[:, 0], 1)
         relation = tf.expand_dims(input_batch[:, 1], 1)
         corrupted_tail = tf.random.uniform((len(input_batch), 1),
