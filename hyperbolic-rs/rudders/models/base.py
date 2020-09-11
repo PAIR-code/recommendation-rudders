@@ -15,9 +15,9 @@ import abc
 
 import numpy as np
 import tensorflow as tf
+import tensorflow.keras.regularizers as regularizers
 from rudders.relations import Relations
-from rudders.models import regularizers
-from rudders.emath import apply_rotation, apply_reflection
+from rudders.math.euclid import apply_rotation, apply_reflection
 
 
 class CFModel(tf.keras.Model, abc.ABC):
@@ -81,9 +81,10 @@ class CFModel(tf.keras.Model, abc.ABC):
         """
         pass
 
-    def get_all_items(self):
+    def get_all_items(self, input_tensor):
         """Identical to get_rhs but using all items
 
+        :param input_tensor: Tensor of size batch_size x 3 containing (h, r, t) indices.
         :return: Tensor of size n_items x embedding_dimension representing embeddings for all items in the CF
         """
         input_tensor = np.repeat(self.item_ids, 3, axis=-1)
@@ -119,7 +120,7 @@ class CFModel(tf.keras.Model, abc.ABC):
         lhs = self.get_lhs(input_tensor)
         lhs_biases = self.bias_head(input_tensor[:, 0])
         if all_items:
-            rhs = self.get_all_items()
+            rhs = self.get_all_items(input_tensor)
             rhs_biases = self.bias_tail(np.reshape(self.item_ids, (-1,)))
         else:
             rhs = self.get_rhs(input_tensor)
@@ -186,11 +187,31 @@ class CFModel(tf.keras.Model, abc.ABC):
         return ranks, ranks_random
 
 
-class BaseChami(CFModel, abc.ABC):
-    """Euclidean attention model that combines reflections and rotations from Chami et al. 2020."""
+class MuRBase(CFModel, abc.ABC):
+    """
+    Multi relational graph embeddings model based on:
+        "Multi-relational Poincaré Graph Embeddings"
+        Balazevic et al. 2019.
+    """
+    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=True):
+        super().__init__(n_entities, n_relations, item_ids, args, train_bias)
+        self.transforms = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='transform_weights')
 
-    def __init__(self, n_entities, n_relations, item_ids, args):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
+
+class RotRefBase(CFModel, abc.ABC):
+    """
+    Attention model that combines reflections and rotations from:
+        "Low-Dimensional Hyperbolic Knowledge Graph Embeddings"
+        Chami et al. 2020.
+    """
+
+    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=True):
+        super().__init__(n_entities, n_relations, item_ids, args, train_bias)
 
         self.reflections = tf.keras.layers.Embedding(
             input_dim=n_relations,
@@ -206,34 +227,193 @@ class BaseChami(CFModel, abc.ABC):
             embeddings_regularizer=self.relation_regularizer,
             name='rotation_weights')
 
-        self.attention_vec = tf.keras.layers.Embedding(
+        self.attention_lhs = tf.keras.layers.Embedding(
             input_dim=n_relations,
             output_dim=self.dims,
             embeddings_initializer=self.initializer,
             embeddings_regularizer=self.relation_regularizer,
-            name='attention_embeddings')
+            name='attention_lhs')
         self.scale = tf.keras.backend.ones(1) / np.sqrt(self.dims)
 
     def reflect_entities(self, entity, ref):
+        """
+        :param entity: bs x dims: entity embeddings
+        :param ref: bs x dims: reflection weights
+        :return: reflected_entity_embeddings: bs x 1 x dims
+        """
         queries = apply_reflection(ref, entity)
         return tf.reshape(queries, (-1, 1, self.dims))
 
     def rotate_entities(self, entity, rot):
+        """
+        :param entity: bs x dims: entity embeddings
+        :param rot: bs x dims: rotation weights
+        :return: rotated_entity_embeddings: bs x 1 x dims
+        """
         queries = apply_rotation(rot, entity)
         return tf.reshape(queries, (-1, 1, self.dims))
 
+    def attn_mechanism(self, queries, attn_vecs):
+        """
+        Applies self-attention mechanism over query vectors
+        :param queries: b x n x dims: tensor with n queries to combine with attention
+        :param attn_vecs: b x dims: attn vector to calculate attn weights based on dot product
+        between each of the n candidates and the attn vector batch-wise.
+        :return: b x dims: weighted average of n candidates as a single vector representation
+        """
+        attn_vecs = tf.reshape(attn_vecs, (-1, 1, self.dims))  # b x 1 x dim
+        att_weights = tf.reduce_sum(attn_vecs * queries * self.scale, axis=-1, keepdims=True)  # b x n x 1
+        att_weights = tf.nn.softmax(att_weights, axis=1)
+        res = tf.reduce_sum(att_weights * queries, axis=1)
+        return res
+
     def get_heads(self, input_tensor):
+        """
+        Calculates the head representation by applying rotations and reflections
+        and combining them with a self-attention mechanism.
+
+        :param input_tensor: Tensor of size batch_size x 3 containing triples' indices: (head, relation, tail)
+        :return: heads: bs x dims
+        """
         heads = self.entities(input_tensor[:, 0])
         rotations = self.rotations(input_tensor[:, 1])
         reflections = self.reflections(input_tensor[:, 1])
-        attn_vec = self.attention_vec(input_tensor[:, 1])
+        attn_vec = self.attention_lhs(input_tensor[:, 1])
+
         ref_q = self.reflect_entities(heads, reflections)
         rot_q = self.rotate_entities(heads, rotations)
+        queries = tf.concat([ref_q, rot_q], axis=1)
+        return self.attn_mechanism(queries, attn_vec)
 
-        # self-attention mechanism
-        cands = tf.concat([ref_q, rot_q], axis=1)
-        attn_vec = tf.reshape(attn_vec, (-1, 1, self.dims))
-        att_weights = tf.reduce_sum(attn_vec * cands * self.scale, axis=-1, keepdims=True)
-        att_weights = tf.nn.softmax(att_weights, axis=1)
-        res = tf.reduce_sum(att_weights * cands, axis=1)
+
+class UserAttentiveBase(RotRefBase, MuRBase, abc.ABC):
+    """
+    This model combines two models:
+        - On the left-hand side, rotations, reflections and transformations, which are
+        combined according to a lhs attention vector that is specific for each relation.
+        - On the right-hand side, we add the relation embedding to the tail.
+        For the special case of the USER-ITEM relation, we add all the relations to the tail.
+        We then combine them according to the rhs attention vector, that is user-specific-
+    """
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args)
+        self.attention_rhs = tf.keras.layers.Embedding(
+            input_dim=n_entities,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.entity_regularizer,
+            name='attention_rhs')
+
+        self.ui_weights = tf.keras.layers.Embedding(
+            input_dim=n_entities,
+            output_dim=1,
+            embeddings_initializer=tf.keras.initializers.constant(args.ui_weight),
+            name='ui_weights',
+            trainable=args.train_ui_weight)
+        self.item_ids = tf.convert_to_tensor(item_ids)
+
+    def get_lhs(self, input_tensor):
+        heads = self.entities(input_tensor[:, 0])
+        rotations = self.rotations(input_tensor[:, 1])
+        reflections = self.reflections(input_tensor[:, 1])
+        transforms = self.transforms(input_tensor[:, 1])
+        attn_vec = self.attention_lhs(input_tensor[:, 1])
+
+        ref_q = self.reflect_entities(heads, reflections)
+        rot_q = self.rotate_entities(heads, rotations)
+        trf_q = tf.reshape(transforms * heads, (-1, 1, self.dims))
+        queries = tf.concat([ref_q, rot_q, trf_q], axis=1)
+        return self.attn_mechanism(queries, attn_vec)
+
+    def get_rhs_attn_vector(self, input_tensor, all_items=False):
+        """
+        Returns the attn vectors for the right-hand side. By default it depends on the head entity (user-centric).
+        :param input_tensor: bs x 3: tensor of triplets
+        :param all_items: Whether to compute the attn vector for all items or not
+        :return: tensor of bs x dims. If all_items=True, bs x n_items x dims
+        """
+        if all_items:
+            input_tensor = tf.repeat(tf.expand_dims(input_tensor[:, 0], 1), repeats=len(self.item_ids), axis=-1)
+            return self.attention_rhs(input_tensor)
+        return self.attention_rhs(input_tensor[:, 0])
+
+    def combine_entities_and_relations(self, entities, relations, all_relations, attn_vecs, relation_index,
+                                       ui_weights, tf_op):
+        """
+        :param entities: b x dims head (or tail) embeddings of each triplet
+        :param relations: b x dims: relation embedding of each triplet
+        :param all_relations: r x dims: one embeddings for each possible relation
+        :param attn_vecs: attn vectors
+        :param relation_index: bs x 1: relation index in the triplet (head, relation_index, tail)
+        :param ui_weights: weight to interpolate between USER-ITEM relation and aggregation
+        of all relations.
+        :param tf_op: it has to be a broadcastable operation between each entity embedding and
+        all the relation embeddings. Usually it is tf.add or tf.multiply
+        :return: b x dims: entity embeddings combined with all relations and aggregated with self-attention
+        """
+        # adds or multiplies each entity with the corresponding relation
+        regular_embeds = tf_op(entities, relations)
+        # adds or multiplies each entity with all the relation embeddings
+        candidates = tf_op(tf.reshape(entities, (-1, 1, self.dims)),
+                           tf.reshape(all_relations, (1, -1, self.dims)))  # b x r x dims
+        combined_embeds = self.attn_mechanism(candidates, attn_vecs)
+
+        # the final embedding is a weighted avg of the reg embed and the combined embed
+        user_item_embed = ui_weights * regular_embeds + (1 - ui_weights) * combined_embeds
+        # if the relation is USER-ITEM it uses the combined embed, if not it uses the regular one
+        is_user_item_rel = tf.tile(tf.expand_dims(relation_index == Relations.USER_ITEM.value, 1), [1, self.dims])
+        res = tf.where(is_user_item_rel, user_item_embed, regular_embeds)
         return res
+
+    def get_rhs(self, input_tensor):
+        """
+        Calculates the rhs embeddings by either adding the corresponding relation embedding
+        for regular relations (non USER-ITEM relations).
+        For the USER-ITEM relations it adds all the relations to the tail.
+        Then it combines them according to the rhs attention vector, that is user-specific.
+        """
+        tails = self.entities(input_tensor[:, -1])
+        rel_index = input_tensor[:, 1]
+        relations = self.relations(rel_index)
+        attn_vecs = self.get_rhs_attn_vector(input_tensor)
+        all_relations = self.relations.weights[0]
+        ui_weights = tf.keras.activations.sigmoid(self.ui_weights(input_tensor[:, 0]))
+
+        res = self.combine_entities_and_relations(entities=tails,
+                                                  relations=relations,
+                                                  all_relations=all_relations,
+                                                  attn_vecs=attn_vecs,
+                                                  relation_index=rel_index,
+                                                  ui_weights=ui_weights,
+                                                  tf_op=tf.add)
+        return res
+
+    def get_all_items(self, input_tensor):
+        """
+        In this case, since the item embedding depends on the head (user)
+        we need to override this function
+
+        :return: batch x n_items x dims tensor representing embeddings for
+        each item, according to each head (user) in the input tensor
+        """
+        all_items = self.entities(self.item_ids)  # n_items x dims
+        ui_relation = self.relations(tf.convert_to_tensor([Relations.USER_ITEM.value]))  # 1 x dims
+        all_relations = self.relations.weights[0]  # r x dims
+        attn_vecs = self.get_rhs_attn_vector(input_tensor, all_items=True)  # b x n_items x dims
+        ui_weights = tf.keras.activations.sigmoid(self.ui_weights(input_tensor[:, 0]))
+
+        # adds each item with all the relation embeddings
+        cands = tf.add(tf.reshape(all_items, (-1, 1, self.dims)),
+                       tf.reshape(all_relations, (1, -1, self.dims)))  # n_items x r x dims
+
+        # aggregates the points
+        cands = tf.expand_dims(cands, axis=0)  # 1 x n_items x r x dims
+        attn_vecs = tf.expand_dims(attn_vecs, axis=2)  # b x n_items x 1 x dims
+        att_weights = tf.reduce_sum(attn_vecs * cands * self.scale, axis=-1, keepdims=True)  # b x n_items x r x 1
+        att_weights = tf.nn.softmax(att_weights, axis=2)
+        combined_embeds = tf.reduce_sum(att_weights * cands, axis=2)  # b x n_items x dims
+
+        regular_embeds = tf.expand_dims(tf.add(all_items, ui_relation), 0)  # 1 x n_items x dims
+        user_item_embed = tf.reshape(ui_weights, (-1, 1, 1)) * regular_embeds + \
+                          tf.reshape(1 - ui_weights, (-1, 1, 1)) * combined_embeds
+        return user_item_embed

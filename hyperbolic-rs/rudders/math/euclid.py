@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import numpy as np
+
 import tensorflow as tf
 
 
@@ -38,6 +38,25 @@ def euclidean_sq_distance(x, y, all_pairs=False):
 def euclidean_distance(x, y, all_pairs=False):
     sq_dist = euclidean_sq_distance(x, y, all_pairs)
     return tf.math.sqrt(tf.maximum(sq_dist, tf.zeros_like(sq_dist)))
+
+
+def euclidean_sq_distance_batched_all_pairs(x, y):
+    """
+    Computes Euclidean squared distance.
+    For each element x_i in X computes the distance to all the elements in the same batch y_i in B2 x d of Y
+    :param x: Tensor of size B1 x d
+    :param y: Tensor of size B1 x B2 x d
+    :return: Tensor of size B1 x B2
+    """
+    x2 = tf.math.reduce_sum(x * x, axis=-1, keepdims=True)      # B1 x 1
+    y2 = tf.math.reduce_sum(y * y, axis=-1)                     # B1 x B2
+    # x2 + y2 -> B1 x B2
+
+    dims = x.shape[-1]
+    xy = tf.linalg.matmul(tf.reshape(x, (-1, 1, dims)), y, transpose_b=True)   # B1 x 1 x B2
+    xy = tf.squeeze(xy, axis=1)                                 # B1 x B2
+
+    return x2 + y2 - 2 * xy
 
 
 def apply_reflection(r, x):

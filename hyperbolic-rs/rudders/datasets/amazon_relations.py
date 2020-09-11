@@ -82,19 +82,18 @@ def get_cat2id(item_metas, n_entities):
     return {cate: n_entities + i for i, cate in enumerate(categories)}
 
 
-def load_relations(data, dataset_path, item_name, iid2id, n_entities):
+def load_relations(metadata_file, data, iid2id, n_entities):
     """
     Loads relations extracted from the amazon dataset.
     Modifies training data (in data variable) in place.
 
+    :param metadata_file: path to metadata file
     :param data: dict with train split as key to extend it with new triplets
-    :param dataset_path: path to dataset to load the metada
-    :param item_name: item name that refers to s specific subset of the amazon data
     :param iid2id: dict of item_ids to numerical index
     :param n_entities: current amount of entities in the data
     :return: updates number of entities after adding new relations
     """
-    item_metas = load_metadata(dataset_path, item_name)
+    item_metas = load_metadata(metadata_file)
     item_metas = [it_meta for it_meta in item_metas if it_meta.id in iid2id]
 
     # co buy relations

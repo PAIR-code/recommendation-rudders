@@ -25,25 +25,28 @@ from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle, add_to_train_split
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('run_id', default='foobar', help='Name of prep to store')
-flags.DEFINE_string('item', default='amzn-musicins', help='Item can be "keen" (user-keen interactions), '
-                                                          '"gem" (keen-gem interactions), "ml-1m", '
-                                                          '"amzn-musicins", "amzn-vgames"')
-flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dataset: data/keen, data/ml-1m, '
-                                                               'data/amazon')
-flags.DEFINE_string('item_item_file', default='data/prep/amazon/musicins_musicins_cosine_distance_th0.6.pickle',
+flags.DEFINE_string('prep_id', default='foobar', help='Name of prep to store')
+flags.DEFINE_string('item', default='amazon', help='Item to process: "keen", "gem", "ml-1m" or "amazon"')
+flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dataset')
+flags.DEFINE_string('amazon_reviews', default='Musical_Instruments_5.json.gz',
+                    help='Name of the 5-core amazon reviews file')
+flags.DEFINE_string('amazon_meta', default='meta_Musical_Instruments.json.gz',
+                    help='Name of the 5-core amazon reviews file')
+flags.DEFINE_string('item_item_file', default='Musical_Instruments_Musical_Instruments_cosdist_th0.6.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=False, help='Whether to shuffle the interactions or not')
-flags.DEFINE_boolean('add_extra_relations', default=True, help='For the amazon dataset, adds co-buy, co-view and'
-                                                                'categorical similarity relations')
-flags.DEFINE_integer('min_user_interactions', default=5, help='Users with less than this interactions are filtered')
-flags.DEFINE_integer('min_item_interactions', default=2, help='Items with less than this interactions are filtered')
-flags.DEFINE_integer('max_item_interactions', default=150, help='Items with more than this interactions are filtered')
+flags.DEFINE_boolean('add_extra_relations', default=True, help='For the amazon dataset, adds extra relations')
+flags.DEFINE_integer('min_user_interactions', default=5,
+                     help='Keens users with less than min_user_interactions are filtered')
+flags.DEFINE_integer('min_item_interactions', default=2,
+                     help='Keens/gems with less than this interactions are filtered')
+flags.DEFINE_integer('max_item_interactions', default=150,
+                     help='Keens/gems with more than this interactions are filtered')
 flags.DEFINE_integer('similarity_items_per_item', default=10, help='Amount of similarity items to add per item')
 flags.DEFINE_integer('seed', default=42, help='Random seed')
 flags.DEFINE_integer('filter_most_popular', default=-1,
-                     help='Filters out most popular items. If -1 it does not filter')
+                     help='Filters out most popular keens/gems. If -1 it does not filter')
 
 
 def plot_graph(samples):
@@ -182,9 +185,9 @@ def main(_):
     elif FLAGS.item == "ml-1m":
         samples = movielens.movielens_to_dict(dataset_path)
         iid2name = movielens.build_movieid2title(dataset_path)
-    elif "amzn" in FLAGS.item:
-        samples = amazon.load_interactions(dataset_path, FLAGS.item)
-        iid2name = amazon.build_itemid2name(dataset_path, FLAGS.item)
+    elif "amazon" in FLAGS.item:
+        samples = amazon.load_interactions(dataset_path / FLAGS.amazon_reviews)
+        iid2name = amazon.build_itemid2name(dataset_path / FLAGS.amazon_meta)
     else:
         raise ValueError(f"Unknown item: {FLAGS.item}")
 
@@ -216,23 +219,23 @@ def main(_):
 
     # if there is an item-item graph, we preprocess it
     if FLAGS.item_item_file:
-        item_item_distances_dict = load_item_item_distances(FLAGS.item_item_file)
+        item_item_distances_dict = load_item_item_distances(dataset_path / FLAGS.item_item_file)
         item_item_triplets = build_item_item_triplets(item_item_distances_dict, iid2id, FLAGS.similarity_items_per_item)
         add_to_train_split(data, item_item_triplets)
         print(f"Added item-item similarity triplets: {len(item_item_triplets)}")
 
-    if "amzn" in FLAGS.item and FLAGS.add_extra_relations:
+    if "amazon" in FLAGS.item and FLAGS.add_extra_relations:
         print("Adding extra relations")
-        n_entities = amazon_relations.load_relations(data, dataset_path, FLAGS.item, iid2id, n_entities)
+        n_entities = amazon_relations.load_relations(dataset_path / FLAGS.amazon_meta, data, iid2id, n_entities)
 
     data["n_entities"] = n_entities
     # creates directories to save preprocessed data
     print(f"Final training split: {len(data['train'])} triplets")
     prep_path = Path(CONFIG["string"]["prep_dir"][1])
     prep_path.mkdir(parents=True, exist_ok=True)
-    to_save_dir = prep_path / FLAGS.dataset_path.split("/")[-1]
+    to_save_dir = prep_path / FLAGS.item
     to_save_dir.mkdir(parents=True, exist_ok=True)
-    save_as_pickle(to_save_dir / f'{FLAGS.run_id}.pickle', data)
+    save_as_pickle(to_save_dir / f'{FLAGS.prep_id}.pickle', data)
 
 
 if __name__ == '__main__':

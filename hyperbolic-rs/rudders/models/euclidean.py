@@ -14,11 +14,11 @@
 
 from abc import ABC
 import tensorflow as tf
-from rudders.models.base import CFModel, BaseChami
-from rudders.emath import euclidean_sq_distance
+from rudders.models.base import CFModel, MuRBase, RotRefBase, UserAttentiveBase
+from rudders.math.euclid import euclidean_sq_distance, euclidean_sq_distance_batched_all_pairs
 
 
-class BaseEuclidean(CFModel, ABC):
+class CFEuclideanBase(CFModel, ABC):
     """Base model class for Euclidean embeddings."""
 
     def get_rhs(self, input_tensor):
@@ -28,7 +28,7 @@ class BaseEuclidean(CFModel, ABC):
         return -euclidean_sq_distance(lhs, rhs, all_items)
 
 
-class SimpleFactor(BaseEuclidean):
+class SimpleFactor(CFEuclideanBase):
     """Simple factorization of entity and relation embeddings."""
     
     def get_lhs(self, input_tensor):
@@ -43,8 +43,11 @@ class SimpleFactor(BaseEuclidean):
         return tf.reduce_sum(lhs * rhs, axis=-1, keepdims=True)
 
 
-class TransE(BaseEuclidean):
-    """Model based on Euclidean Translations (Bordes et al. 2013).
+class TransE(CFEuclideanBase):
+    """
+    Model based on:
+        "Translating Embeddings for Modeling Multi-relational Data"
+        Bordes et al. 2013
     To establish a closer comparison with the hyperbolic model, we make minor modifications
     from the original Bordes' model.
      - No L2 normalization is applied on the entity embeddings
@@ -57,20 +60,11 @@ class TransE(BaseEuclidean):
         return entities + relations
 
 
-class MuREuclidean(BaseEuclidean):
-    """Model based on Balazevic et al. (2019) for multi relational graph embeddings"""
-    def __init__(self, n_entities, n_relations, item_ids, args):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias=True)
-        self.relation_transforms = tf.keras.layers.Embedding(
-            input_dim=n_relations,
-            output_dim=self.dims,
-            embeddings_initializer=self.initializer,
-            embeddings_regularizer=self.relation_regularizer,
-            name='relation_transforms')
+class MuREuclidean(MuRBase, CFEuclideanBase):
 
     def get_lhs(self, input_tensor):
         heads = self.entities(input_tensor[:, 0])
-        relation_transforms = self.relation_transforms(input_tensor[:, 1])
+        relation_transforms = self.transforms(input_tensor[:, 1])
         return relation_transforms * heads
 
     def get_rhs(self, input_tensor):
@@ -79,10 +73,25 @@ class MuREuclidean(BaseEuclidean):
         return tails + relation_additions
 
 
-class ChamiEuclidean(BaseChami, BaseEuclidean):
-    """Euclidean attention model that combines reflections and rotations from Chami et al. 2020."""
+class RotRefEuclidean(RotRefBase, CFEuclideanBase):
 
     def get_lhs(self, input_tensor):
         head_embeds = self.get_heads(input_tensor)
         rel_embeds = self.relations(input_tensor[:, 1])
         return head_embeds + rel_embeds
+
+
+class UserAttentiveEuclidean(UserAttentiveBase):
+
+    def similarity_score(self, lhs, rhs, all_items):
+        """
+        The main difference of this function with the BaseEuclidean score is that when all_items = True,
+        rhs will be B1 x B2 x dims, instead of B2 x dims
+        :param lhs: B1 x dims
+        :param rhs: B1 x dims if all_items = False, else B1 x B2 x dims
+        :param all_items:
+        :return: B1 x 1 if all_items = False, else B1 x B2
+        """
+        if all_items:
+            return -euclidean_sq_distance_batched_all_pairs(lhs, rhs)
+        return -euclidean_sq_distance(lhs, rhs, all_pairs=False)

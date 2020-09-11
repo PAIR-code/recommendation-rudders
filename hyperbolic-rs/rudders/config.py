@@ -20,10 +20,10 @@ CONFIG = {
         'prep_name': ('Name of prep file to load', 'musicins-top10'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
-        'model': ('Model', 'RotatE'),
+        'model': ('Model', 'UserAttentiveEuclidean'),
         'loss_fn': ('Loss function to use', 'BCELoss'),
         'initializer': ('Which initializer to use', 'GlorotNormal'),
-        'regularizer': ('Regularizer', 'L2Regularizer'),
+        'regularizer': ('Regularizer', 'l2'),
         'optimizer': ('Optimizer', 'adam'),
         'dtype': ('Precision to use', 'float64'),
         'results_file': ('Name of file to export results', 'results'),
@@ -32,11 +32,11 @@ CONFIG = {
         'lr': ('Learning rate', 1e-3),
         'lr_decay': ('Learning rate decay', 0.96),
         'min_lr': ('Minimum learning rate decay', 1e-5),
-        'gamma': ('Weight for distortion loss', 1),
         'entity_reg': ('Regularization weight for entity embeddings', 0),
         'relation_reg': ('Regularization weight for relation embeddings', 0),
         'hinge_margin': ('Margin for hinge based models', 1),
         'curvature': ('Curvature in case of using hyperbolic space', 1.),
+        'ui_weight': ('Weight to combine user-item relation with weighted average of all other relations', 0.75),
     },
     'integer': {
         'patience': ('Number of validation steps before early stopping', 10),
@@ -45,7 +45,7 @@ CONFIG = {
         'max_epochs': ('Maximum number of epochs to train for', 12),
         'dims': ('Embeddings dimension', 32),
         'batch_size': ('Batch size', 1000),
-        'eval_batch_size': ('Eval Batch size', 1024),
+        'eval_batch_size': ('Eval Batch size', 75),
         'neg_sample_size': ('Negative sample size, -1 to use loss without negative sampling', 1),
         'seed': ('Random seed', 42),
         'gpu_index': ('GPU index, in case of working with more than one', 0),
@@ -63,5 +63,6 @@ CONFIG = {
         'use_category_relation': ('Whether to use this relation or not', False),
         'use_brand_relation': ('Whether to use this relation or not', True),
         'unique_relation': ('Whether to convert allowed relations into only one', False),
+        'train_ui_weight': ('Whether to train weight between combined and reg embeds in UI rel', False)
     }
 }

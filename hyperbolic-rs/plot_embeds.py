@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Script to export for visualization the learnt embeddings.
+"""Script to export for visualization or plot the learnt embeddings.
 This file takes as input the .h5 output of a trained model. It applies a
 dimensionality reduction technique to 2D in either Euclidean or Hyperbolic
 Space. Finally it plots the embeddings using matplotlib or it exports
@@ -25,8 +25,10 @@ import tensorflow as tf
 import pickle
 import numba
 import numpy as np
-from rudders.hmath import expmap0, hyp_distance_all_pairs
-from rudders.models.euclidean import euclidean_distance
+from collections import namedtuple
+import rudders.models as models
+from rudders.math.hyperb import expmap0, hyp_distance_all_pairs
+from rudders.math.euclid import euclidean_distance
 import os
 import matplotlib as mpl
 if os.environ.get('DISPLAY') is None:  # NOQA
@@ -38,82 +40,58 @@ import seaborn as sns
 sns.set()
 
 EXPORT_PATH = Path("out")
-USER_KEY = "user_embeddings"
-ITEM_KEY = "item_embeddings"
+ENTITY_KEY = "entity_embeddings"
+RELATION_KEY = "relation_embeddings"
 
 
-def main():
-    parser = argparse.ArgumentParser(description="export.py")
-    parser.add_argument("--model", required=True, help="Path to model to load")
-    parser.add_argument("--prep", default="data/prep/keen/ukeen-minint5-random.pickle",
-                        help="Path to prep file for id2title dict")
-    parser.add_argument("--matplot", default=0, type=int,
-                        help="If matplot=1 it exports a matplot image. If not, it exports the coords and metadata to"
-                             "be plotted in projector.tensorflow.org")
-    parser.add_argument("--hyperbolic", default=1, type=int,
-                        help="Whether the points were trained in a hyperbolic space or not. If --hyperbolic=1, it "
-                             "assumes points are in the tangent space and need to be projected.")
-    parser.add_argument("--curvature", default=1, type=float, help="Curvature of hyperbolic space.")
-    parser.add_argument("--debug", default=0, type=int, help="If debug is 1, uses only a few embeddings")
-
-    EXPORT_PATH.mkdir(parents=True, exist_ok=True)
-    args = parser.parse_args()
-    model_data = h5py.File(args.model, "r")
-
-    user_embeds = np.array(model_data[USER_KEY][USER_KEY]["embeddings:0"])
-    item_embeds = np.array(model_data[ITEM_KEY][ITEM_KEY]["embeddings:0"])
-
-    if args.debug == 1:
-        user_embeds = user_embeds[:100]
-        item_embeds = item_embeds[:100]
-
-    if args.hyperbolic:
-        user_embeds = to_hyperbolic(user_embeds, args.curvature)
-        item_embeds = to_hyperbolic(item_embeds, args.curvature)
-
-    user_embeds_2d, item_embeds_2d = project_to_2d(user_embeds, item_embeds, hyperbolic=args.hyperbolic == 1)
-
-    if args.matplot == 1:
-        plot(args.model, user_embeds_2d, item_embeds_2d)
-        return
-
-    closest_user_item = get_closest_points(user_embeds, item_embeds, hyperbolic=args.hyperbolic == 1, curvature=args.curvature, top_k=9)
-    closest_item_item = get_closest_points(item_embeds, item_embeds, hyperbolic=args.hyperbolic == 1, curvature=args.curvature)[:, 1:]
-    id2title, samples = load_id2title(args.prep)
-    export_for_projector(args.model, user_embeds_2d, item_embeds_2d, id2title, samples, closest_user_item, closest_item_item)
-
-
-def load_id2title(prep_path):
+def load_prep(prep_path):
     print(f"Loading prep from {prep_path}")
     with tf.io.gfile.GFile(str(prep_path), 'rb') as f:
-        data = pickle.load(f)
-    id2iid, iid2name = data["id2iid"], data["iid2name"]
-    return {item_idx: iid2name.get(iid, "None") for item_idx, iid in id2iid.items()}, data["samples"]
+        return pickle.load(f)
+
+
+def load_id2title(prep_data):
+    id2iid, iid2name = prep_data["id2iid"], prep_data["iid2name"]
+    return {item_idx: iid2name.get(iid, "None") for item_idx, iid in id2iid.items()}, prep_data["samples"]
 
 
 def to_hyperbolic(embeds, c_value):
     return expmap0(tf.convert_to_tensor(embeds), tf.convert_to_tensor([c_value], dtype=tf.float64)).numpy()
 
 
-def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, closest_user_item, closest_item_item):
+def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, closest_user_item, closest_item_item,
+                         user_ids, item_ids):
+    """
+    Exports coordinates and metadata of points in tsv following the guidelines to be plotted on
+    the Tensorflow embedding projector.
+
+    :param filename: to export the final files of coords and metadata
+    :param user_embeds, item_embeds: 2D embeddings
+    :param id2title: item id to title.
+    :param samples: To know with which items the user is interacting.
+    :param closest_user_item, closest_item_item: to be added as metadata
+    :param user_ids, item_ids: aligned to the user/item embeds, to know to which entity we refer
+    """
     meta, coords = ["type\ttitle\tinteractions\tclosest"], []
     for i, embed in enumerate(user_embeds):
+        user_id = user_ids[i]
         coords.append("\t".join([str(x) for x in embed]))
         # interactions are the items that each user is interacting with
         # samples contain the ids of the items, and id2title the title of each item
-        interactions = [id2title.get(item_id, "None").replace("\t", "") for item_id in samples[i]]
+        interactions = [id2title.get(item_id, "None").replace("\t", "") for item_id in samples[user_id]]
         interactions = "//".join(interactions)
 
-        closests = [id2title.get(item_id, "None").replace("\t", "") for item_id in closest_user_item[i]]
+        closests = [id2title.get(item_ids[neigh_id], "None").replace("\t", "") for neigh_id in closest_user_item[i]]
         closests = "//".join(closests)
 
-        meta.append(f"user\tu_{i + 1}\t{interactions}\t{closests}")
+        meta.append(f"user\tu_{user_id}\t{interactions}\t{closests}")
 
     for i, embed in enumerate(item_embeds):
+        item_id = item_ids[i]
         coords.append("\t".join([str(x) for x in embed]))
-        title = id2title[i].replace("\t", "-")
+        title = id2title[item_id].replace("\t", "-")
 
-        closests = [id2title[item_id].replace("\t", "") for item_id in closest_item_item[i]]
+        closests = [id2title[item_ids[neig_id]].replace("\t", "") for neig_id in closest_item_item[i]]
         closests = "//".join(closests)
 
         meta.append(f"item\t{title}\t-\t{closests}")
@@ -181,7 +159,6 @@ def plot(filename, user_embeds, item_embeds, subsample=0.5, alpha=0.75, size=2):
     If subsample == 0 or subsample == 1, it will use all users/items
     :param alpha: alpha parameter in scatter plot. Alpha of points to plot.
     :param size: size of each point for scatter plot
-    :return:
     """
     if subsample > 0:
         user_embeds = user_embeds[:int(len(user_embeds) * subsample)]
@@ -202,6 +179,8 @@ def plot(filename, user_embeds, item_embeds, subsample=0.5, alpha=0.75, size=2):
 
 @numba.njit()
 def hyperbolic_distance(x, y):
+    """Function used by UMAP to project the points.
+    It can only use numpy methods that's why it is reimplemented here"""
 
     def artanh(x):
         eps = 1e-10
@@ -233,6 +212,95 @@ def get_closest_points(src_embeds, dst_embeds, hyperbolic, curvature, top_k=15):
     closest_indexes = tf.math.top_k(-distances, k=top_k + 1)[1]
     closest_indexes = closest_indexes.numpy()
     return closest_indexes
+
+
+def load_model(ckpt_path, model_name, curvature, prep_data):
+    model_data = h5py.File(ckpt_path, "r")
+    n_entities = len(model_data[ENTITY_KEY][ENTITY_KEY]["embeddings:0"])
+    n_relations = len(model_data[RELATION_KEY][RELATION_KEY]["embeddings:0"])
+    dims = model_data[ENTITY_KEY][ENTITY_KEY]["embeddings:0"].shape[-1]
+
+    Flags = namedtuple("Flags",
+                       ['initializer', 'entity_init', 'relation_init', 'regularizer', 'dims', 'neg_sample_size',
+                        'entity_reg', 'relation_reg', 'batch_size', 'curvature', 'train_c', 'dtype',
+                        'ui_weight', 'train_ui_weight'])
+    initializer = "GlorotNormal"
+    regularizer = "l2"
+    args = Flags(
+        initializer=initializer,
+        entity_init=initializer,
+        relation_init=initializer,
+        regularizer=regularizer,
+        dims=dims,
+        neg_sample_size=1,
+        entity_reg=0,
+        relation_reg=0,
+        batch_size=1024,
+        curvature=curvature,
+        train_c=False,
+        dtype='float64',
+        ui_weight=0.75,
+        train_ui_weight=False
+    )
+
+    tf.keras.backend.set_floatx(args.dtype)
+    item_ids = list(prep_data["id2iid"].keys())
+    model = getattr(models, model_name)(n_entities, n_relations, item_ids, args)
+    model.build(input_shape=(1, 2))
+    model.load_weights(ckpt_path)
+    print(model.summary())
+    return model
+
+
+def get_embeds(model, prep_data, is_debug):
+    """Computes embeddings by using the left and right hand side model representations.
+    It uses users and items on the dev set.
+    Returns the embeddings of users and items, and to which id they correspond to"""
+    split = prep_data["dev"][:100] if is_debug else prep_data["dev"]
+    bs = 100
+    user_embeds, item_embeds = [], []
+    user_ids, item_ids = [], []
+    for input_tensor in tf.data.Dataset.from_tensor_slices(split).batch(bs):
+        user_embeds.append(model.get_lhs(input_tensor))
+        item_embeds.append(model.get_rhs(input_tensor))
+        user_ids.extend(input_tensor[:, 0].numpy().tolist())
+        item_ids.extend(input_tensor[:, -1].numpy().tolist())
+    return tf.concat(user_embeds, axis=0).numpy(), tf.concat(item_embeds, axis=0).numpy(), user_ids, item_ids
+
+
+def main():
+    parser = argparse.ArgumentParser(description="plot_embeds.py")
+    parser.add_argument("--ckpt_path", default="ckpt/fooh_10ep.h5", required=False, help="Path to h5 ckpt to load")
+    parser.add_argument("--model_name", default="UserAttentiveHyperbolic", help="Name of model to load")
+    parser.add_argument("--prep", default="data/prep/amazon/musicins-top10.pickle",
+                        help="Path to prep used in the training of this model")
+    parser.add_argument("--matplot", default=0, type=int,
+                        help="If matplot=1 it exports a matplot image. If not, it exports the coords and metadata to"
+                             "be plotted in projector.tensorflow.org")
+    parser.add_argument("--hyperbolic", default=1, type=int,
+                        help="Whether the points are on a hyperbolic space or not, for the projection.")
+    parser.add_argument("--curvature", default=1, type=float, help="Curvature of hyperbolic space.")
+    parser.add_argument("--debug", default=1, type=int, help="If debug is 1, uses only a few embeddings")
+
+    EXPORT_PATH.mkdir(parents=True, exist_ok=True)
+    args = parser.parse_args()
+
+    prep_data = load_prep(args.prep)
+    model = load_model(args.ckpt_path, args.model_name, args.curvature, prep_data)
+
+    user_embeds, item_embeds, user_ids, item_ids = get_embeds(model, prep_data, args.debug == 1)
+
+    user_embeds_2d, item_embeds_2d = project_to_2d(user_embeds, item_embeds, hyperbolic=args.hyperbolic == 1)
+
+    if args.matplot == 1:
+        plot(args.ckpt_path, user_embeds_2d, item_embeds_2d)
+        return
+
+    closest_user_item = get_closest_points(user_embeds, item_embeds, hyperbolic=args.hyperbolic == 1, curvature=args.curvature, top_k=9)
+    closest_item_item = get_closest_points(item_embeds, item_embeds, hyperbolic=args.hyperbolic == 1, curvature=args.curvature)[:, 1:]
+    id2title, samples = load_id2title(prep_data)
+    export_for_projector(args.ckpt_path, user_embeds_2d, item_embeds_2d, id2title, samples, closest_user_item,
+                         closest_item_item, user_ids, item_ids)
 
 
 if __name__ == "__main__":
