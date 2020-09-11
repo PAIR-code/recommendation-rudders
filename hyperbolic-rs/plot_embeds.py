@@ -51,6 +51,13 @@ def load_prep(prep_path):
 
 
 def load_id2title(prep_data):
+    """
+    Loads a dictionary of {id: title}
+    In the preprocessing data "id2iid" maps item indexes in the model to their original item_id
+    on the dataset, and "iid2name" maps origina item_ids to the name that appears on the metadata
+
+    :param prep_data: it is the dictionary with the preprocessing data used to generate the ckpt being processed
+    """
     id2iid, iid2name = prep_data["id2iid"], prep_data["iid2name"]
     return {item_idx: iid2name.get(iid, "None") for item_idx, iid in id2iid.items()}, prep_data["samples"]
 
@@ -214,7 +221,14 @@ def get_closest_points(src_embeds, dst_embeds, hyperbolic, curvature, top_k=15):
     return closest_indexes
 
 
-def load_model(ckpt_path, model_name, curvature, prep_data):
+def load_model(ckpt_path, model_class, curvature, prep_data):
+    """
+    :param ckpt_path: path to h5 exported model after training 
+    :param model_class: class name of the model
+    :param curvature: hyperparameter used to train the model (in case it is a hyperbolic model)
+    :param prep_data: prep_data used to train the model
+    :return: an instance of 'model_class' with weights taken from the specified ckpt
+    """
     model_data = h5py.File(ckpt_path, "r")
     n_entities = len(model_data[ENTITY_KEY][ENTITY_KEY]["embeddings:0"])
     n_relations = len(model_data[RELATION_KEY][RELATION_KEY]["embeddings:0"])
@@ -245,7 +259,7 @@ def load_model(ckpt_path, model_name, curvature, prep_data):
 
     tf.keras.backend.set_floatx(args.dtype)
     item_ids = list(prep_data["id2iid"].keys())
-    model = getattr(models, model_name)(n_entities, n_relations, item_ids, args)
+    model = getattr(models, model_class)(n_entities, n_relations, item_ids, args)
     model.build(input_shape=(1, 2))
     model.load_weights(ckpt_path)
     print(model.summary())
@@ -271,7 +285,7 @@ def get_embeds(model, prep_data, is_debug):
 def main():
     parser = argparse.ArgumentParser(description="plot_embeds.py")
     parser.add_argument("--ckpt_path", default="ckpt/fooh_10ep.h5", required=False, help="Path to h5 ckpt to load")
-    parser.add_argument("--model_name", default="UserAttentiveHyperbolic", help="Name of model to load")
+    parser.add_argument("--model_class", default="UserAttentiveHyperbolic", help="Name of model class to load")
     parser.add_argument("--prep", default="data/prep/amazon/musicins-top10.pickle",
                         help="Path to prep used in the training of this model")
     parser.add_argument("--matplot", default=0, type=int,
@@ -286,7 +300,7 @@ def main():
     args = parser.parse_args()
 
     prep_data = load_prep(args.prep)
-    model = load_model(args.ckpt_path, args.model_name, args.curvature, prep_data)
+    model = load_model(args.ckpt_path, args.model_class, args.curvature, prep_data)
 
     user_embeds, item_embeds, user_ids, item_ids = get_embeds(model, prep_data, args.debug == 1)
 

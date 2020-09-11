@@ -34,7 +34,7 @@ flags.DEFINE_string('file', default='movies.dat',
 flags.DEFINE_string('amazon_reviews', default='Musical_Instruments_5.json.gz',
                     help='Name of the 5-core amazon reviews file')
 flags.DEFINE_string('amazon_meta', default='meta_Musical_Instruments.json.gz',
-                    help='Name of the 5-core amazon reviews file')
+                    help='Name of the product metadata file in the Amazon dataset')
 flags.DEFINE_string('text_embeddings', default='', help='If provided, it takes embeddings from file')
 flags.DEFINE_float('threshold', default=0.6, help='Cosine similarity threshold to add edges')
 flags.DEFINE_string('use_model_url', default="https://tfhub.dev/google/universal-sentence-encoder-large/5",
@@ -190,6 +190,7 @@ def get_neighbors_with_distances(graph):
 
 def main(_):
     dataset_path = Path(FLAGS.dataset_path)
+    item_name = FLAGS.amazon_reviews.split("5")[0][:-1] if FLAGS.item == "amazon" else FLAGS.item
     if not FLAGS.text_embeddings:
         text_file_path = dataset_path / FLAGS.file
 
@@ -213,12 +214,12 @@ def main(_):
         else:
             raise ValueError(f"Unrecognized item: {FLAGS.item}")
 
-        print(f"Items with text from {FLAGS.item} to encode with USE: {len(texts)}")
+        print(f"Items with text from {item_name} to encode with USE: {len(texts)}")
         print(list(texts.items())[:3])
 
         weight_first_embed = FLAGS.item == "keen" or "amazon" in FLAGS.dataset_path
         embeds = build_item_embeds(texts, FLAGS.use_model_url, weight_first_embedding=weight_first_embed)
-        export_text_embeddings(embeds, dataset_path, FLAGS.item)
+        export_text_embeddings(embeds, dataset_path, item_name)
     else:
         embeds = load_text_embeddings(FLAGS.text_embeddings)
 
@@ -240,13 +241,12 @@ def main(_):
     neighs_and_dists = get_neighbors_with_distances(graph)
     result = {"item_item_distances": neighs_and_dists}
 
-    if FLAGS.item == "amazon":
-        item_name = FLAGS.amazon_reviews.split("5")[0][:-1]
-        file_name = f'{item_name}_{item_name}_{"cos" if FLAGS.use_distance else "hop"}dist_th{FLAGS.threshold}'
-    else:
-        file_name = f'{FLAGS.item}_{FLAGS.item}_{"cos" if FLAGS.use_distance else "hop"}dist_th{FLAGS.threshold}'
-    nx.write_weighted_edgelist(graph, str(dataset_path / (file_name + ".edgelist")))
-    save_as_pickle(dataset_path / (file_name + ".pickle"), result)
+    # stores graph
+    graph_file_name = f'{item_name}_th{FLAGS.threshold}_graph.edgelist'
+    nx.write_weighted_edgelist(graph, str(dataset_path / graph_file_name))
+    # stores distances for preprocessing
+    file_name = f'{item_name}_th{FLAGS.threshold}_{"cos" if FLAGS.use_distance else "hop"}distances.pickle'
+    save_as_pickle(dataset_path / file_name, result)
 
 
 if __name__ == '__main__':

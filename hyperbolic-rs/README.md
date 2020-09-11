@@ -20,6 +20,7 @@ Knowledge graph models available:
  - ``tqdm``
  - ``networkx``: for preprocessing only
  
+
 ## Reproducing experiments
 
 ### 1. Download Amazon review data
@@ -27,10 +28,11 @@ From [Amazon Review Data (2018)](https://nijianmo.github.io/amazon/index.html), 
 category branch of the dataset ("Musical Instruments", "Video Games", etc), download the 
 5-core review file and the metadata. Store the ``*.json.gz`` files in ``data/amazon``
 
-### 2. Build semantic similarity graph
 
+### 2. Build semantic distances between items
 Computes semantic embeddings with the _Universal Sentence Encoder_ based on product reviews.
 Builds semantic similarity graph based on distance in the embedding space.
+Retrieves the distances from each item (products) to the closest neighbors.
 
 Example made for "Musical Instruments".
 ```
@@ -40,22 +42,29 @@ python item_graph.py --item=amazon --dataset_path=data/amazon \
 ```
 
 The output of this script will be the file 
-``data/amazon/Musical_Instruments_Musical_Instruments_cosdist_th0.6.pickle``
-with the semantic distance between products.
+``data/amazon/Musical_Instruments_th0.6_cosdistances.pickle``
+with the semantic distance between items (products).
+
 
 ### 3. Preprocess data 
+Generates train, dev and test splits with triplets of the form ``(head, relation, tail)``, 
+where ``head`` and ``tail`` are entities in the space.
+It also stores the metadata about users, products and other entities in the space.
+
 The parameter ``prep_id`` can be set to store different preprocessing configurations:
  
 ```
 python preprocess.py --item=amazon --dataset_path=data/amazon \
         --amazon_reviews=Musical_Instruments_5.json.gz \
         --amazon_meta=meta_Musical_Instruments.json.gz \
-        --item_item_file=musicins_musicins_cosine_distance_th0.6.pickle \
+        --item_item_file=Musical_Instruments_th0.6_cosdistances.pickle \
         --add_extra_relations=True --prep_id=amzn-musicins
 ```
 
 The output of this script will be the "prep file" and it will be stored in 
 ``data/prep/amazon/amzn-musicins.pickle``
+
+
 ### 4. Train model
 The name of the preprocessing used in the previous step must be given as a parameter.
 ```
