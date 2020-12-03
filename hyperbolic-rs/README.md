@@ -68,7 +68,7 @@ The output of this script will be the "prep file" and it will be stored in
 ### 4. Train model
 The name of the preprocessing used in the previous step must be given as a parameter.
 ```
-python train --prep_name=amzn-musicins --run_id=my_trained_model
+python train.py --prep_name=amzn-musicins --run_id=my_trained_model
 ```
 
 More parameters can be set on the ``config.py`` file.
