@@ -65,11 +65,23 @@ def setup_summary(save_path: Path):
 
 
 def rank_to_metric_dict(ranks):
+    """
+    Computes metrics and returns them as dict
+    :param ranks: Numpy array of shape (n_examples, ) containing the rank of each example in full
+    :return:
+    """
     mean_rank = np.mean(ranks)
     mean_reciprocal_rank = np.mean(1. / ranks)
     metrics = {'MR': mean_rank, 'MRR': mean_reciprocal_rank}
     for k in (1, 3, 10):
-        metrics[f'HR@{k}'] = np.mean(ranks <= k) * 100
+        less_or_equal_k = ranks <= k
+        metrics[f'HR@{k}'] = np.mean(less_or_equal_k) * 100
+
+        if k == 10:
+            ndcg_at_k = 1 / np.log2(ranks + 1)
+            ndcg_at_k = np.where(less_or_equal_k, ndcg_at_k, 0)
+            metrics[f'NDCG@{k}'] = np.mean(ndcg_at_k)
+
     return metrics
 
 

@@ -17,11 +17,11 @@ CONFIG = {
         'run_id': ('Name of the run to write down logs and config', 'fooh'),
         'prep_dir': ('Path to data directory', 'data/prep'),
         'dataset': ('Dataset (keen, gem, ml-1m or amazon)', 'amazon'),
-        'prep_name': ('Name of prep file to load', 'musicins-top10'),
+        'prep_name': ('Name of prep file to load', 'Software-top10'),
         'logs_dir': ('Path to logs directory', 'logs/'),
         'ckpt_dir': ('Path to checkpoint directory', 'ckpt/'),
         'model': ('Model', 'UserAttentiveEuclidean'),
-        'loss_fn': ('Loss function to use', 'BCELoss'),
+        'loss_fn': ('Loss function to use', 'BCELossBatchedNegSample'),
         'initializer': ('Which initializer to use', 'GlorotNormal'),
         'regularizer': ('Regularizer', 'l2'),
         'optimizer': ('Optimizer', 'adam'),
@@ -37,6 +37,8 @@ CONFIG = {
         'hinge_margin': ('Margin for hinge based models', 1),
         'curvature': ('Curvature in case of using hyperbolic space', 1.),
         'ui_weight': ('Weight to combine user-item relation with weighted average of all other relations', 0.75),
+        'cold_start_proportion': ('Proportion of the tail to keep to analyze cold start problem', 0.02),
+        'dropout': ('Dropout', 0.3),
     },
     'integer': {
         'patience': ('Number of validation steps before early stopping', 10),
@@ -51,7 +53,6 @@ CONFIG = {
         'gpu_index': ('GPU index, in case of working with more than one', 0),
     },
     'boolean': {
-        'train_c': ('Whether to train the hyperbolic curvature or not', False),
         'debug': ('If debug is true, only use 1000 examples for debugging purposes', True),
         'save_logs': ('Whether to save the training logs or not', True),
         'print_logs': ('Whether to print the training logs to stdout', True),
@@ -63,6 +64,8 @@ CONFIG = {
         'use_category_relation': ('Whether to use this relation or not', False),
         'use_brand_relation': ('Whether to use this relation or not', True),
         'unique_relation': ('Whether to convert allowed relations into only one', False),
-        'train_ui_weight': ('Whether to train weight between combined and reg embeds in UI rel', False)
+        'train_ui_weight': ('Whether to train weight between combined and reg embeds in UI rel', False),
+        'train_c': ('Whether to train the hyperbolic curvature or not', False),
+        'train_bias': ('Whether to train added bias for scoring function or not', True),
     }
 }

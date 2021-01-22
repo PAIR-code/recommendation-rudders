@@ -21,7 +21,7 @@ HR_AT_10 = "HR@10_r"
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="process_results.py")
-    parser.add_argument("--file", required=True, help="Path to model to load")
+    parser.add_argument("--file", required=True, help="Path to result file to load")
     args = parser.parse_args()
 
     data = pd.read_csv(args.file)

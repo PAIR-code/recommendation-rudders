@@ -28,7 +28,7 @@ class CFModel(tf.keras.Model, abc.ABC):
     different types of relations between entities (users and items)
     """
 
-    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=False):
+    def __init__(self, n_entities, n_relations, item_ids, args):
         super().__init__()
         self.dims = args.dims
         self.item_ids = np.reshape(np.array(item_ids), (-1, 1))
@@ -53,13 +53,19 @@ class CFModel(tf.keras.Model, abc.ABC):
             output_dim=1,
             embeddings_initializer='zeros',
             name='head_biases',
-            trainable=train_bias)
+            trainable=args.train_bias)
         self.bias_tail = tf.keras.layers.Embedding(
             input_dim=n_entities,
             output_dim=1,
             embeddings_initializer='zeros',
             name='tail_biases',
-            trainable=train_bias)
+            trainable=args.train_bias)
+        self.dropout = tf.keras.layers.Dropout(args.dropout)
+        self.training = True
+
+    def build(self, input_shape):
+        super().build(input_shape)
+        self.dropout.build(input_shape)
 
     @abc.abstractmethod
     def get_lhs(self, input_tensor):
@@ -168,7 +174,7 @@ class CFModel(tf.keras.Model, abc.ABC):
         for counter, input_tensor in enumerate(split_data.batch(batch_size)):
             targets = self.call(input_tensor).numpy()
             scores = self.call(input_tensor, all_items=True).numpy()
-            scores[:, excluded_items] = -1e6
+            # scores[:, excluded_items] = -1e6
             scores_random = np.ones(shape=(scores.shape[0], num_rand))
             for i, query in enumerate(input_tensor):
                 query = query.numpy()
@@ -193,8 +199,8 @@ class MuRBase(CFModel, abc.ABC):
         "Multi-relational Poincaré Graph Embeddings"
         Balazevic et al. 2019.
     """
-    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=True):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias)
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args)
         self.transforms = tf.keras.layers.Embedding(
             input_dim=n_relations,
             output_dim=self.dims,
@@ -210,8 +216,8 @@ class RotRefBase(CFModel, abc.ABC):
         Chami et al. 2020.
     """
 
-    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=True):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias)
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args)
 
         self.reflections = tf.keras.layers.Embedding(
             input_dim=n_relations,
@@ -276,6 +282,7 @@ class RotRefBase(CFModel, abc.ABC):
         :return: heads: bs x dims
         """
         heads = self.entities(input_tensor[:, 0])
+        heads = self.dropout(heads, training=self.training)
         rotations = self.rotations(input_tensor[:, 1])
         reflections = self.reflections(input_tensor[:, 1])
         attn_vec = self.attention_lhs(input_tensor[:, 1])
@@ -314,6 +321,7 @@ class UserAttentiveBase(RotRefBase, MuRBase, abc.ABC):
 
     def get_lhs(self, input_tensor):
         heads = self.entities(input_tensor[:, 0])
+        heads = self.dropout(heads, training=self.training)
         rotations = self.rotations(input_tensor[:, 1])
         reflections = self.reflections(input_tensor[:, 1])
         transforms = self.transforms(input_tensor[:, 1])
@@ -333,10 +341,11 @@ class UserAttentiveBase(RotRefBase, MuRBase, abc.ABC):
         :return: tensor of bs x dims. If all_items=True, bs x n_items x dims
         """
         if all_items:
-            input_tensor = tf.repeat(tf.expand_dims(input_tensor[:, 0], 1), repeats=len(self.item_ids), axis=-1)
+            input_tensor = tf.tile(tf.expand_dims(input_tensor[:, 0], 1), [1, len(self.item_ids)])
             return self.attention_rhs(input_tensor)
         return self.attention_rhs(input_tensor[:, 0])
 
+    @tf.function
     def combine_entities_and_relations(self, entities, relations, all_relations, attn_vecs, relation_index,
                                        ui_weights, tf_op):
         """
@@ -353,6 +362,10 @@ class UserAttentiveBase(RotRefBase, MuRBase, abc.ABC):
         """
         # adds or multiplies each entity with the corresponding relation
         regular_embeds = tf_op(entities, relations)
+
+        if relation_index.shape[0] != 1 and tf.reduce_all(relation_index != Relations.USER_ITEM.value):
+            return regular_embeds
+
         # adds or multiplies each entity with all the relation embeddings
         candidates = tf_op(tf.reshape(entities, (-1, 1, self.dims)),
                            tf.reshape(all_relations, (1, -1, self.dims)))  # b x r x dims
@@ -373,6 +386,7 @@ class UserAttentiveBase(RotRefBase, MuRBase, abc.ABC):
         Then it combines them according to the rhs attention vector, that is user-specific.
         """
         tails = self.entities(input_tensor[:, -1])
+        tails = self.dropout(tails, training=self.training)
         rel_index = input_tensor[:, 1]
         relations = self.relations(rel_index)
         attn_vecs = self.get_rhs_attn_vector(input_tensor)

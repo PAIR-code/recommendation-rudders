@@ -80,8 +80,43 @@ class BCELoss(NegativeSampleLoss):
         return loss / n_samples
 
 
+class BCELossBatchedNegSample(NegativeSampleLoss):
+    """Binary Cross Entropy loss.
+    The probability of the triplet being true is given by sigma(score(head, relation, tail))
+    This loss aims to maximize the probability of positive samples and minimize the one of
+    negative samples.
+    """
+    def __init__(self, ini_neg_index, end_neg_index, args):
+        super().__init__(ini_neg_index, end_neg_index, args)
+        self.bce = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.SUM)
+
+    def build_negative_input_batch(self, input_batch):
+        """From a batch x 3 input_batch tensor with (head, relation, tail) builds a
+        batch x 3 input batch of the form (head, relation, corrupted_tail)"""
+        head = tf.tile(tf.expand_dims(input_batch[:, 0], 1), [self.neg_sample_size, 1])
+        relation = tf.tile(tf.expand_dims(input_batch[:, 1], 1), [self.neg_sample_size, 1])
+        corrupted_entity = tf.random.uniform((len(input_batch) * self.neg_sample_size, 1),
+                                             minval=self.ini_neg_index,
+                                             maxval=self.end_neg_index + 1,
+                                             dtype=input_batch.dtype)
+        return tf.concat((head, relation, corrupted_entity), axis=-1)
+
+    def calculate_loss(self, model, input_batch):
+        neg_input_batch = self.build_negative_input_batch(input_batch)
+        total_input_batch = tf.concat((input_batch, neg_input_batch), axis=0)
+
+        true_labels = tf.ones((len(input_batch), 1), dtype=tf.float64)
+        neg_labels = tf.zeros((len(neg_input_batch), 1), dtype=tf.float64)
+        total_labels = tf.concat((true_labels, neg_labels), axis=0)
+
+        scores = model(total_input_batch)
+
+        loss = self.bce(total_labels, scores)
+        return loss / tf.cast(len(total_input_batch), dtype=tf.float64)
+
+
 class HingeLoss(NegativeSampleLoss):
-    """Hinge triple loss based on scoring positve samples higher than negative samples."""
+    """Hinge triple loss based on scoring positive samples higher than negative samples."""
     def __init__(self, ini_neg_index, end_neg_index, args):
         super().__init__(ini_neg_index, end_neg_index, args)
         self.margin = args.hinge_margin
@@ -94,3 +129,38 @@ class HingeLoss(NegativeSampleLoss):
             neg_score = model(neg_input_batch)
             loss = loss + tf.reduce_mean(tf.nn.relu(self.margin - pos_score + neg_score))
         return loss
+
+
+class BPRLoss(NegativeSampleLoss):
+    """Loss for Bayesian Personalized ranking
+    The probability of the triplet being true is given by sigma(score(head, relation, tail))
+    This loss aims to maximize the probability of positive samples and minimize the one of
+    negative samples.
+    """
+    def __init__(self, ini_neg_index, end_neg_index, args):
+        super().__init__(ini_neg_index, end_neg_index, args)
+        self.log_sigmoid = tf.math.log_sigmoid
+
+    def calculate_loss(self, model, input_batch):
+        pos_score = model(input_batch)
+        neg_input_batch = self.build_negative_input_batch(input_batch)
+        neg_score = model(neg_input_batch)
+        loss = self.log_sigmoid(pos_score - neg_score) * -1
+        return tf.reduce_mean(loss)
+
+
+class RotatELoss(NegativeSampleLoss):
+    """Loss used in RotatE, based on negative sampling loss by Mikolov."""
+    def __init__(self, ini_neg_index, end_neg_index, args):
+        super().__init__(ini_neg_index, end_neg_index, args)
+        self.log_sigmoid = tf.math.log_sigmoid
+        self.margin = args.hinge_margin
+
+    def calculate_loss(self, model, input_batch):
+        pos_score = model(input_batch)
+        loss = self.log_sigmoid(self.margin - pos_score) * -1
+        for _ in range(self.neg_sample_size):
+            neg_input_batch = self.build_negative_input_batch(input_batch)
+            neg_score = model(neg_input_batch)
+            loss = loss - self.log_sigmoid(neg_score - self.margin)
+        return tf.reduce_mean(loss)

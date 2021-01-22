@@ -28,8 +28,46 @@ class CFEuclideanBase(CFModel, ABC):
         return -euclidean_sq_distance(lhs, rhs, all_items)
 
 
-class SimpleFactor(CFEuclideanBase):
-    """Simple factorization of entity and relation embeddings."""
+class MLP(CFModel):
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args)
+        self.relations = None
+
+        self.dense_1 = tf.keras.layers.Dense(units=self.dims, activation=tf.nn.relu)
+        self.dense_2 = tf.keras.layers.Dense(units=int(self.dims / 2), activation=tf.nn.relu)
+        self.dense_3 = tf.keras.layers.Dense(units=1)
+        self.dropout = tf.keras.layers.Dropout(args.dropout)
+
+    def get_lhs(self, input_tensor):
+        return self.entities(input_tensor[:, 0])
+
+    def get_rhs(self, input_tensor):
+        return self.entities(input_tensor[:, -1])
+
+    def similarity_score(self, lhs, rhs, all_items):
+        """
+        :param lhs: b x dim
+        :param rhs: b x dim. If all_items: n_items x dim
+        :param all_items:
+        :return: b x 1. If all_items b x n_items
+        """
+        squeeze = lambda x: x
+        if all_items:
+            bs, dim = tf.shape(lhs)
+            n_items, _ = tf.shape(rhs)
+            lhs = tf.broadcast_to(tf.expand_dims(lhs, 1), (bs, n_items, dim))
+            rhs = tf.broadcast_to(tf.expand_dims(rhs, 0), (bs, n_items, dim))
+            squeeze = lambda x: tf.squeeze(x, axis=-1)
+
+        embeds = tf.concat((lhs, rhs), axis=-1)
+        embeds = self.dense_1(self.dropout(embeds, training=self.training))
+        embeds = self.dense_2(self.dropout(embeds, training=self.training))
+        embeds = self.dense_3(self.dropout(embeds, training=self.training))
+        embeds = squeeze(embeds)
+        return embeds
+
+
+class DistMul(CFEuclideanBase):
     
     def get_lhs(self, input_tensor):
         entities = self.entities(input_tensor[:, 0])
@@ -43,27 +81,76 @@ class SimpleFactor(CFEuclideanBase):
         return tf.reduce_sum(lhs * rhs, axis=-1, keepdims=True)
 
 
-class TransE(CFEuclideanBase):
-    """
-    Model based on:
-        "Translating Embeddings for Modeling Multi-relational Data"
-        Bordes et al. 2013
-    To establish a closer comparison with the hyperbolic model, we make minor modifications
-    from the original Bordes' model.
-     - No L2 normalization is applied on the entity embeddings
-     - The loss is based on squared Euclidean distance instead of 'just' Euclidean distance
-    """
+class BPR(DistMul):
+    """Bayesian personalized ranking.
+    Ignores relations and only accounts for (user, item) interactions"""
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args)
+        self.relations = None
 
     def get_lhs(self, input_tensor):
-        entities = self.entities(input_tensor[:, 0])
+        return self.entities(input_tensor[:, 0])
+
+
+class TransE(CFEuclideanBase):
+    """Model based on:
+       "Translating Embeddings for Modeling Multi-relational Data" Bordes et al. 2013"""
+
+    def get_lhs(self, input_tensor):
+        heads = self.entities(input_tensor[:, 0])
+        heads = tf.math.l2_normalize(heads, axis=-1)
         relations = self.relations(input_tensor[:, 1])
-        return entities + relations
+        return heads + relations
+
+    def get_rhs(self, input_tensor):
+        tails = self.entities(input_tensor[:, -1])
+        return tf.math.l2_normalize(tails, axis=-1)
+
+
+class TransH(CFEuclideanBase):
+
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args)
+
+        self.norm_vector = tf.keras.layers.Embedding(
+            input_dim=n_relations,
+            output_dim=self.dims,
+            embeddings_initializer=self.initializer,
+            embeddings_regularizer=self.relation_regularizer,
+            name='norm_vector')
+
+    def get_lhs(self, input_tensor):
+        heads = self.entities(input_tensor[:, 0])
+        heads = tf.clip_by_norm(heads, clip_norm=1, axes=-1)
+        norm_vectors = self.norm_vector(input_tensor[:, 1])
+        proj_heads = self.project(heads, norm_vectors)
+
+        relations = self.relations(input_tensor[:, 1])
+        return proj_heads + relations
+
+    def get_rhs(self, input_tensor):
+        tails = self.entities(input_tensor[:, -1])
+        tails = tf.clip_by_norm(tails, clip_norm=1, axes=-1)
+        norm_vectors = self.norm_vector(input_tensor[:, 1])
+        proj_tails = self.project(tails, norm_vectors)
+        return proj_tails
+
+    def project(self, entities, norm_vectors):
+        """
+        :param entities: b x dim
+        :param norm_vectors: b x dim
+        :return: b x dim
+        """
+        norm_vectors = tf.math.l2_normalize(norm_vectors, axis=-1)
+        dot_prod = tf.reduce_sum(entities * norm_vectors, axis=-1, keepdims=True)
+        return entities - dot_prod * norm_vectors
 
 
 class MuREuclidean(MuRBase, CFEuclideanBase):
 
     def get_lhs(self, input_tensor):
         heads = self.entities(input_tensor[:, 0])
+        heads = self.dropout(heads, training=self.training)
         relation_transforms = self.transforms(input_tensor[:, 1])
         return relation_transforms * heads
 
