@@ -21,7 +21,7 @@ class BaseComplex(CFModel, ABC):
     """Base model class for complex embeddings."""
 
     def __init__(self, n_entities, n_relations, item_ids, args):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias=False)
+        super().__init__(n_entities, n_relations, item_ids, args)
         assert self.dims % 2 == 0, "Complex models must have an even embedding dimension."
         self.half_dim = self.dims // 2
 
@@ -39,7 +39,9 @@ class BaseComplex(CFModel, ABC):
 
 class ComplexProd(BaseComplex):
     """Complex embeddings for simple link prediction.
-    Applies a complex product (without conjugating the second part) between the head and the relation before scoring"""
+    Applies a complex product (without conjugating the second part) between the head and the relation before scoring.
+    TODO: To fully resemble Trouillon et al 2016. it should conjugate the rhs, apply the complex product one more
+    time, and return the summation of the real values only"""
 
     def get_lhs(self, input_tensor):
         lhs = self.entities(input_tensor[:, 0])

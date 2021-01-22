@@ -32,11 +32,12 @@ flags.DEFINE_string('amazon_reviews', default='Musical_Instruments_5.json.gz',
                     help='Name of the 5-core amazon reviews file')
 flags.DEFINE_string('amazon_meta', default='meta_Musical_Instruments.json.gz',
                     help='Name of the 5-core amazon reviews file')
-flags.DEFINE_string('item_item_file', default='Musical_Instruments_Musical_Instruments_cosdist_th0.6.pickle',
+flags.DEFINE_string('item_item_file', default='Musical_Instruments_th0.6_cosdistances.pickle',
                     help='Path to the item-item distance file')
 flags.DEFINE_boolean('plot_graph', default=False, help='Plots the user-item graph')
 flags.DEFINE_boolean('shuffle', default=False, help='Whether to shuffle the interactions or not')
 flags.DEFINE_boolean('add_extra_relations', default=True, help='For the amazon dataset, adds extra relations')
+flags.DEFINE_boolean('export_splits', default=True, help='Exports (user_id, item_id) pairs of all splits')
 flags.DEFINE_integer('min_user_interactions', default=5,
                      help='Keens users with less than min_user_interactions are filtered')
 flags.DEFINE_integer('min_item_interactions', default=2,
@@ -167,6 +168,19 @@ def build_item_item_triplets(item_item_distances_dict, iid2id, top_k):
     return list(triplets)
 
 
+def export_splits(data, to_save_dir, prep_id):
+    """Exports (user_id, item_id) pairs of all splits splits"""
+    split_names = ["train", "dev", "test"]
+    id2uid, id2iid = data["id2uid"], data["id2iid"]
+    for split_name in split_names:
+        split = data[split_name]
+        if split_name == "train":
+            split = [(uid, r, iid) for uid, r, iid in split if r == Relations.USER_ITEM.value]
+        lines = [f"{id2uid[u_id]},{id2iid[i_id]}\n" for u_id, _, i_id in split]
+        with open(to_save_dir / f"{prep_id}_ui_{split_name}.csv", "w") as f:
+            f.writelines(lines)
+
+
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=True)
     dataset_path = Path(FLAGS.dataset_path)
@@ -236,6 +250,11 @@ def main(_):
     to_save_dir = prep_path / FLAGS.item
     to_save_dir.mkdir(parents=True, exist_ok=True)
     save_as_pickle(to_save_dir / f'{FLAGS.prep_id}.pickle', data)
+
+    if FLAGS.export_splits:
+        export_splits(data, to_save_dir, FLAGS.prep_id)
+
+    print("Done!")
 
 
 if __name__ == '__main__':

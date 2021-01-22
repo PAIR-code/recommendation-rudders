@@ -25,7 +25,8 @@ from rudders.utils import rank_to_metric_dict
 
 
 class Runner:
-    def __init__(self, args, model, optimizer, loss, train, dev, test, samples, id2uid, id2iid, iid2name):
+    def __init__(self, args, model, optimizer, loss, train, dev, test, low_test, top_test, samples, id2uid, id2iid,
+                 iid2name):
         self.args = args
         self.model = model
         self.optimizer = optimizer
@@ -33,6 +34,8 @@ class Runner:
         self.train = train
         self.dev = dev
         self.test = test
+        self.low_test = low_test
+        self.top_test = top_test
         self.samples = samples
         self.id2uid = id2uid
         self.id2iid = id2iid
@@ -85,6 +88,9 @@ class Runner:
                         logging.info('Early stopping!!!')
                         break
 
+            if epoch % 100 == 0:
+                self.compute_metrics(self.test, self.excluded_test, "test", epoch)
+
         logging.info(f'Optimization finished\nEvaluating best model from epoch {best_epoch}')
         self.model.set_weights(best_weights)
 
@@ -99,11 +105,21 @@ class Runner:
         test_metric_all, test_metric_random = self.compute_metrics(self.test, self.excluded_test, "test", best_epoch,
                                                                    write_summary=False)
 
+        # results with cold start and most active users
+        _, low_test_metric_random = self.compute_metrics(self.low_test, self.excluded_test, "low_test", best_epoch,
+                                                         write_summary=False)
+        _, top_test_metric_random = self.compute_metrics(self.top_test, self.excluded_test, "top_test", best_epoch,
+                                                         write_summary=False)
+        for s, d in [("low", low_test_metric_random), ("top", top_test_metric_random)]:
+            for k, v in d.items():
+                test_metric_all[f"{k}_{s}"] = v
+
         self.export_metric(dev_metric_all, dev_metric_random, "dev")
         self.export_metric(test_metric_all, test_metric_random, "test")
 
     @tf.function
     def train_epoch(self, train_batch):
+        self.model.training = True
         total_loss = tf.keras.backend.constant(0.0)
         counter = tf.keras.backend.constant(0.0)
         for input_batch in train_batch:
@@ -117,6 +133,7 @@ class Runner:
         return total_loss / counter
 
     def validate(self):
+        self.model.training = False
         dev_batch = self.dev.batch(self.args.batch_size)
         total_loss = 0.
         counter = 0
@@ -128,6 +145,7 @@ class Runner:
         return total_loss / counter
 
     def compute_metrics(self, split, excluded_items, title, epoch, write_summary=True):
+        self.model.training = False
         random_items = 100
         rank_all, rank_random = self.model.random_eval(split, excluded_items, self.samples, num_rand=random_items,
                                                        batch_size=self.args.eval_batch_size)
@@ -147,6 +165,7 @@ class Runner:
         return metric_all, metric_random
 
     def print_samples(self, n_users=20, n_samples=6, k_closest=10):
+        self.model.training = False
         random.seed(datetime.now())
         users = random.sample(list(self.samples.keys()), len(self.samples))[:n_users]
         user_tensor = tf.expand_dims(tf.convert_to_tensor(users), 1)
@@ -203,5 +222,5 @@ class Runner:
         :param split: Dataset with tensor of triplets
         :return: list of excluded items
         """
-        target_item_ids = [triplet[-1].item() for triplet in list(split.as_numpy_iterator())]
+        target_item_ids = [triplet.numpy()[-1].item() for triplet in list(split.__iter__())]
         return list(set(self.id2iid.keys()) - set(target_item_ids))
