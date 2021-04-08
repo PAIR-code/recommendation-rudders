@@ -21,8 +21,8 @@ import rudders.math.hyperb as hmath
 class CFHyperbolicBase(CFModel, ABC):
     """Base model class for hyperbolic embeddings with parameters defined in tangent space."""
 
-    def __init__(self, n_entities, n_relations, item_ids, args, train_bias=False):
-        super().__init__(n_entities, n_relations, item_ids, args, train_bias)
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args)
         # inits c to a value that will result in softplus(c) == curvature
         init_value = tf.math.log(tf.math.exp(tf.keras.backend.constant(args.curvature)) - 1)
         self.c = tf.Variable(initial_value=init_value, trainable=args.train_c)
@@ -40,26 +40,25 @@ class CFHyperbolicBase(CFModel, ABC):
         return -hmath.hyp_distance(lhs, rhs, self.get_c()) ** 2
 
 
-class TransH(CFHyperbolicBase):
+class HyperML(CFHyperbolicBase):
     """
-    Model based on:
-        "Translating Embeddings for Modeling Multi-relational Data"
-        Bordes et al. 2013
-    Parameters are defined in tangent space and mapped onto the Poincare Ball
-    before applying the Mobius addition
+    Model based on "HyperML: A boosting metric learning approach in hyperbolic space for recommender systems"
+    Vinh Tran et al.
     """
 
+    def __init__(self, n_entities, n_relations, item_ids, args):
+        super().__init__(n_entities, n_relations, item_ids, args)
+        self.relations = None
+
     def get_lhs(self, input_tensor):
-        c = self.get_c()
-        head = hmath.expmap0(self.entities(input_tensor[:, 0]), c)
-        relations = hmath.expmap0(self.relations(input_tensor[:, 1]), c)
-        return hmath.mobius_add(head, relations, c)
+        return hmath.expmap0(self.entities(input_tensor[:, 0]), self.get_c())
 
 
 class MuRHyperbolic(MuRBase, CFHyperbolicBase):
 
     def get_lhs(self, input_tensor):
         tg_heads = self.entities(input_tensor[:, 0])
+        tg_heads = self.dropout(tg_heads)
         tg_relation_transforms = self.transforms(input_tensor[:, 1])
         return hmath.expmap0(tg_relation_transforms * tg_heads, self.get_c())
 

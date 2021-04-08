@@ -84,11 +84,33 @@ def setup_relations(train, args):
     return np.array(filtered_train).astype(np.int64), n_relations
 
 
+def build_cold_start_test_splits(samples, test, proportion=0.1):
+    """
+    :param samples: dict of u_id: ints
+    :param test: list of [(uid, rel, iid)] test set
+    :return:
+    """
+    # builds "ranking" of more and less active users
+    user_ints = [(uid, len(ints)) for uid, ints in samples.items()]
+    user_ints = sorted(user_ints, key=lambda t: t[1])
+    n_to_keep = round(len(user_ints) * proportion)
+
+    top_users = set([uid for uid, _ in user_ints[-n_to_keep:]])
+    low_users = set([uid for uid, _ in user_ints[:n_to_keep]])
+
+    top_test = [triplet for triplet in test if triplet[0] in top_users]
+    low_test = [triplet for triplet in test if triplet[0] in low_users]
+
+    return low_test, top_test
+
+
 def load_data(args):
     file_path = Path(args.prep_dir) / args.dataset / f'{args.prep_name}.pickle'
     logging.info(f"Loading data from {file_path}")
     with tf.io.gfile.GFile(str(file_path), 'rb') as f:
         data = pickle.load(f)
+
+    samples = data["samples"]
 
     # splits
     train = data["train"] if not args.debug else data["train"][:1000].astype(np.int64)
@@ -98,10 +120,11 @@ def load_data(args):
     train.shuffle(buffer_size=buffer_size, reshuffle_each_iteration=True)
     dev = tf.data.Dataset.from_tensor_slices(data["dev"])
     test = tf.data.Dataset.from_tensor_slices(data["test"])
+    low_test, top_test = build_cold_start_test_splits(samples, data["test"], proportion=args.cold_start_proportion)
+    low_test = tf.data.Dataset.from_tensor_slices(low_test)
+    top_test = tf.data.Dataset.from_tensor_slices(top_test)
 
-    # metadata
-    samples = data["samples"]
-    return train, dev, test, samples, n_relations, buffer_size, data
+    return train, dev, test, low_test, top_test, samples, n_relations, buffer_size, data
 
 
 def save_config(logs_dir, run_id):
@@ -152,7 +175,7 @@ def main(_):
             logging.info(e)     # Visible devices must be set before GPUs have been initialized
 
     # load data
-    train, dev, test, samples, n_relations, train_len, data = load_data(FLAGS)
+    train, dev, test, low_test, top_test, samples, n_relations, train_len, data = load_data(FLAGS)
     n_users, n_items, n_entities = get_quantities(data)
 
     model = get_model(n_entities, n_relations, data["id2iid"])
@@ -160,7 +183,8 @@ def main(_):
     loss_fn = getattr(losses, FLAGS.loss_fn)(ini_neg_index=0, end_neg_index=n_entities - 1, args=FLAGS)
     logging.info(f"Train split size: {train_len}, relations: {n_relations}")
 
-    runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, samples=samples,
+    runner = Runner(FLAGS, model, optimizer, loss=loss_fn, train=train, dev=dev, test=test, low_test=low_test,
+                    top_test=top_test, samples=samples,
                     id2uid=data["id2uid"], id2iid=data["id2iid"], iid2name=data["iid2name"])
     runner.run()
     logging.info("Done!")
