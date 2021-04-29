@@ -15,7 +15,7 @@
 
 import tensorflow as tf
 from pathlib import Path
-
+import json
 
 def movielens_to_dict(dataset_path):
     """
@@ -26,33 +26,37 @@ def movielens_to_dict(dataset_path):
     :return: Dictionary containing users as keys, and a numpy array of items the user
       interacted with, sorted by the time of interaction.
     """
-    filename = "ratings.dat"
+    filename = "ratings_with_imdb_id_no_gzip.jsonl"
     samples = {}
     with tf.io.gfile.GFile(str(dataset_path / filename), 'r') as lines:
         for line in lines:
-            line = line.strip('\n').split('::')
-            uid = line[0]
-            iid = line[1]
-            timestamp = int(line[3])
-            if uid in samples:
-                samples[uid].append((iid, timestamp))
-            else:
-                samples[uid] = [(iid, timestamp)]
+            input = json.loads(line)
+            uid = input['user_id']
+            timestamp = input['timestamp']
+            iid = input['imdb_id']
+            if iid:
+                if uid in samples:
+                    samples[uid].append((iid, timestamp))
+                else:
+                    samples[uid] = [(iid, timestamp)]
     sorted_samples = {}
     for uid in samples:
         sorted_items = sorted(samples[uid], key=lambda p: p[1])
         sorted_samples[uid] = [pair[0] for pair in sorted_items]
+    num_ratings = len(sorted_samples)
     return sorted_samples
 
 
 def build_movieid2title(dataset_path):
     """Builds a mapping between item ids and the title of each item."""
-    filename = "movies.dat"
+    filename = "ratings_with_imdb_id_no_gzip.jsonl"
     movieid2title = {}
-    with open(dataset_path / filename, "r", encoding="ISO-8859-1") as f:
-        for line in f:
-            line = line.strip("\n").split("::")
-            movieid2title[line[0]] = line[1]
+    with tf.io.gfile.GFile(str(dataset_path / filename), 'r') as lines:
+      for line in lines:
+        input = json.loads(line)
+        mid = input['imdb_id']
+        name = input['name']
+        movieid2title[mid] = name
     return movieid2title
 
 
@@ -66,11 +70,10 @@ def build_texts_from_movies(path_to_movie_dat):
     texts = {}
     with open(path_to_movie_dat, "r", encoding="ISO-8859-1") as f:
         for line in f:
-            movie_id, title_and_year, genres = line.strip("\n").split("::")
-            title = title_and_year[:-7]
-            # year = title_and_year[-5:-1]
-            sorted_genres = sorted(genres.split("|"))
-            texts[movie_id] = [title] + sorted_genres
+           input = json.loads(line)
+           imdb_id = input['imdb_id']
+           synopsis = input['plot_synopsis']
+           texts[imdb_id] = [synopsis]
     return texts
 
 
