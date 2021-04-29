@@ -137,7 +137,11 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Editors
 .idea/
+.vscode/
+
+# Local data directories.
 hyperbolic-rs/data
 hyperbolic-rs/logs
 hyperbolic-rs/ckpt
