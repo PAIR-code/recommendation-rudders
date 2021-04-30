@@ -203,8 +203,8 @@ def main(_):
         samples = amazon.load_interactions(dataset_path / FLAGS.amazon_reviews)
         iid2name = amazon.build_itemid2name(dataset_path / FLAGS.amazon_meta)
     elif FLAGS.item == "synopsis":
-	samples = synopsis.synopsis_to_dict(dataset_path)
-	iid2name = synopsis.build_movieid2title(dataset_path)
+        samples = synopsis.synopsis_to_dict(dataset_path)
+        iid2name = synopsis.build_movieid2title(dataset_path)
     else:
         raise ValueError(f"Unknown item: {FLAGS.item}")
 

@@ -212,7 +212,7 @@ def main(_):
         elif FLAGS.item == "amazon":
             texts = amazon.build_text_from_items(dataset_path, FLAGS.amazon_reviews, FLAGS.amazon_meta)
         elif FLAGS.item == "synopsis":
-            text = synopsis.build_texts_from_synopsis(text_file_path)
+            texts = synopsis.build_texts_from_synopsis(text_file_path)
         else:
             raise ValueError(f"Unrecognized item: {FLAGS.item}")
 
