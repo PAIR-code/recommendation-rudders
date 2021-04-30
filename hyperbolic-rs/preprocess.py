@@ -20,13 +20,13 @@ import random
 from tqdm import tqdm
 from pathlib import Path
 from rudders.relations import Relations
-from rudders.datasets import movielens, keen, amazon, amazon_relations
+from rudders.datasets import movielens, keen, amazon, amazon_relations, synopsis
 from rudders.config import CONFIG
 from rudders.utils import set_seed, sort_items_by_popularity, save_as_pickle, add_to_train_split
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('prep_id', default='foobar', help='Name of prep to store')
-flags.DEFINE_string('item', default='amazon', help='Item to process: "keen", "gem", "ml-1m" or "amazon"')
+flags.DEFINE_string('item', default='amazon', help='Item to process: "keen", "gem", "ml-1m", "amazon" or "synopsis"')
 flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dataset')
 flags.DEFINE_string('amazon_reviews', default='Musical_Instruments_5.json.gz',
                     help='Name of the 5-core amazon reviews file')
@@ -202,6 +202,9 @@ def main(_):
     elif "amazon" in FLAGS.item:
         samples = amazon.load_interactions(dataset_path / FLAGS.amazon_reviews)
         iid2name = amazon.build_itemid2name(dataset_path / FLAGS.amazon_meta)
+    elif FLAGS.item == "synopsis":
+        samples = synopsis.synopsis_to_dict(dataset_path)
+        iid2name = synopsis.build_movieid2title(dataset_path)
     else:
         raise ValueError(f"Unknown item: {FLAGS.item}")
 
