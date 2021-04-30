@@ -23,12 +23,12 @@ import tensorflow as tf
 from tensorflow.keras.metrics import CosineSimilarity
 import tensorflow_hub as hub
 from rudders.utils import save_as_pickle
-from rudders.datasets import keen, movielens, amazon
+from rudders.datasets import keen, movielens, amazon, synopsis
 
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dataset: data/keen, data/ml-1m')
-flags.DEFINE_string('item', default='amazon', help='Item to create embeddings: keen, gem, ml-1m, amazon')
+flags.DEFINE_string('dataset_path', default='data/amazon', help='Path to raw dataset: data/keen, data/ml-1m, data/synopsis')
+flags.DEFINE_string('item', default='amazon', help='Item to create embeddings: keen, gem, ml-1m, amazon, synopsis')
 flags.DEFINE_string('file', default='movies.dat',
                     help='Path to file with textual data if item != amazon. Ex: "movies.dat" for ml-1m')
 flags.DEFINE_string('amazon_reviews', default='Musical_Instruments_5.json.gz',
@@ -211,6 +211,8 @@ def main(_):
             texts = movielens.build_texts_from_movies(text_file_path)
         elif FLAGS.item == "amazon":
             texts = amazon.build_text_from_items(dataset_path, FLAGS.amazon_reviews, FLAGS.amazon_meta)
+        elif FLAGS.item == "synopsis":
+            text = synopsis.build_texts_from_synopsis(text_file_path)
         else:
             raise ValueError(f"Unrecognized item: {FLAGS.item}")
 
