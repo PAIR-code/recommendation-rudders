@@ -15,6 +15,8 @@
 
 import json
 import re
+import tensorflow as tf
+
 URL_RE = '((www\.[^\s]+)|(https?://[^\s]+)|(http?://[^\s]+))'
 KEEN_METADATA = "data/keen/exports_2020-07-03_keens_and_gems.jsonl"
 USER_ITEM_INTERACTIONS_FILE = "interactions.csv"
@@ -25,7 +27,7 @@ def load_user_keen_interactions(dataset_path, min_user_ints=5, min_item_ints=2, 
     Maps raw csv interactions file of 'user_id,item_id' to a Dictonary.
     Discards users with less than 'min_interactions'
 
-    :param dataset_path: Path to dataset dir containing interactions in a format user_id,keen_id
+    :param dataset_path: path str to dataset dir containing interactions in a format user_id,keen_id
     :param min_user_ints: users with less than min_user_ints are discarded
     :param min_item_ints: items with less than min_keen_ints are discarded
     :param max_item_ints: items with more than max_keen_ints are discarded
@@ -34,10 +36,11 @@ def load_user_keen_interactions(dataset_path, min_user_ints=5, min_item_ints=2, 
     all_user_item_ints = load_interactions_file(dataset_path)
     all_item_user_ints = build_item_user_ints(all_user_item_ints)
 
-    filtered_user_item_ints, filtered_items_user_ints = filter_interactions(all_user_item_ints, all_item_user_ints,
-                                                                            min_user_ints=min_user_ints,
-                                                                            min_item_ints=min_item_ints,
-                                                                            max_item_ints=max_item_ints)
+    filtered_user_item_ints, filtered_items_user_ints = filter_interactions(
+      all_user_item_ints, all_item_user_ints,
+      min_user_ints=min_user_ints,
+      min_item_ints=min_item_ints,
+      max_item_ints=max_item_ints)
 
     print(f"Initial amount of users: {len(all_user_item_ints)}, items: {len(all_item_user_ints)}")
     print(f"Final amount of users: {len(filtered_user_item_ints)}, items: {len(filtered_items_user_ints)}")
@@ -45,13 +48,15 @@ def load_user_keen_interactions(dataset_path, min_user_ints=5, min_item_ints=2, 
     return filtered_user_item_ints
 
 
-def load_keen_gems_interactions(dataset_path, min_keen_keen_edges=3, max_keen_keen_edges=100, min_overlapping_users=2,
-                                min_keen_ints=10, min_item_ints=2, max_item_ints=100):
+def load_keen_gems_interactions(
+  dataset_path, min_keen_keen_edges=3,
+  max_keen_keen_edges=100, min_overlapping_users=2,
+  min_keen_ints=10, min_item_ints=2, max_item_ints=100):
     """
     Loads user-keen interactions and from there it infers the keen-gem interactions, using users as edges
     between the keens.
 
-    :param dataset_path: Path to dataset dir containing interactions in a format user_id,keen_id
+    :param dataset_path: path str to dataset dir containing interactions in a format user_id,keen_id
     :param min_keen_keen_edges: keens interacting with less than min_keen_keen_edges are discarded.
     This is useful to filter rare keens that are not well connected to other keens.
     :param max_keen_keen_edges: keens interacting with more than max_keen_keen_edges are discarded.
@@ -71,9 +76,10 @@ def load_keen_gems_interactions(dataset_path, min_keen_keen_edges=3, max_keen_ke
 
     # at this point there are some keens that interact with too many other keens because of a UI bias and they
     # have to be filtered out so they don't add their gems into the interactions
-    filtered_keen_keen_graph = filter_keen_keen_graph(keen_keen_graph, min_keen_keen_edges=min_keen_keen_edges,
-                                                      max_keen_keen_edges=max_keen_keen_edges,
-                                                      min_overlapping_users=min_overlapping_users)
+    filtered_keen_keen_graph = filter_keen_keen_graph(
+      keen_keen_graph, min_keen_keen_edges=min_keen_keen_edges,
+      max_keen_keen_edges=max_keen_keen_edges,
+      min_overlapping_users=min_overlapping_users)
     print(f"Total amount of keen-keen interactions: {len(keen_keen_graph)}")
     print(f"Keen-keen interactions through at least {min_overlapping_users} users and filtering: "
           f"{len(filtered_keen_keen_graph)}")
@@ -83,10 +89,11 @@ def load_keen_gems_interactions(dataset_path, min_keen_keen_edges=3, max_keen_ke
     # In this case user -> keen, item -> gem
     gem_keen_interactions = build_item_user_ints(keen_gem_interactions)
 
-    filtered_keen_gem_ints, filtered_gem_keen_ints = filter_interactions(keen_gem_interactions, gem_keen_interactions,
-                                                                         min_user_ints=min_keen_ints,
-                                                                         min_item_ints=min_item_ints,
-                                                                         max_item_ints=max_item_ints)
+    filtered_keen_gem_ints, filtered_gem_keen_ints = filter_interactions(
+      keen_gem_interactions, gem_keen_interactions,
+      min_user_ints=min_keen_ints,
+      min_item_ints=min_item_ints,
+      max_item_ints=max_item_ints)
 
     interactions = sum((len(ints) for ints in filtered_keen_gem_ints.values()))
     print(f"Initial amount of keens: {len(keen_gem_interactions)}, items: {len(gem_keen_interactions)}")
@@ -202,9 +209,9 @@ def build_keen_keen_graph(user_keen_interactions):
     return keen_keen_ints
 
 
-def load_interactions_file(dataset_path):
+def load_interactions_file(dataset_path: str):
     samples = {}
-    with open(str(dataset_path / USER_ITEM_INTERACTIONS_FILE), 'r') as f:
+    with tf.io.gfile.GFile(os.path.join(dataset_path, USER_ITEM_INTERACTIONS_FILE), mode='r') as f:
         next(f)
         for line in f:
             line = line.strip('\n').split(',')
@@ -287,7 +294,7 @@ def filter_interactions(user_item_ints, item_user_ints, min_user_ints=5, max_use
 def build_iid2title(item_id_key, item_title_key):
     """Builds a mapping between item ids and the title of each item."""
     iid2title = {}
-    with open(KEEN_METADATA, "r") as f:
+    with tf.io.gfile.GFile(KEEN_METADATA, "r") as f:
         for line in f:
             line = json.loads(line)
             if item_id_key in line and item_title_key in line:
@@ -296,7 +303,7 @@ def build_iid2title(item_id_key, item_title_key):
 
 
 def load_all_keens():
-    with open(KEEN_METADATA, "r") as f:
+    with tf.io.gfile.GFile(KEEN_METADATA, "r") as f:
         data = [json.loads(line) for line in f]
     return get_keens(data)
 

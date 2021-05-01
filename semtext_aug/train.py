@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import json
-from pathlib import Path
+import os.path
 from absl import app, flags, logging
 import numpy as np
 import tensorflow as tf
@@ -105,9 +105,9 @@ def build_cold_start_test_splits(samples, test, proportion=0.1):
 
 
 def load_data(args):
-    file_path = Path(args.prep_dir) / args.dataset / f'{args.prep_name}.pickle'
+    file_path = os.path.join(args.prep_dir, args.dataset, f'{args.prep_name}.pickle')
     logging.info(f"Loading data from {file_path}")
-    with tf.io.gfile.GFile(str(file_path), 'rb') as f:
+    with tf.io.gfile.GFile(file_path, mode="rb") as f:
         data = pickle.load(f)
 
     samples = data["samples"]
@@ -128,9 +128,9 @@ def load_data(args):
 
 
 def save_config(logs_dir, run_id):
-    config_path = logs_dir / f'{run_id}.json'
-    if FLAGS.save_logs and not config_path.exists():
-        with tf.io.gfile.GFile(str(config_path), 'w') as fjson:
+    config_path = os.path.join(logs_dir, f'{run_id}.json')
+    if FLAGS.save_logs and not tf.io.gfile.exists(config_path):
+        with tf.io.gfile.GFile(config_path, mode="w") as fjson:
             json.dump(get_flags_dict(CONFIG), fjson)
 
 
@@ -160,8 +160,7 @@ def get_quantities(data):
 
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=FLAGS.debug)
-    logs_dir = Path(FLAGS.logs_dir)
-    setup_logger(FLAGS.print_logs, FLAGS.save_logs, logs_dir, FLAGS.run_id)
+    setup_logger(FLAGS.print_logs, FLAGS.save_logs, FLAGS.logs_dir, FLAGS.run_id)
     tf.config.experimental_run_functions_eagerly(FLAGS.debug)
 
     logging.info(f"Flags/config of this run:\n{get_flags_dict(FLAGS)}")

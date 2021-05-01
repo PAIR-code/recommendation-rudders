@@ -14,7 +14,7 @@
 """Script to create an item-item graph based on semantic similarities from the text in the items"""
 
 from absl import app, flags
-from pathlib import Path
+import os.path
 import json
 from tqdm import tqdm
 import networkx as nx
@@ -51,7 +51,7 @@ flags.DEFINE_boolean('debug', default=True, help='Debug mode with very few embed
 
 def load_jsonl(path):
     data = []
-    with open(path, "r") as f:
+    with tf.io.gfile.GFile(path, mode="r") as f:
         for line in f:
             data.append(json.loads(line))
     return data
@@ -87,9 +87,9 @@ def build_item_embeds(item_text, use_url, weight_first_embedding=False):
     return result
 
 
-def export_text_embeddings(embeds, dst_path, item):
+def export_text_embeddings(embeds, dst_path: str, item):
     """Export embeddings in CSV format emulating GloVe format"""
-    with open(str(dst_path / f"{item}_text_embeddings.csv"), "w") as f:
+    with tf.io.gfile.GFile(os.path.join(dst_path, f"{item}_text_embeddings.csv"), mode="w") as f:
         for iid, vec in embeds.items():
             values = ",".join([str(x) for x in vec[0].numpy()])
             f.write(f"{iid},{values}\n")
@@ -98,7 +98,7 @@ def export_text_embeddings(embeds, dst_path, item):
 def load_text_embeddings(text_embeddings_path):
     """Loads pre-computed text embeddings. They must be persisted in CSV format"""
     embeds = {}
-    with open(text_embeddings_path, "r") as f:
+    with tf.io.gfile.GFile(text_embeddings_path, mode="r") as f:
         for line in f:
             data = line.strip().split(",")
             iid = data[0]
@@ -169,7 +169,8 @@ def plot_graph(graph, dst_path):
     fig = plt.figure()
     pos = nx.spring_layout(graph, iterations=100)
     nx.draw(graph, pos, ax=fig.add_subplot(111), node_size=10)
-    plt.savefig(str(dst_path))
+    with tf.io.gfile.GFile(dst_path, mode="w") as f:
+      plt.savefig(f)
 
 
 def get_neighbors_with_distances(graph):
@@ -189,10 +190,10 @@ def get_neighbors_with_distances(graph):
 
 
 def main(_):
-    dataset_path = Path(FLAGS.dataset_path)
+    dataset_path = FLAGS.dataset_path
     item_name = FLAGS.amazon_reviews.split("5")[0][:-1] if FLAGS.item == "amazon" else FLAGS.item
     if not FLAGS.text_embeddings:
-        text_file_path = dataset_path / FLAGS.file
+        text_file_path = os.path.join(dataset_path, FLAGS.file)
 
         if FLAGS.item == "keen":
             data = load_jsonl(text_file_path)
@@ -236,17 +237,18 @@ def main(_):
 
     print(f"Graph info:\n{nx.info(graph)}")
     if FLAGS.plot:
-        plot_graph(graph, dataset_path / f'{FLAGS.item}_{FLAGS.item}_graph_th{FLAGS.threshold}.png')
+        plot_graph(graph, os.path.join(dataset_path,
+          f'{FLAGS.item}_{FLAGS.item}_graph_th{FLAGS.threshold}.png'))
 
     neighs_and_dists = get_neighbors_with_distances(graph)
     result = {"item_item_distances": neighs_and_dists}
 
     # stores graph
     graph_file_name = f'{item_name}_th{FLAGS.threshold}_graph.edgelist'
-    nx.write_weighted_edgelist(graph, str(dataset_path / graph_file_name))
+    nx.write_weighted_edgelist(graph, os.path.join(dataset_path, graph_file_name))
     # stores distances for preprocessing
     file_name = f'{item_name}_th{FLAGS.threshold}_{"cos" if FLAGS.use_distance else "hop"}distances.pickle'
-    save_as_pickle(dataset_path / file_name, result)
+    save_as_pickle(os.path.join(dataset_path, file_name), result)
 
 
 if __name__ == '__main__':

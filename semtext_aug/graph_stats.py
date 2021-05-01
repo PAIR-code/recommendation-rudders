@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pathlib import Path
+import os.path
 import tensorflow as tf
 import numpy as np
 import pickle
@@ -65,9 +65,9 @@ def setup_relations(train, args):
 
 
 def load_data(args):
-    file_path = Path(args.prep_dir) / args.dataset / f'{args.prep_name}.pickle'
+    file_path = os.path.join(args.prep_dir, args.dataset, f'{args.prep_name}.pickle')
     logging.info(f"Loading data from {file_path}")
-    with tf.io.gfile.GFile(str(file_path), 'rb') as f:
+    with tf.io.gfile.GFile(file_path, mode="rb") as f:
         data = pickle.load(f)
     # splits
     train = data["train"] if not args.debug else data["train"][:1000].astype(np.int64)

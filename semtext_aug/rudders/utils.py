@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import sys
-from pathlib import Path
+import os.path
 import logging as native_logging
 from absl import logging
 import tensorflow as tf
@@ -31,18 +31,18 @@ def set_seed(seed: int, set_tf_seed: bool):
         tf.random.set_seed(seed)
 
 
-def setup_logger(print_logs: bool, save_logs: bool, save_path: Path, run_id: str):
+def setup_logger(print_logs: bool, save_logs: bool, logs_dir: str, run_id: str):
     native_logging.root.removeHandler(logging._absl_handler)
     logging._warn_preinit_stderr = False
     formatter = native_logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%Y-%d-%m %H:%M:%S')
     handlers = []
     if save_logs:
-        write_mode = 'a' if save_path.exists() else 'w'
-        save_path.mkdir(parents=True, exist_ok=True)
-        log_file = save_path / f"{run_id}.log"
-        stream = tf.io.gfile.GFile(str(log_file), write_mode)
+        write_mode = 'a' if tf.io.gfile.exists(logs_dir) else 'w'
+        # save_path.mkdir(parents=True, exist_ok=True)
+        log_file = os.path.join(logs_dir, f"{run_id}.log")
+        stream = tf.io.gfile.GFile(log_file, mode=write_mode)
         log_handler = native_logging.StreamHandler(stream)
-        print('Saving logs in {}'.format(save_path))
+        print(f'Saving logs as {str(log_file)}')
         handlers.append(log_handler)
     if print_logs or not save_logs:
         log_handler = native_logging.StreamHandler(sys.stdout)
@@ -56,11 +56,11 @@ def setup_logger(print_logs: bool, save_logs: bool, save_path: Path, run_id: str
     return logger
 
 
-def setup_summary(save_path: Path):
-    train_log_dir = save_path / 'train'
-    dev_log_dir = save_path / 'dev'
-    train_summary_writer = tf.summary.create_file_writer(str(train_log_dir))
-    dev_summary_writer = tf.summary.create_file_writer(str(dev_log_dir))
+def setup_summary(save_path: str):
+    train_log_dir = os.path.join(save_path, 'train')
+    dev_log_dir = os.path.join(save_path, 'dev')
+    train_summary_writer = tf.summary.create_file_writer(train_log_dir)
+    dev_summary_writer = tf.summary.create_file_writer(dev_log_dir)
     return train_summary_writer, dev_summary_writer
 
 
@@ -96,14 +96,14 @@ def sort_items_by_popularity(samples):
     return sorted(item_degree.items(), key=lambda item: item[1], reverse=True)
 
 
-def save_as_pickle(save_path, data):
+def save_as_pickle(save_path:str, data):
     """
     Saves data to train, dev, test and samples pickle files.
 
     :param save_path: path where to save data.
     :param data: Data to store
     """
-    with open(str(save_path), 'wb') as fp:
+    with tf.io.gfile.GFile(save_path, mode="wb") as fp:
         pickle.dump(data, fp)
 
 

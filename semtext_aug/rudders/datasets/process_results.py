@@ -14,14 +14,15 @@
 """Script to process csv of results"""
 import argparse
 import pandas as pd
-from pathlib import Path
+import os.path
+import tensorflow as tf
 RUN_ID = "run_id"
 HR_AT_10 = "HR@10_r"
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="process_results.py")
-    parser.add_argument("--file", required=True, help="Path to result file to load")
+    parser.add_argument("--file", required=True, help="Path str to result file to load")
     args = parser.parse_args()
 
     data = pd.read_csv(args.file)
@@ -36,6 +37,7 @@ if __name__ == '__main__':
     means_and_stds = means.join(stds)
     means_and_stds = means_and_stds.sort_values(by=[HR_AT_10], ascending=False)
 
-    path = Path(args.file)
-    new_path = path.parent / f"AA-{path.name[:-4]}.csv"
-    means_and_stds.to_csv(str(new_path))
+    path = args.file
+    new_path = os.path.join(path.parent, f"AA-{path.name[:-4]}.csv")
+    with tf.io.gfile.GFile(new_path, mode='w') as f:
+      means_and_stds.to_csv(f)

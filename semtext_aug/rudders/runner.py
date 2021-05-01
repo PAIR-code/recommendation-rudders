@@ -17,7 +17,7 @@ import copy
 import tensorflow as tf
 import pandas as pd
 from absl import logging
-from pathlib import Path
+import os.path
 import random
 from datetime import datetime
 from rudders.relations import Relations
@@ -25,8 +25,8 @@ from rudders.utils import rank_to_metric_dict
 
 
 class Runner:
-    def __init__(self, args, model, optimizer, loss, train, dev, test, low_test, top_test, samples, id2uid, id2iid,
-                 iid2name):
+    def __init__(self, args, model, optimizer, loss, train, dev, test, low_test,
+                 top_test, samples, id2uid, id2iid, iid2name):
         self.args = args
         self.model = model
         self.optimizer = optimizer
@@ -40,7 +40,10 @@ class Runner:
         self.id2uid = id2uid
         self.id2iid = id2iid
         self.iid2name = iid2name
-        self.summary = tf.summary.create_file_writer(args.logs_dir + f"/summary/{args.run_id}")
+        # Note: tensorboard defines "runs" as subfolders of the logs_dir,
+        # So this should make each run appear as the run_id in tensorboard.
+        self.summary = tf.summary.create_file_writer(
+          os.path.join(args.logs_dir, args.run_id))
         self.excluded_dev = self.get_excluded_item_ids(self.dev)
         self.excluded_test = self.get_excluded_item_ids(self.test)
 
@@ -54,7 +57,9 @@ class Runner:
             exec_time = time.perf_counter() - start
 
             logging.info(f'Epoch {epoch} | train loss: {train_loss:.4f} | total time: {int(exec_time)} secs')
+            start = time.perf_counter()
             with self.summary.as_default():
+                tf.summary.scalar('train-secs-per-epoch', exec_time, step=epoch)
                 tf.summary.scalar('train/loss', train_loss, step=epoch)
                 tf.summary.scalar('train/lr', float(tf.keras.backend.get_value(self.optimizer.lr)), step=epoch)
                 if hasattr(self.model, 'c'):
@@ -66,10 +71,7 @@ class Runner:
 
             if epoch % self.args.validate == 0:
                 dev_loss = self.validate()
-
                 logging.info(f'Epoch {epoch} | average valid loss: {dev_loss:.4f}')
-                with self.summary.as_default():
-                    tf.summary.scalar('dev/loss', dev_loss, step=epoch)
 
                 # compute validation metrics
                 metric_all, _ = self.compute_metrics(self.dev, self.excluded_dev, "dev", epoch)
@@ -88,6 +90,11 @@ class Runner:
                         logging.info('Early stopping!!!')
                         break
 
+                with self.summary.as_default():
+                    tf.summary.scalar('dev/loss', dev_loss, step=epoch)
+                    exec_time = time.perf_counter() - start
+                    tf.summary.scalar('secs-per-eval', exec_time, step=epoch)
+
             if epoch % 100 == 0:
                 self.compute_metrics(self.test, self.excluded_test, "test", epoch)
 
@@ -95,22 +102,29 @@ class Runner:
         self.model.set_weights(best_weights)
 
         if self.args.save_model:
-            self.model.save_weights(str(Path(self.args.ckpt_dir) / f'{self.args.run_id}_{best_epoch}ep.h5'))
+          model_ckpt_path = os.path.join(self.args.ckpt_dir, self.args.run_id)
+          tf.io.gfile.makedirs(model_ckpt_path)
+          self.model.save_weights(
+            os.path.join(model_ckpt_path, f'{best_epoch}ep.h5'))
 
         # validation metrics
         self.print_samples()
         logging.info(f"Final best performance from {best_epoch} epochs")
-        dev_metric_all, dev_metric_random = self.compute_metrics(self.dev, self.excluded_dev, "dev", best_epoch,
-                                                                 write_summary=False)
-        test_metric_all, test_metric_random = self.compute_metrics(self.test, self.excluded_test, "test", best_epoch,
-                                                                   write_summary=False)
+        dev_metric_all, dev_metric_random = self.compute_metrics(
+          self.dev, self.excluded_dev, "dev", best_epoch, write_summary=False)
+        test_metric_all, test_metric_random = self.compute_metrics(
+          self.test, self.excluded_test, "test", best_epoch,
+          write_summary=False)
 
         # results with cold start and most active users
-        _, low_test_metric_random = self.compute_metrics(self.low_test, self.excluded_test, "low_test", best_epoch,
-                                                         write_summary=False)
-        _, top_test_metric_random = self.compute_metrics(self.top_test, self.excluded_test, "top_test", best_epoch,
-                                                         write_summary=False)
-        for s, d in [("low", low_test_metric_random), ("top", top_test_metric_random)]:
+        _, low_test_metric_random = self.compute_metrics(
+          self.low_test, self.excluded_test, "low_test", best_epoch,
+          write_summary=False)
+        _, top_test_metric_random = self.compute_metrics(
+          self.top_test, self.excluded_test, "top_test", best_epoch,
+          write_summary=False)
+        for s, d in [("low", low_test_metric_random),
+                     ("top", top_test_metric_random)]:
             for k, v in d.items():
                 test_metric_all[f"{k}_{s}"] = v
 
@@ -147,9 +161,11 @@ class Runner:
     def compute_metrics(self, split, excluded_items, title, epoch, write_summary=True):
         self.model.training = False
         random_items = 100
-        rank_all, rank_random = self.model.random_eval(split, excluded_items, self.samples, num_rand=random_items,
-                                                       batch_size=self.args.eval_batch_size)
-        metric_all, metric_random = rank_to_metric_dict(rank_all), rank_to_metric_dict(rank_random)
+        rank_all, rank_random = self.model.random_eval(
+          split, excluded_items, self.samples, num_rand=random_items,
+          batch_size=self.args.eval_batch_size)
+        metric_all = rank_to_metric_dict(rank_all)
+        metric_random = rank_to_metric_dict(rank_random)
 
         logging.info(f"Result at epoch {epoch} in {title.upper()}")
         logging.info(f"Random items {random_items}: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
@@ -178,7 +194,7 @@ class Runner:
             logging.info(f"User {user_index} - {self.id2uid[user_index]} total training samples: {len(samples)}")
             for item_index in samples[:-2][:n_samples]:
                 logging.info(f"\t - {item_index} - {self.get_item_name(item_index)}")
-            
+
             logging.info(f"\tClosest {k_closest} items to user")
             for item_index in top_k[i]:
                 if item_index == samples[-1]:
@@ -211,8 +227,11 @@ class Runner:
         for k, v in metric_random.items():
             out[f"{k}_r"] = [v]
 
-        file = Path(self.args.logs_dir) / (self.args.results_file + f"-{split}.csv")
-        pd.DataFrame.from_dict(out).to_csv(file, mode="a", header=not file.exists())
+        csv_path = os.path.join(self.args.logs_dir, "exported_metrics",
+            f"{self.args.results_file}-{split}.csv")
+        write_header = not tf.io.gfile.exists(csv_path)
+        with tf.io.gfile.GFile(csv_path, mode="a") as fh:
+          pd.DataFrame.from_dict(out).to_csv(fh, header=write_header)
 
     def get_excluded_item_ids(self, split):
         """

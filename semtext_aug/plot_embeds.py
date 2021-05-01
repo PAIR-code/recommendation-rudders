@@ -19,7 +19,7 @@ the coordinates of the embeddings in the appropriate format to visualize
 them with https://projector.tensorflow.org/"""
 
 import argparse
-from pathlib import Path
+import os.path
 import h5py
 import tensorflow as tf
 import pickle
@@ -39,14 +39,14 @@ from sklearn.preprocessing import StandardScaler
 import seaborn as sns
 sns.set()
 
-EXPORT_PATH = Path("out")
+EXPORT_PATH = "out"
 ENTITY_KEY = "entity_embeddings"
 RELATION_KEY = "relation_embeddings"
 
 
 def load_prep(prep_path):
     print(f"Loading prep from {prep_path}")
-    with tf.io.gfile.GFile(str(prep_path), 'rb') as f:
+    with tf.io.gfile.GFile(prep_path, mode="rb") as f:
         return pickle.load(f)
 
 
@@ -104,14 +104,14 @@ def export_for_projector(filename, user_embeds, item_embeds, id2title, samples, 
         meta.append(f"item\t{title}\t-\t{closests}")
 
     model_name = filename.split("/")[-1]
-    coord_path = EXPORT_PATH / f"{model_name}-coords.tsv"
-    meta_path = EXPORT_PATH / f"{model_name}-meta.tsv"
+    coord_path = os.path.join(EXPORT_PATH, f"{model_name}-coords.tsv")
+    meta_path = os.path.join(EXPORT_PATH, f"{model_name}-meta.tsv")
     write_file(coord_path, coords)
     write_file(meta_path, meta)
 
 
 def write_file(path, data):
-    with open(path, "w") as f:
+    with tf.io.gfile.GFile(path, mode="w") as f:
         f.write("\n".join(data))
 
 
@@ -179,7 +179,8 @@ def plot(filename, user_embeds, item_embeds, subsample=0.5, alpha=0.75, size=2):
     plt.title(f'{model_name} projection')
     plt.legend()
     if os.environ.get('DISPLAY') is None:
-        plt.savefig(EXPORT_PATH / f"{model_name}.png")
+      with tf.io.gfile.GFile(os.path.join(EXPORT_PATH, f"{model_name}.png")) as f:
+        plt.savefig(f)
     else:
         plt.show()
 
@@ -223,7 +224,7 @@ def get_closest_points(src_embeds, dst_embeds, hyperbolic, curvature, top_k=15):
 
 def load_model(ckpt_path, model_class, curvature, prep_data):
     """
-    :param ckpt_path: path to h5 exported model after training 
+    :param ckpt_path: path to h5 exported model after training
     :param model_class: class name of the model
     :param curvature: hyperparameter used to train the model (in case it is a hyperbolic model)
     :param prep_data: prep_data used to train the model

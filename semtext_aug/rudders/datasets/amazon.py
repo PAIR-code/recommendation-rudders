@@ -14,15 +14,16 @@
 """File with amazon dataset specific functions to collect user-item interactions"""
 import json
 import gzip
+import tensorflow as tf
 
 
-def load_interactions_file(filepath):
+def load_interactions_file(filepath: str):
     """
     :param filepath: file to 5-core amazon review file
     :return: dict of uid: interactions, sorted by ascending date
     """
     samples = {}
-    with gzip.open(str(filepath), 'r') as f:
+    with gzip.open(tf.io.gfile.GFile(filepath, mode='rb')) as f:
         for review in map(json.loads, f):
             uid = review["reviewerID"]
             iid = review["asin"]
@@ -57,14 +58,14 @@ def load_interactions(reviews_file):
     return load_interactions_file(reviews_file)
 
 
-def build_itemid2name(metadata_file):
+def build_itemid2name(metadata_file: str):
     """
     Loads item titles and creates a dictionary
 
     :param metadata_file: path to amazon product metadata file
     :return: dict of iid: item_title
     """
-    with gzip.open(str(metadata_file), 'r') as f:
+    with gzip.open(tf.io.gfile.GFile(metadata_file, mode='rb')) as f:
         return {meta["asin"]: meta.get("title", "None")[:100] for meta in map(json.loads, f)}
 
 
@@ -75,7 +76,7 @@ def load_reviews(filepath, revs_to_keep=10):
     :return: dict of iid: list of reviews
     """
     reviews = {}
-    with gzip.open(filepath, 'r') as f:
+    with gzip.open(tf.io.gfile.GFile(filepath, mode='rb')) as f:
         for line in map(json.loads, f):
             iid = line["asin"]
             this_rev = [line.get("summary"), line.get("reviewText")]
@@ -91,13 +92,13 @@ def load_reviews(filepath, revs_to_keep=10):
     return reviews
 
 
-def load_metadata_as_text(filepath):
+def load_metadata_as_text(filepath:str):
     """
     :param filepath: file to amazon item metadata file
     :return: dict of iid: metadata as one string
     """
     metadata = {}
-    with gzip.open(filepath, 'r') as f:
+    with gzip.open(tf.io.gfile.GFile(filepath, mode='rb')) as f:
         for line in map(json.loads, f):
             iid = line["asin"]
             this_meta = [line.get("title", "")]
@@ -130,11 +131,11 @@ def build_text_from_items(dataset_path, reviews_file, metadata_file):
     :param item_key: key to index FILES dict
     :return: dict of iid: list of text for each item
     """
-    reviews_file = dataset_path / reviews_file
+    reviews_file = os.path.join(dataset_path, reviews_file)
     print(f"Loading amazon reviews from {reviews_file}")
     texts = load_reviews(reviews_file)
 
-    metadata_file = dataset_path / metadata_file
+    metadata_file = os.path.join(dataset_path, metadata_file)
     print(f"Loading amazon metadata from {metadata_file}")
     metadata = load_metadata_as_text(metadata_file)
 
@@ -162,7 +163,7 @@ class AmazonItem:
         self.brand = metadata.get("brand", "")
 
 
-def load_metadata(metadata_file):
+def load_metadata(metadata_file: str):
     """
     Loads metadata as a dict
 
@@ -170,5 +171,5 @@ def load_metadata(metadata_file):
     :return: dict of dicts with metadata
     """
     print(f"Loading amazon metadata from {metadata_file}")
-    with gzip.open(str(metadata_file), 'r') as f:
+    with gzip.open(tf.io.gfile.GFile(metadata_file, mode='rb')) as f:
         return [AmazonItem(line) for line in map(json.loads, f)]

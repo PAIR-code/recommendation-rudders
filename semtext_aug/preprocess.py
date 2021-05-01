@@ -18,7 +18,7 @@ import tensorflow as tf
 import numpy as np
 import random
 from tqdm import tqdm
-from pathlib import Path
+import os.path
 from rudders.relations import Relations
 from rudders.datasets import movielens, keen, amazon, amazon_relations
 from rudders.config import CONFIG
@@ -128,10 +128,10 @@ def create_splits(samples, relation_id, do_random=False, seed=42):
     }
 
 
-def load_item_item_distances(item_item_file_path):
+def load_item_item_distances(item_item_file_path: str):
     """Loads item-item distances that were precomputed with item_graph.py."""
     print(f"Loading data from {item_item_file_path}")
-    with tf.io.gfile.GFile(str(item_item_file_path), 'rb') as f:
+    with tf.io.gfile.GFile(item_item_file_path, mode="rb") as f:
         data = pickle.load(f)
     return data["item_item_distances"]
 
@@ -168,7 +168,7 @@ def build_item_item_triplets(item_item_distances_dict, iid2id, top_k):
     return list(triplets)
 
 
-def export_splits(data, to_save_dir, prep_id):
+def export_splits(data, to_save_dir: str, prep_id):
     """Exports (user_id, item_id) pairs of all splits splits"""
     split_names = ["train", "dev", "test"]
     id2uid, id2iid = data["id2uid"], data["id2iid"]
@@ -177,31 +177,38 @@ def export_splits(data, to_save_dir, prep_id):
         if split_name == "train":
             split = [(uid, r, iid) for uid, r, iid in split if r == Relations.USER_ITEM.value]
         lines = [f"{id2uid[u_id]},{id2iid[i_id]}\n" for u_id, _, i_id in split]
-        with open(to_save_dir / f"{prep_id}_ui_{split_name}.csv", "w") as f:
-            f.writelines(lines)
+        with tf.io.gfile.GFile(os.path.join(to_save_dir,
+            f"{prep_id}_ui_{split_name}.csv"), mode="w") as f:
+          f.writelines(lines)
 
 
 def main(_):
     set_seed(FLAGS.seed, set_tf_seed=True)
-    dataset_path = Path(FLAGS.dataset_path)
+    dataset_path = FLAGS.dataset_path
     if FLAGS.item == "keen":
-        samples = keen.load_user_keen_interactions(dataset_path, min_user_ints=FLAGS.min_user_interactions,
-                                                   min_item_ints=FLAGS.min_item_interactions,
-                                                   max_item_ints=FLAGS.max_item_interactions)
-        iid2name = keen.build_iid2title(item_id_key="keen_id", item_title_key="keen_title")
+        samples = keen.load_user_keen_interactions(
+          dataset_path, min_user_ints=FLAGS.min_user_interactions,
+          min_item_ints=FLAGS.min_item_interactions,
+          max_item_ints=FLAGS.max_item_interactions)
+        iid2name = keen.build_iid2title(item_id_key="keen_id",
+          item_title_key="keen_title")
     elif FLAGS.item == "gem":
-        samples = keen.load_keen_gems_interactions(dataset_path, min_keen_keen_edges=2, max_keen_keen_edges=1000,
-                                                   min_overlapping_users=2,
-                                                   min_keen_ints=FLAGS.min_user_interactions,
-                                                   min_item_ints=FLAGS.min_item_interactions,
-                                                   max_item_ints=FLAGS.max_item_interactions)
-        iid2name = keen.build_iid2title(item_id_key="gem_id", item_title_key="gem_link_title")
+        samples = keen.load_keen_gems_interactions(
+          dataset_path, min_keen_keen_edges=2, max_keen_keen_edges=1000,
+          min_overlapping_users=2,
+          min_keen_ints=FLAGS.min_user_interactions,
+          min_item_ints=FLAGS.min_item_interactions,
+          max_item_ints=FLAGS.max_item_interactions)
+        iid2name = keen.build_iid2title(item_id_key="gem_id",
+        item_title_key="gem_link_title")
     elif FLAGS.item == "ml-1m":
         samples = movielens.movielens_to_dict(dataset_path)
         iid2name = movielens.build_movieid2title(dataset_path)
     elif "amazon" in FLAGS.item:
-        samples = amazon.load_interactions(dataset_path / FLAGS.amazon_reviews)
-        iid2name = amazon.build_itemid2name(dataset_path / FLAGS.amazon_meta)
+        samples = amazon.load_interactions(
+            os.path.join(dataset_path, FLAGS.amazon_reviews))
+        iid2name = amazon.build_itemid2name(
+            os.path.join(dataset_path, FLAGS.amazon_meta))
     else:
         raise ValueError(f"Unknown item: {FLAGS.item}")
 
@@ -233,23 +240,26 @@ def main(_):
 
     # if there is an item-item graph, we preprocess it
     if FLAGS.item_item_file:
-        item_item_distances_dict = load_item_item_distances(dataset_path / FLAGS.item_item_file)
+        item_item_distances_dict = load_item_item_distances(
+          os.path.join(dataset_path, FLAGS.item_item_file))
         item_item_triplets = build_item_item_triplets(item_item_distances_dict, iid2id, FLAGS.similarity_items_per_item)
         add_to_train_split(data, item_item_triplets)
         print(f"Added item-item similarity triplets: {len(item_item_triplets)}")
 
     if "amazon" in FLAGS.item and FLAGS.add_extra_relations:
         print("Adding extra relations")
-        n_entities = amazon_relations.load_relations(dataset_path / FLAGS.amazon_meta, data, iid2id, n_entities)
+        n_entities = amazon_relations.load_relations(
+          os.path.join(dataset_path, FLAGS.amazon_meta),
+          data, iid2id, n_entities)
 
     data["n_entities"] = n_entities
     # creates directories to save preprocessed data
     print(f"Final training split: {len(data['train'])} triplets")
-    prep_path = Path(CONFIG["string"]["prep_dir"][1])
-    prep_path.mkdir(parents=True, exist_ok=True)
-    to_save_dir = prep_path / FLAGS.item
-    to_save_dir.mkdir(parents=True, exist_ok=True)
-    save_as_pickle(to_save_dir / f'{FLAGS.prep_id}.pickle', data)
+    prep_path = CONFIG["string"]["prep_dir"][1]
+    io.gfile.makedirs(prep_path)
+    to_save_dir = os.path.join(prep_path, FLAGS.item)
+    io.gfile.makedirs(to_save_dir)
+    save_as_pickle(os.path.join(to_save_dir, f'{FLAGS.prep_id}.pickle'), data)
 
     if FLAGS.export_splits:
         export_splits(data, to_save_dir, FLAGS.prep_id)

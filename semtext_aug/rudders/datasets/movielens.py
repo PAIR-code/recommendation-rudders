@@ -14,21 +14,22 @@
 """File with movie lens dataset specific functions"""
 
 import tensorflow as tf
-from pathlib import Path
+import os.path
 import json
 
 def movielens_to_dict(dataset_path):
     """
     Maps raw dataset file to a Dictonary.
 
-    :param dataset_path: Path to file containing interactions in a format
+    :param dataset_path: path str to file containing interactions in a format
         uid::iid::rate::time.
     :return: Dictionary containing users as keys, and a numpy array of items the user
       interacted with, sorted by the time of interaction.
     """
     filename = "ratings_with_imdb_id_no_gzip.jsonl"
     samples = {}
-    with tf.io.gfile.GFile(str(dataset_path / filename), 'r') as lines:
+    with tf.io.gfile.GFile(os.path.join(dataset_path, filename),
+                           mode="r") as lines:
         for line in lines:
             input = json.loads(line)
             uid = input['user_id']
@@ -51,7 +52,7 @@ def build_movieid2title(dataset_path):
     """Builds a mapping between item ids and the title of each item."""
     filename = "ratings_with_imdb_id_no_gzip.jsonl"
     movieid2title = {}
-    with tf.io.gfile.GFile(str(dataset_path / filename), 'r') as lines:
+    with tf.io.gfile.GFile(os.path.join(dataset_path, filename), mode="r") as lines:
       for line in lines:
         input = json.loads(line)
         mid = input['imdb_id']
@@ -68,7 +69,7 @@ def build_texts_from_movies(path_to_movie_dat):
     :return: dict of text list keyed by movie_id
     """
     texts = {}
-    with open(path_to_movie_dat, "r", encoding="ISO-8859-1") as f:
+    with tf.io.gfile.GFile(path_to_movie_dat, mode="r", encoding="ISO-8859-1") as f:
         for line in f:
            input = json.loads(line)
            imdb_id = input['imdb_id']
