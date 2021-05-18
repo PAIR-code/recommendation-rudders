@@ -13,6 +13,8 @@
 # limitations under the License.
 r"""
 
+Example command line... (after you've setup python)
+
 python3 ./train.py \
   --dataset=ml-1m \
   --max_epochs=1000 \
@@ -23,10 +25,6 @@ python3 ./train.py \
   --ui_weight=-20 \
   --train_ui_weight=False \
   --eval_batch_size=128 \
-  --use_cobuy_relation=False \
-  --use_coview_relation=False \
-  --use_category_relation=False \
-  --use_brand_relation=False \
   --dropout=0.0 \
   --debug=False \
   --invert_relations=true \
@@ -39,11 +37,27 @@ python3 ./train.py \
   --lr=1e-05 \
   --run_id=local-test.TransE.bs512.lr1e-05.sem.ml-1m_10. \
   --loss_fn=HingeLoss \
-  --log_dir=gs://rudders-xcloud-experiments/tmp/toy_experiment_logs/ \
-  --ckpt_dir=gs://rudders-xcloud-experiments/tmp/ckpts/
+  --log_dir=gs://rudders-xcloud-experiments/tmp/test-run/logs/ \
+  --ckpt_dir=gs://rudders-xcloud-experiments/tmp/test-run/ckpts/
 
-# For Fast testing
-python3 train.py --ckpt_dir=gs://rudders-xcloud-experiments/model_checkpoints/ --logs_dir=gs://rudders-xcloud-experiments/experiment_logs/ --dataset=ml-1m --max_epochs=10 --dims=64 --neg_sample_size=1 --validate=4 --patience=2 --ui_weight=-20 --train_ui_weight=False --eval_batch_size=128 --dropout=0.0 --run_id=test-hyper-search2.TransE.bs2048.lr0.0005.nosem.ml-1m_10. --loss_fn=HingeLoss --train_bias=false --model=TransE --use_semantic_relation=false --batch_size=2048 --lr=0.0005 --prep_name=ml-1m_10 --results_file=a-20210502092342-hyper-search2.TransE.bs2048.lr0.0005.nosem.ml-1m_10. --invert_relations=false --debug=True
+Note: you will need to make sure that your have access to write to the cloud
+buckets (gs://rudders-xcloud-experiments/...). If you run and get an error,
+you'll see the user-name you are running as and need to add write access for.
+
+# For fast testing use the flags --debug (run on 50 examples) and set
+# --max_epochs=... to something small like 10. For example:
+python3 train.py --debug=True --max_epochs=10 \
+  --log_dir=gs://rudders-xcloud-experiments/tmp/test-run/logs/ \
+  --ckpt_dir=gs://rudders-xcloud-experiments/tmp/test-run/ckpts/ \
+  --dataset=ml-1m --dims=64 --neg_sample_size=1 \
+  --validate=4 --patience=2 --ui_weight=-20 --train_ui_weight=False \
+  --eval_batch_size=128 --dropout=0.0 \
+  --run_id=local-test.TransE.bs2048.lr0.0005.nosem.ml-1m_10. \
+  --loss_fn=HingeLoss --train_bias=false --model=TransE \
+  --use_semantic_relation=false --batch_size=2048 --lr=0.0005 \
+  --prep_name=ml-1m_10 \
+  --results_file=local-test.TransE.bs2048.lr0.0005.nosem.ml-1m_10. \
+  --invert_relations=false
 
 """
 import json
