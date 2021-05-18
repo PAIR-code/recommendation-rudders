@@ -23,11 +23,20 @@ Knowledge graph models available:
 
 ## Reproducing experiments
 
-### 1. Download Amazon review data
+### 0. Download Amazon review data
 From [Amazon Review Data (2018)](https://nijianmo.github.io/amazon/index.html), for a given
 category branch of the dataset ("Musical Instruments", "Video Games", etc), download the
 5-core review file and the metadata. Store the ``*.json.gz`` files in ``data/amazon``
 
+### 1. Make sure you have dependencies
+Install relevant dependencies, e.g. to get setup with python virtual
+environment:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r semtext_aug/requirements.txt
+```
 
 ### 2. Build semantic distances between items
 Computes semantic embeddings with the _Universal Sentence Encoder_ based on product reviews.

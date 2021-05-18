@@ -232,11 +232,13 @@ class Runner:
         for k, v in metric_random.items():
             out[f"{k}_r"] = [v]
 
-        csv_path = os.path.join(self.args.logs_dir, "exported_metrics",
-            f"{self.args.results_file}-{split}.csv")
-        write_header = not tf.io.gfile.exists(csv_path)
+        csv_dir = os.path.join(self.args.logs_dir, "exported_metrics")
+        csv_path = os.path.join(csv_dir, f"{self.args.results_file}-{split}.csv")
+        already_exists = tf.io.gfile.exists(csv_path)
+        if not already_exists:
+          tf.io.gfile.makedirs(csv_dir)
         with tf.io.gfile.GFile(csv_path, mode="a") as fh:
-          pd.DataFrame.from_dict(out).to_csv(fh, header=write_header)
+          pd.DataFrame.from_dict(out).to_csv(fh, header=not already_exists)
 
     def get_excluded_item_ids(self, split):
         """
