@@ -142,7 +142,7 @@ cython_debug/
 .vscode/
 
 # Local data directories.
-hyperbolic-rs/data
-hyperbolic-rs/logs
-hyperbolic-rs/ckpt
-hyperbolic-rs/out
+semtext_aug/data/
+semtext_aug/logs
+semtext_aug/ckpt
+semtext_aug/out
