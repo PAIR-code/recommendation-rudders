@@ -51,13 +51,13 @@ def setup_relations(train, args):
         allowed_relations.add(Relations.SEM_LOW_SIM.value)
         allowed_relations.add(Relations.SEM_MEDIUM_SIM.value)
         allowed_relations.add(Relations.SEM_HIGH_SIM.value)
-    if args.use_cobuy_relation:
+    if args.dataset == 'amazon' and args.use_cobuy_relation:
         allowed_relations.add(Relations.COBUY.value)
-    if args.use_coview_relation:
+    if args.dataset == 'amazon' and args.use_coview_relation:
         allowed_relations.add(Relations.COVIEW.value)
-    if args.use_category_relation:
+    if args.dataset == 'amazon' and args.use_category_relation:
         allowed_relations.add(Relations.CATEGORY.value)
-    if args.use_brand_relation:
+    if args.dataset == 'amazon' and args.use_brand_relation:
         allowed_relations.add(Relations.BRAND.value)
     filtered_train = [triplet for triplet in train if triplet[1] in allowed_relations]
     all_rels = len(allowed_relations) == 8

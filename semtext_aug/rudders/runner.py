@@ -50,16 +50,16 @@ class Runner:
     def run(self):
         best_hr_at_10 = best_epoch = early_stopping_counter = -1
         best_weights = None
+        total_time = None
 
         for epoch in range(1, self.args.max_epochs + 1):
             start = time.perf_counter()
             train_loss = self.train_epoch(self.train.batch(self.args.batch_size)).numpy().item()
-            exec_time = time.perf_counter() - start
+            train_time = time.perf_counter() - start
 
-            logging.info(f'Epoch {epoch} | train loss: {train_loss:.4f} | total time: {int(exec_time)} secs')
-            start = time.perf_counter()
             with self.summary.as_default():
-                tf.summary.scalar('train-secs-per-epoch', exec_time, step=epoch)
+                if total_time:
+                    tf.summary.scalar('secs-per-epoch', int(total_time), step=epoch)
                 tf.summary.scalar('train/loss', train_loss, step=epoch)
                 tf.summary.scalar('train/lr', float(tf.keras.backend.get_value(self.optimizer.lr)), step=epoch)
                 if hasattr(self.model, 'c'):
@@ -92,11 +92,13 @@ class Runner:
 
                 with self.summary.as_default():
                     tf.summary.scalar('dev/loss', dev_loss, step=epoch)
-                    exec_time = time.perf_counter() - start
-                    tf.summary.scalar('secs-per-eval', exec_time, step=epoch)
 
             if epoch % 100 == 0:
                 self.compute_metrics(self.test, self.excluded_test, "test", epoch)
+
+            total_time = (time.perf_counter() - start)
+            eval_time = total_time - train_time
+            logging.info(f'Epoch {epoch} | train loss: {train_loss:.4f} | time: (train: {int(train_time)} secs, eval: {int(eval_time)} secs, total: {int(total_time)} secs)')
 
         logging.info(f'Optimization finished\nEvaluating best model from epoch {best_epoch}')
         self.model.set_weights(best_weights)
@@ -104,8 +106,11 @@ class Runner:
         if self.args.save_model:
           model_ckpt_path = os.path.join(self.args.ckpt_dir, self.args.run_id)
           tf.io.gfile.makedirs(model_ckpt_path)
+          # with tf.io.gfile.GFile(
+          #   , mode='w') as f:
           self.model.save_weights(
-            os.path.join(model_ckpt_path, f'{best_epoch}ep.h5'))
+            os.path.join(model_ckpt_path, f'ep{best_epoch}_tf'),
+            save_format='tf')
 
         # validation metrics
         self.print_samples()
@@ -168,8 +173,8 @@ class Runner:
         metric_random = rank_to_metric_dict(rank_random)
 
         logging.info(f"Result at epoch {epoch} in {title.upper()}")
-        logging.info(f"Random items {random_items}: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
-        logging.info("All items: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
+        logging.info(f"Random items ({title.upper()}): {random_items}: " + " ".join((f"{k}: {v:.2f}" for k, v in metric_random.items())))
+        logging.info(f"All items ({title.upper()}):" + " ".join((f"{k}: {v:.2f}" for k, v in metric_all.items())))
 
         if write_summary:
             with self.summary.as_default():

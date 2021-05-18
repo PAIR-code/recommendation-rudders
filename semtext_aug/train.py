@@ -11,7 +11,41 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+r"""
 
+python3 ./train.py \
+  --dataset=ml-1m \
+  --max_epochs=1000 \
+  --dims=64 \
+  --neg_sample_size=1 \
+  --validate=25 \
+  --patience=5 \
+  --ui_weight=-20 \
+  --train_ui_weight=False \
+  --eval_batch_size=128 \
+  --use_cobuy_relation=False \
+  --use_coview_relation=False \
+  --use_category_relation=False \
+  --use_brand_relation=False \
+  --dropout=0.0 \
+  --debug=False \
+  --invert_relations=true \
+  --use_semantic_relation=true \
+  --batch_size=512 \
+  --prep_name=ml-1m_10 \
+  --results_file=local-test.TransE.bs512.lr1e-05.sem.ml-1m_10. \
+  --train_bias=false \
+  --model=TransE \
+  --lr=1e-05 \
+  --run_id=local-test.TransE.bs512.lr1e-05.sem.ml-1m_10. \
+  --loss_fn=HingeLoss \
+  --log_dir=gs://rudders-xcloud-experiments/tmp/toy_experiment_logs/ \
+  --ckpt_dir=gs://rudders-xcloud-experiments/tmp/ckpts/
+
+# For Fast testing
+python3 train.py --ckpt_dir=gs://rudders-xcloud-experiments/model_checkpoints/ --logs_dir=gs://rudders-xcloud-experiments/experiment_logs/ --dataset=ml-1m --max_epochs=10 --dims=64 --neg_sample_size=1 --validate=4 --patience=2 --ui_weight=-20 --train_ui_weight=False --eval_batch_size=128 --dropout=0.0 --run_id=test-hyper-search2.TransE.bs2048.lr0.0005.nosem.ml-1m_10. --loss_fn=HingeLoss --train_bias=false --model=TransE --use_semantic_relation=false --batch_size=2048 --lr=0.0005 --prep_name=ml-1m_10 --results_file=a-20210502092342-hyper-search2.TransE.bs2048.lr0.0005.nosem.ml-1m_10. --invert_relations=false --debug=True
+
+"""
 import json
 import os.path
 from absl import app, flags, logging
@@ -55,7 +89,7 @@ def setup_relations(train, args):
     :param train: train split represented as a numpy array of train_len x 3 with (head, relation, tail)
     :param args: namespace with information about which relations should filter
     :return: filtered_train: numpy array of final_train_len x 3 only with allowed relations
-            n_relations: amount of allowed relations
+             n_relations: amount of allowed relations
     """
     allowed_relations = {Relations.USER_ITEM.value}     # User Item is always required
     if args.use_semantic_relation:
@@ -162,6 +196,9 @@ def main(_):
     set_seed(FLAGS.seed, set_tf_seed=FLAGS.debug)
     setup_logger(FLAGS.print_logs, FLAGS.save_logs, FLAGS.logs_dir, FLAGS.run_id)
     tf.config.experimental_run_functions_eagerly(FLAGS.debug)
+
+    tf.io.gfile.makedirs(FLAGS.logs_dir)
+    tf.io.gfile.makedirs(FLAGS.ckpt_dir)
 
     logging.info(f"Flags/config of this run:\n{get_flags_dict(FLAGS)}")
     gpus = tf.config.experimental.list_physical_devices('GPU')
