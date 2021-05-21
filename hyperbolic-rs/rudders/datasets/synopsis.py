@@ -11,7 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""File with movie lens dataset specific functions"""
+"""File with movie lens ratings joined with synopsis data.
+
+TODO(mpellat): Add external python notebook.
+
+The dataset was built by joining Movie Lens 1M dataset of movie ratings
+(https://grouplens.org/datasets/movielens/1m/) with the MPST synopsis
+dataset
+(https://www.kaggle.com/cryptexcode/mpst-movie-plot-synopses-with-tag),
+joining on imdb id. 
+"""
 
 import tensorflow as tf
 from pathlib import Path
@@ -47,7 +56,10 @@ def synopsis_to_dict(dataset_path):
 
 
 def build_movieid2title(dataset_path):
-    """Builds a mapping between item ids and the title of each item."""
+    """Builds a mapping between item ids and the title of each item.
+    :param dataset_path: contains ratings, item ids and synopsis.
+    :return: Dict of item ids (imdb ids) and movie names.
+    """
     filename = "ratings_with_imdb_id_no_gzip.jsonl"
     movieid2title = {}
     with tf.io.gfile.GFile(str(dataset_path / filename), 'r') as lines:
@@ -61,7 +73,8 @@ def build_movieid2title(dataset_path):
 
 def build_texts_from_synopsis(path_to_movie_dat):
     """
-    Extracts genre text from movies.dat to create semantic embeddings
+    Extracts genre text from Movie Lens ratings joined with synopsis data
+    to create semantic embeddings.
     :param path_to_movie_dat:
     :return: dict of text list keyed by movie_id
     """
