@@ -1,9 +1,12 @@
 <div *ngIf="mode == 'view'; else editView" >
-<div>
+<div class="view">
   <span class="id">{{item.id}}</span>
   <span class="timestamp">{{item.date}}</span>
-  <button mat-flat-button aria-label="Edit" (click)="editMode()">
+  <!-- <button mat-flat-button aria-label="Edit" (click)="editMode()">
     edit
+  </button> -->
+  <button class="hoverSmallBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
+    <mat-icon>edit</mat-icon>
   </button>
 </div>
 <div><span class="text">{{item.text}}</span>
@@ -14,17 +17,17 @@
   <div>
     <span class="id">{{item.id}}</span>
     <span class="timestamp">{{item.date}}</span>
-    <button mat-icon-button aria-label="More actions"
-              [matMenuTriggerFor]="menu">
-        <mat-icon class="smallBtn">more_vert</mat-icon>
-      </button>
+    <button class="smallBtn" mat-icon-button aria-label="More actions" [matMenuTriggerFor]="menu">
+      <mat-icon >more_vert</mat-icon>
+    </button>
     <mat-menu #menu="matMenu">
       <button mat-menu-item (click)="deleteItem()">Delete</button>
       <button mat-menu-item (click)="revert()">Revert</button>
+      <button mat-menu-item (click)="viewMode()">cancel</button>
     </mat-menu>
   </div>
 
-  <form class="search-form">
+  <form class="search-form" (submit)="save()">
     <div>
       <mat-form-field class="full-width">
         <mat-label>Item Text</mat-label>
@@ -32,7 +35,7 @@
       </mat-form-field>
     </div>
     <div>
-      <button type="submit" mat-flat-button aria-label="Edit" (click)="save()">
+      <button type="submit" mat-flat-button aria-label="Edit">
         done
       </button>
     </div>

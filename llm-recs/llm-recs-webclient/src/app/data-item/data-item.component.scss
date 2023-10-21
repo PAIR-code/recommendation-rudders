@@ -42,7 +42,21 @@
 }
 
 .smallBtn {
+  // --mdc-icon-button-icon-size: 16px;
   transform: scale(0.75);
   // font-size: 12px;
   // width: 100%;
+}
+
+
+.view .hoverSmallBtn {
+  opacity: 0.0;
+  transition: opacity .5s ease-out;
+  -moz-transition: opacity .5s ease-out;
+  -webkit-transition: opacity .5s ease-out;
+  -o-transition: opacity .5s ease-out;
+}
+
+.view:hover .hoverSmallBtn {
+  opacity: 1.0;
 }

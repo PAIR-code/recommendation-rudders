@@ -1,13 +1,11 @@
 <div class="main">
 
-<p>There are <span>{{size()}}</span> item in the store.</p>
+<p>Items in the store: <span>{{size()}}</span></p>
 
 <button mat-button color="warn" (click)="deleteData()">Delete all data</button>
 
-<ul>
-  <li *ngFor="let d of data(); let i = index" class="item">
-    <app-data-item [item]="d" (deleteEvent)="deleteItem(d)"></app-data-item>
-  </li>
-</ul>
+<div *ngFor="let d of data(); let i = index" class="item">
+  <app-data-item [item]="d" (deleteEvent)="deleteItem(d)"></app-data-item>
+</div>
 
 </div>

@@ -33,10 +33,14 @@ export class DataItemComponent implements OnInit {
   editMode(): void {
     this.mode = 'edit';
   }
-  save(): void {
+  viewMode(): void {
     this.mode = 'view';
+  }
+
+  save(): void {
     this.item.text = this.itemTextControl.value || this.item.text;
     this.dataService.saveItem(this.item);
+    this.viewMode();
   }
 
   revert(): void {
@@ -45,7 +49,6 @@ export class DataItemComponent implements OnInit {
 
   deleteItem(): void {
     this.deleteEvent.emit();
-    this.mode = 'view';
   }
 
 }
