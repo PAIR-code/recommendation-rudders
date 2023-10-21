@@ -1,3 +1,37 @@
-This application is works!
+<!-- <mat-sidenav-container>
+  <mat-sidenav>side nav Start</mat-sidenav>
+  <mat-sidenav-content><router-outlet></router-outlet></mat-sidenav-content>
+</mat-sidenav-container> -->
 
-<router-outlet></router-outlet>
+<div class="toolbar" role="banner">
+  <button mat-icon-button (click)="drawer.toggle()"><mat-icon>menu</mat-icon></button>
+
+  <!-- <mat-button-toggle-group #group="matButtonToggleGroup">
+    <mat-button-toggle value="left" aria-label="Menu" >
+
+    </mat-button-toggle>
+  </mat-button-toggle-group> -->
+
+  <!-- <button mat-raised-button (click)="drawer.toggle()">config</button> -->
+
+  <span class="title">Rudders Demo</span>
+  <div class="spacer"></div>
+  <a class="small-logo" aria-label="Home" [routerLink]="['/']" title="Home">
+    <img src="/assets/pair-logo.svg">
+  </a>
+</div>
+
+<div class="content" role="main">
+  <mat-drawer-container [hasBackdrop]="true">
+    <mat-drawer #drawer [mode]="'side'">
+      <nav class="menu-buttons">
+        <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <button (click)="drawer.toggle()" mat-button>Home</button></a>
+        <a routerLink="/llm-config" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <button (click)="drawer.toggle()" mat-button>LLM Config</button></a>
+        <a routerLink="/prompt-config" routerLinkActive="active" ariaCurrentWhenActive="page"><button (click)="drawer.toggle()" mat-button>Prompts</button></a>
+      </nav>
+    </mat-drawer>
+    <mat-drawer-content><router-outlet></router-outlet></mat-drawer-content>
+  </mat-drawer-container>
+</div>
