@@ -9,10 +9,10 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-llm-api-config',
-  templateUrl: './llm-api-config.component.html',
-  styleUrls: ['./llm-api-config.component.scss']
+  selector: 'app-prompts-config',
+  templateUrl: './prompts-config.component.html',
+  styleUrls: ['./prompts-config.component.scss']
 })
-export class LlmApiConfigComponent {
+export class PromptsConfigComponent {
 
 }

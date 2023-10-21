@@ -8,17 +8,17 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LlmApiConfigComponent } from './llm-api-config.component';
+import { RuddersHomeComponent } from './rudders-home.component';
 
-describe('LlmApiConfigComponent', () => {
-  let component: LlmApiConfigComponent;
-  let fixture: ComponentFixture<LlmApiConfigComponent>;
+describe('RuddersHomeComponent', () => {
+  let component: RuddersHomeComponent;
+  let fixture: ComponentFixture<RuddersHomeComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [LlmApiConfigComponent]
+      declarations: [RuddersHomeComponent]
     });
-    fixture = TestBed.createComponent(LlmApiConfigComponent);
+    fixture = TestBed.createComponent(RuddersHomeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

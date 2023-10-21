@@ -3,8 +3,9 @@
  * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an Apache2 license that can be
- * found in the LICENSE file.
- */
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
+
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
@@ -19,11 +20,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { RuddersHomeComponent } from './rudders-home/rudders-home.component';
+import { PromptsConfigComponent } from './prompts-config/prompts-config.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LlmApiConfigComponent
+    LlmApiConfigComponent,
+    RuddersHomeComponent,
+    PromptsConfigComponent
   ],
   imports: [
     BrowserModule,
@@ -34,7 +40,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatFormFieldModule,
     MatSidenavModule,
     MatButtonToggleModule,
-    MatIconModule
+    MatIconModule,
+    MatListModule
   ],
   providers: [],
   bootstrap: [AppComponent]

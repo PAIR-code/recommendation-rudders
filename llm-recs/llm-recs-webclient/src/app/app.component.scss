@@ -46,7 +46,8 @@ $toolbar-height: 60px;
 }
 
 .content .mat-drawer-container {
-  min-height: 300px;
+  min-height: 100vh;
+  min-width: 100vw;
 }
 
 .menu-buttons {
@@ -80,9 +81,9 @@ $toolbar-height: 60px;
 //   // background-color: #33B5E5;
 // }
 
-.menu-button .mat-mdc-button-base {
-  margin: 8px 8px 8px 0;
-}
+// .menu-button .mat-mdc-button-base {
+//   margin: 8px 8px 8px 0;
+// }
 
 .error {
   color: #F00;

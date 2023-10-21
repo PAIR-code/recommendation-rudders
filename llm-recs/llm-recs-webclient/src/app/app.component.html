@@ -1,37 +1,30 @@
-<!-- <mat-sidenav-container>
-  <mat-sidenav>side nav Start</mat-sidenav>
-  <mat-sidenav-content><router-outlet></router-outlet></mat-sidenav-content>
-</mat-sidenav-container> -->
-
 <div class="toolbar" role="banner">
-  <button mat-icon-button (click)="drawer.toggle()"><mat-icon>menu</mat-icon></button>
-
-  <!-- <mat-button-toggle-group #group="matButtonToggleGroup">
-    <mat-button-toggle value="left" aria-label="Menu" >
-
-    </mat-button-toggle>
-  </mat-button-toggle-group> -->
-
-  <!-- <button mat-raised-button (click)="drawer.toggle()">config</button> -->
-
+  <button mat-icon-button (click)="sidenav.toggle()"><mat-icon>menu</mat-icon></button>
   <span class="title">Rudders Demo</span>
   <div class="spacer"></div>
-  <a class="small-logo" aria-label="Home" [routerLink]="['/']" title="Home">
+  <a class="small-logo" aria-label="PAIR" href="https://pair.withgoogle.com/" title="Home">
     <img src="/assets/pair-logo.svg">
   </a>
 </div>
 
 <div class="content" role="main">
-  <mat-drawer-container [hasBackdrop]="true">
-    <mat-drawer #drawer [mode]="'side'">
-      <nav class="menu-buttons">
-        <a routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page">
-        <button (click)="drawer.toggle()" mat-button>Home</button></a>
-        <a routerLink="/llm-config" routerLinkActive="active" ariaCurrentWhenActive="page">
-        <button (click)="drawer.toggle()" mat-button>LLM Config</button></a>
-        <a routerLink="/prompt-config" routerLinkActive="active" ariaCurrentWhenActive="page"><button (click)="drawer.toggle()" mat-button>Prompts</button></a>
-      </nav>
-    </mat-drawer>
-    <mat-drawer-content><router-outlet></router-outlet></mat-drawer-content>
-  </mat-drawer-container>
+  <mat-sidenav-container>
+    <mat-sidenav #sidenav mode="side" opened="true">
+      <mat-nav-list class="menu-buttons">
+        <mat-list-item [activated]="router.url == '/'" matListItemTitle routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page">
+          home
+        </mat-list-item>
+        <mat-list-item [activated]="router.url == '/llm-config'" matListItemTitle routerLink="/llm-config" routerLinkActive="active" ariaCurrentWhenActive="page">
+          LLM Config
+        </mat-list-item>
+        <mat-list-item [activated]="router.url == '/prompts'" matListItemTitle routerLink="/prompts" routerLinkActive="active" ariaCurrentWhenActive="page">
+          Prompts
+        </mat-list-item>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
 </div>
