@@ -7,6 +7,8 @@
 ==============================================================================*/
 
 import { Component } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { PalmApiService } from '../palm-api.service';
 
 @Component({
   selector: 'app-llm-api-config',
@@ -14,5 +16,22 @@ import { Component } from '@angular/core';
   styleUrls: ['./llm-api-config.component.scss']
 })
 export class LlmApiConfigComponent {
+  public tokenControl: FormControl<string | null>;
+  public projectControl: FormControl<string | null>;
 
+  constructor(private llmService: PalmApiService) {
+    this.tokenControl = new FormControl<string | null>(this.llmService.accessToken);
+    this.projectControl = new FormControl<string | null>(this.llmService.projectId);
+
+    this.tokenControl.valueChanges.forEach(update => {
+      if (update && this.llmService.accessToken !== update) {
+        this.llmService.accessToken = update
+      }
+    });
+    this.projectControl.valueChanges.forEach(update => {
+      if (update && this.llmService.projectId !== update) {
+        this.llmService.projectId = update
+      }
+    });
+  }
 }

@@ -1,1 +1,22 @@
-<p>rudders-home works!</p>
+<div class="main">
+  <form class="add-form">
+    <mat-form-field class="minus-button-width">
+      <mat-label>Item Text</mat-label>
+      <textarea matInput [formControl]="addControl"></textarea>
+    </mat-form-field>
+    <button mat-icon-button aria-label="add" (click)="add()">
+      <mat-icon>add</mat-icon>
+    </button>
+  </form>
+  <form class="search-form">
+    <mat-form-field class="minus-button-width">
+      <mat-label>Search</mat-label>
+      <input type="text" matInput [formControl]="searchControl">
+    </mat-form-field>
+    <button mat-icon-button aria-label="search" (click)="search()">
+      <mat-icon>search</mat-icon>
+    </button>
+  </form>
+  <div class="searchResults">
+  </div>
+  </div>

@@ -7,6 +7,9 @@
 ==============================================================================*/
 
 import { Component } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { PalmApiService } from '../palm-api.service';
+import { SavedDataService } from '../saved-data.service';
 
 @Component({
   selector: 'app-rudders-home',
@@ -14,5 +17,27 @@ import { Component } from '@angular/core';
   styleUrls: ['./rudders-home.component.scss']
 })
 export class RuddersHomeComponent {
+
+  public searchControl: FormControl<string | null>;
+  public addControl: FormControl<string | null>;
+
+  constructor(
+    private llmService: PalmApiService,
+    private dataService: SavedDataService
+  ) {
+    this.searchControl = new FormControl<string | null>('');
+    this.addControl = new FormControl<string | null>('');
+  }
+
+  search() {
+    console.log(`searching for ${this.searchControl.value}.`);
+  }
+
+  add() {
+    console.log(`adding ${this.addControl.value}.`);
+    if (this.addControl.value) {
+      this.dataService.add(this.addControl.value);
+    }
+  }
 
 }

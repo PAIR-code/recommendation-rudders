@@ -17,5 +17,30 @@ import { VertexPalm2LLM } from '../lib/text-templates/llm_vertexapi_palm2';
   providedIn: 'root'
 })
 export class PalmApiService {
-  constructor(@Inject('llm') private llm: VertexPalm2LLM) { }
+  private llm: VertexPalm2LLM;
+
+  constructor() {
+    const project = localStorage.getItem('projectId') || 'no project set';
+    const token = localStorage.getItem('accessToken') || 'no access token set';
+
+    this.llm = new VertexPalm2LLM(project, token);
+  }
+
+  set accessToken(token: string) {
+    console.log(`accessToken update ${token}.`)
+    this.llm.accessToken = token;
+    localStorage.setItem('accessToken', token);
+  }
+  get accessToken(): string {
+    return this.llm.accessToken;
+  }
+
+  set projectId(project: string) {
+    console.log(`projectId update ${project}.`)
+    this.llm.projectId = project;
+    localStorage.setItem('projectId', project);
+  }
+  get projectId(): string {
+    return this.llm.projectId;
+  }
 }

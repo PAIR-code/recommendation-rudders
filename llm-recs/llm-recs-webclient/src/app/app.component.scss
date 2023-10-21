@@ -1,7 +1,7 @@
 $toolbar-height: 60px;
 
 .toolbar {
-  position: absolute;
+  // position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -34,7 +34,7 @@ $toolbar-height: 60px;
 .content {
   display: flex;
   margin: 0;
-  margin-top: $toolbar-height;
+  // margin-top: $toolbar-height;
   // padding: 10px 16px;
   // max-width: 960px;
   flex-wrap: wrap;
@@ -46,8 +46,8 @@ $toolbar-height: 60px;
 }
 
 .content .mat-drawer-container {
-  min-height: 100vh;
-  min-width: 100vw;
+  min-height: calc(100vh - $toolbar-height);
+  min-width: 100%;
 }
 
 .menu-buttons {

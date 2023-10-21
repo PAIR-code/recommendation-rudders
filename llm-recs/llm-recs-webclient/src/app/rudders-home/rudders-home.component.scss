@@ -1,0 +1,33 @@
+.main {
+  margin: 20px;
+}
+
+.search-form {
+  min-width: 150px;
+  // max-width: 500px;
+  width: 100%;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex: 1 1 auto;
+}
+
+.minus-button-width {
+  width: calc(100% - 80px);
+}
+
+.add-form {
+  min-width: 150px;
+  // max-width: 500px;
+  width: 100%;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex: 1 1 auto;
+}
+
+.full-width {
+  width: 100%;
+}

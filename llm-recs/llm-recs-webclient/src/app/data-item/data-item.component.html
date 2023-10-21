@@ -1,0 +1,44 @@
+<div *ngIf="mode == 'view'; else editView" >
+<div>
+  <span class="id">{{item.id}}</span>
+  <span class="timestamp">{{item.date}}</span>
+  <button mat-flat-button aria-label="Edit" (click)="editMode()">
+    edit
+  </button>
+</div>
+<div><span class="text">{{item.text}}</span>
+</div>
+</div>
+
+<ng-template #editView><div>
+  <div>
+    <span class="id">{{item.id}}</span>
+    <span class="timestamp">{{item.date}}</span>
+    <button mat-icon-button aria-label="More actions"
+              [matMenuTriggerFor]="menu">
+        <mat-icon class="smallBtn">more_vert</mat-icon>
+      </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="deleteItem()">Delete</button>
+      <button mat-menu-item (click)="revert()">Revert</button>
+    </mat-menu>
+  </div>
+
+  <form class="search-form">
+    <div>
+      <mat-form-field class="full-width">
+        <mat-label>Item Text</mat-label>
+        <textarea matInput [formControl]="itemTextControl"></textarea>
+      </mat-form-field>
+    </div>
+    <div>
+      <button type="submit" mat-flat-button aria-label="Edit" (click)="save()">
+        done
+      </button>
+    </div>
+  </form>
+
+</div></ng-template>
+
+<!--
+ -->
