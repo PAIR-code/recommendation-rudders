@@ -2,7 +2,6 @@
   "name": "llm-rec-server-appengine",
   "version": "0.0.1",
   "description": "Appengine server",
-  "main": "index.js",
   "scripts": {
     "start": "ts-node ./server.ts",
     "test": "c8 mocha -r ts-node/register -p -j 2 ./tests/*.spec.ts --exit --timeout=20000",
