@@ -4,7 +4,7 @@
   "description": "Appengine server",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node ./src/server.ts",
+    "start": "ts-node ./server.ts",
     "test": "c8 mocha -r ts-node/register -p -j 2 ./tests/*.spec.ts --exit --timeout=20000",
     "build-static": "mkdir -p static && cd ../llm-recs-webclient && npm run build && cp -r ./dist/llm-recs-webclient/* ../appengine-server/static/",
     "deploy": "npm run build-static && gcloud app deploy"
