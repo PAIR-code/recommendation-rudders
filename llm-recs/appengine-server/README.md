@@ -12,6 +12,12 @@ npm run start
 npm run test
 ```
 
+## Building
+
+```sh
+npm run build-static
+```
+
 ## Deploying
 
 Deploy to production appengine environment. Remember to first set your cloud
