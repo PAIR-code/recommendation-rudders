@@ -15,9 +15,11 @@ export const app: Express = express();
 // This middleware is available in Express v4.16.0 onwards
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello from App Engine!');
-});
+app.use(express.static('./static'))
+
+// app.get('/', (req: Request, res: Response) => {
+//   res.send('Hello from App Engine!');
+// });
 
 app.get('/submit', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '/views/form.html'));
