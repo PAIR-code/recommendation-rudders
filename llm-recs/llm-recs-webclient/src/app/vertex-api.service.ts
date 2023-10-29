@@ -8,6 +8,7 @@
 
 import { Inject, Injectable } from '@angular/core';
 import { VertexPalm2LLM } from '../lib/text-templates/llm_vertexapi_palm2';
+import { VertexEmbedder } from 'src/lib/text-embeddings/embedder_vertexapi';
 
 // TODO: Unclear to me if this is needed or helpful...
 //
@@ -16,14 +17,16 @@ import { VertexPalm2LLM } from '../lib/text-templates/llm_vertexapi_palm2';
 @Injectable({
   providedIn: 'root'
 })
-export class PalmApiService {
-  private llm: VertexPalm2LLM;
+export class VertexApiService {
+  public llm: VertexPalm2LLM;
+  public embedder: VertexEmbedder;
 
   constructor() {
     const project = localStorage.getItem('projectId') || 'no project set';
     const token = localStorage.getItem('accessToken') || 'no access token set';
 
     this.llm = new VertexPalm2LLM(project, token);
+    this.embedder = new VertexEmbedder(project, token);
   }
 
   set accessToken(token: string) {

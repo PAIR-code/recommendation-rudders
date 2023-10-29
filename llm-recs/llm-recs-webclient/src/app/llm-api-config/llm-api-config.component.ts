@@ -8,7 +8,7 @@
 
 import { Component } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { PalmApiService } from '../palm-api.service';
+import { VertexApiService } from '../vertex-api.service';
 
 @Component({
   selector: 'app-llm-api-config',
@@ -19,7 +19,7 @@ export class LlmApiConfigComponent {
   public tokenControl: FormControl<string | null>;
   public projectControl: FormControl<string | null>;
 
-  constructor(private llmService: PalmApiService) {
+  constructor(private llmService: VertexApiService) {
     this.tokenControl = new FormControl<string | null>(this.llmService.accessToken);
     this.projectControl = new FormControl<string | null>(this.llmService.projectId);
 

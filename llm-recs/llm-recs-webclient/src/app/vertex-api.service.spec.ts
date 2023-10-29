@@ -8,14 +8,14 @@
 
 import { TestBed } from '@angular/core/testing';
 
-import { PalmApiService } from './palm-api.service';
+import { VertexApiService } from './vertex-api.service';
 
 describe('PalmApiService', () => {
-  let service: PalmApiService;
+  let service: VertexApiService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(PalmApiService);
+    service = TestBed.inject(VertexApiService);
   });
 
   it('should be created', () => {
