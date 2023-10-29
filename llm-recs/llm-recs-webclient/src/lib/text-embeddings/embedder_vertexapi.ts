@@ -10,6 +10,7 @@ import { Embedder, EmbedResponse as EmbedResponse } from "./embedder";
 
 /*
 Google Cloud Vertex Embedding API
+See: https://cloud.google.com/vertex-ai/docs/generative-ai/embeddings/get-text-embeddings
 (Same models as Google Generative AI Developer API but different API)
 */
 

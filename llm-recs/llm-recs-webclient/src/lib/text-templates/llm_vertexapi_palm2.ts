@@ -8,6 +8,7 @@
 
 /*
 Google Cloud Vertex Palm2 API
+See: https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/text
 (same models as Google Generative AI Developer API but different API)
 */
 
