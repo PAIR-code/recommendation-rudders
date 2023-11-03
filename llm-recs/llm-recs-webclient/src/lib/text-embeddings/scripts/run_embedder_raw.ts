@@ -10,37 +10,24 @@
 
 Usage:
 
-npx ts-node --esm ./run_vertexapi_palm2_rawSend.ts \
+npx ts-node --esm ./run_embedder_raw.ts \
   --project=$(gcloud config get-value project) \
   --accessToken=$(gcloud auth print-access-token)
 */
-import { sendPalm2Request, preparePalm2Request } from '../llm_vertexapi_palm2';
+import { sendEmbedRequest, prepareEmbedRequest } from '../embedder_vertexapi';
 
 import * as yargs from 'yargs';
 
 interface Params {
   accessToken: string,
   project: string,
+  model: string,
 }
 
 async function run(args: Params): Promise<void> {
-
-  const prompt = `
-The following are short movie summaries. They are specific, not generic (no movie is just "a classic"), and they don't contain plot synopsis. They just describe the experience of watching the movie. It tries to tell you the essence of the movie.
-
-movie: 'Fifth Element'
-summary: ['joyous sci fi that emerses you in a colourful universe', 'quirky upbeat action']
-
-movie: 'Seven Samurai'
-summary: ['black and white masterpiece of cinematography', 'a slow, atmospheric, symbolic fight for all that is just']
-
-movie: 'The Godfather'
-summary: ['
-`;
-
-  const request = preparePalm2Request(prompt);
-  request.parameters.stopSequences.push(`']`);
-  const response = await sendPalm2Request(
+  const text = `I am a hungry hippo`;
+  const request = prepareEmbedRequest(text);
+  const response = await sendEmbedRequest(
     args.project, args.accessToken, request);
   console.log(JSON.stringify(response));
 }
@@ -56,6 +43,11 @@ const args = yargs
     describe: 'The Google Cloud Project to use (it must have the VertexAI ' +
       'API enabled).',
     demandOption: true,
+    type: 'string',
+  }).option('model', {
+    describe: 'The Google Cloud Project to use (it must have the VertexAI ' +
+      'API enabled).',
+    default: 'textembedding-gecko',
     type: 'string',
   }).help().argv;
 

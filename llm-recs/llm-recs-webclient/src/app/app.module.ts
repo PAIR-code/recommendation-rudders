@@ -29,7 +29,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 
-import { PalmApiService } from './palm-api.service';
+import { VertexApiService } from './vertex-api.service';
 import { SavedDataService } from './saved-data.service';
 import { DataItemComponent } from './data-item/data-item.component';
 
@@ -59,7 +59,7 @@ import { DataItemComponent } from './data-item/data-item.component';
     MatMenuModule,
   ],
   providers: [
-    PalmApiService,
+    VertexApiService,
     SavedDataService,
   ],
   bootstrap: [AppComponent]

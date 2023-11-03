@@ -8,7 +8,7 @@
 
 import { Component } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { PalmApiService } from '../palm-api.service';
+import { VertexApiService } from '../vertex-api.service';
 import { SavedDataService } from '../saved-data.service';
 
 @Component({
@@ -22,7 +22,7 @@ export class RuddersHomeComponent {
   public addControl: FormControl<string | null>;
 
   constructor(
-    private llmService: PalmApiService,
+    private llmService: VertexApiService,
     private dataService: SavedDataService
   ) {
     this.searchControl = new FormControl<string | null>('');
