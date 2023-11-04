@@ -32,6 +32,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { VertexApiService } from './vertex-api.service';
 import { SavedDataService } from './saved-data.service';
 import { DataItemComponent } from './data-item/data-item.component';
+import { AppSettingsComponent } from './app-settings/app-settings.component';
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
 @NgModule({
   declarations: [
@@ -41,6 +43,8 @@ import { DataItemComponent } from './data-item/data-item.component';
     PromptsConfigComponent,
     DataViewerComponent,
     DataItemComponent,
+    AppSettingsComponent,
+    PageNotFoundComponent,
   ],
   imports: [
     BrowserModule,
