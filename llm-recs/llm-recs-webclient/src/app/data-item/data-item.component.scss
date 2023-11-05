@@ -41,6 +41,23 @@
   border-radius: 5px;
 }
 
+.embedding {
+  display: inline-block;
+  padding: 5px;
+  border: solid 1px #ddd;
+  border-radius: 5px;
+  font-size: 12px;
+  max-width: 15em;
+}
+
+.error {
+  padding: 5px;
+  border-radius: 5px;
+  background-color: #FAA;
+  border: solid 1px #A00;
+  // color: #FF0000;
+}
+
 .smallBtn {
   // --mdc-icon-button-icon-size: 16px;
   transform: scale(0.75);

@@ -20,7 +20,7 @@ export interface EmbedRequest {
   instances: { content: string }[]
 }
 
-export interface VertexEmbedResponse {
+export interface VertexEmbedding {
   predictions: {
     embeddings: {
       statistics: {
@@ -33,6 +33,24 @@ export interface VertexEmbedResponse {
   metadata: {
     billableCharacterCount: number;
   }
+}
+
+export interface VertexEmbedError {
+  error: {
+    code: number;
+    details: unknown[];
+    message: string;
+    status: string;
+  }
+}
+
+export type VertexEmbedResponse = VertexEmbedding | VertexEmbedError;
+
+function isErrorResponse(response: VertexEmbedResponse): response is VertexEmbedError {
+  if ((response as VertexEmbedError).error) {
+    return true;
+  }
+  return false;
 }
 
 export function prepareEmbedRequest(text: string, options?: EmbedRequestParams): EmbedRequest {
@@ -109,6 +127,12 @@ export class VertexEmbedder implements Embedder<EmbedApiOptions> {
       apiRequest,
       params ? params.modelId : this.defaultOptions.modelId,
       params ? params.apiEndpoint : this.defaultOptions.apiEndpoint);
+
+    console.log(apiResponse);
+
+    if (isErrorResponse(apiResponse)) {
+      return { error: apiResponse.error.message };
+    }
 
     return { embedding: apiResponse.predictions.embeddings.values };
   }
