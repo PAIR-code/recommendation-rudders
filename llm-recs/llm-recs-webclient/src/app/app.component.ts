@@ -39,17 +39,17 @@ export class AppComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.authService.prompt();
-    // @ts-ignore
-    google.accounts.id.renderButton(
-      this.googleButton.nativeElement,
-      {
-        theme: "outline",
-        // type: "icon",
-        size: "medium",
-        width: "215",
-      }
-    );
+    // this.authService.prompt();
+    // // @ts-ignore
+    // google.accounts.id.renderButton(
+    //   this.googleButton.nativeElement,
+    //   {
+    //     theme: "outline",
+    //     // type: "icon",
+    //     size: "medium",
+    //     width: "215",
+    //   }
+    // );
   }
 
   // async handleCredentialResponse(response: any) {

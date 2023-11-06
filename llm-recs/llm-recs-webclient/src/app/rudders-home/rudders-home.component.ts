@@ -11,6 +11,7 @@ import { FormControl } from '@angular/forms';
 import { ItemEmbeddings, SavedDataService } from '../saved-data.service';
 import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
+import { SearchSpec } from '../data-viewer/data-viewer.component';
 
 @Component({
   selector: 'app-rudders-home',
@@ -21,31 +22,39 @@ export class RuddersHomeComponent {
   public itemTextControl: FormControl<string | null>;
   public waiting: boolean = false;
   public errorMessage?: string;
-  public embeddingSearch: WritableSignal<number[] | null>;
+  public searchSpec: WritableSignal<SearchSpec | null>;
 
   constructor(
     private lmApiService: LmApiService,
     private dataService: SavedDataService
   ) {
-    this.embeddingSearch = signal(null);
+    this.searchSpec = signal(null);
     this.itemTextControl = new FormControl<string | null>('');
   }
 
   async search() {
-    delete this.errorMessage;
-    this.waiting = true;
-    if (!this.itemTextControl.value) {
-      console.error('no value to search for; this should not be possible');
+    if (this.hasNoInput()) {
       return;
     }
+
+    delete this.errorMessage;
+    this.waiting = true;
+    // if (!this.itemTextControl.value) {
+    //   console.error('no value to search for; this should not be possible');
+    //   return;
+    // }
     const embedResult = await this.lmApiService.embedder.embed(
-      this.itemTextControl.value);
+      this.itemTextControl.value!);
 
     if (isEmbedError(embedResult)) {
       this.errorMessage = embedResult.error;
       return;
     }
-    this.embeddingSearch.set(embedResult.embedding);
+    this.searchSpec.set(
+      {
+        text: this.itemTextControl.value!,
+        embedding: embedResult.embedding
+      });
     this.waiting = false;
     // console.log(`searching for ${this.itemTextControl.value}.`);
   }
@@ -66,6 +75,11 @@ export class RuddersHomeComponent {
       this.dataService.add(text, embeddings);
       this.waiting = false;
     }
+  }
+
+  hasNoInput() {
+    return !this.itemTextControl.value
+      || this.itemTextControl.value.length === 0;
   }
 
 }

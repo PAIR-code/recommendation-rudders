@@ -6,9 +6,14 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, Input, OnInit, Signal, computed } from '@angular/core';
+import { Component, Input, OnInit, Signal, WritableSignal, computed } from '@angular/core';
 import { DataItem, SavedDataService } from '../saved-data.service';
 // import { EventEmitter, Input, OnInit, Output, effect } from '@angular/core';
+
+export interface SearchSpec {
+  text: string;
+  embedding: number[];
+}
 
 function dotProd(e1: number[], e2: number[]) {
   let dotProduct = 0;
@@ -31,8 +36,7 @@ export class DataViewerComponent implements OnInit {
   // Local copy of the data items
   public data!: Signal<DataItem[]>;
 
-  @Input() search!: Signal<number[] | null>;
-
+  @Input() public search?: WritableSignal<SearchSpec | null>;
 
   public itemRanks!: Signal<{ [itemId: string]: number }>;
 
@@ -44,8 +48,8 @@ export class DataViewerComponent implements OnInit {
       const items = this.dataService.data().items;
       const ranks = {} as { [itemId: string]: number };
 
-      const searchEmbedding = this.search();
-      if (!searchEmbedding) {
+      const searchSpec = (this.search && this.search()) || null;
+      if (!searchSpec) {
         Object.values(items).forEach(item =>
           ranks[item.id] = parseInt(item.id));
         console.log(JSON.stringify(ranks, null, 2));
@@ -54,7 +58,7 @@ export class DataViewerComponent implements OnInit {
 
       Object.values(items).forEach(item =>
         ranks[item.id] = maxOf(Object.values(item.embeddings).map(
-          e => dotProd(e, searchEmbedding))));
+          e => dotProd(e, searchSpec.embedding))));
 
       console.log(JSON.stringify(ranks, null, 2));
       return ranks;
@@ -80,6 +84,12 @@ export class DataViewerComponent implements OnInit {
   }
   itemRank(d: DataItem): number {
     return this.itemRanks()[d.id];
+  }
+
+  removeSearch() {
+    if (this.search) {
+      this.search.set(null);
+    }
   }
 
 }

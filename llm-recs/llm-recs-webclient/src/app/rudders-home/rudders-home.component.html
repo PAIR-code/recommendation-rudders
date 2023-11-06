@@ -7,14 +7,14 @@
       <div class='error' *ngIf="errorMessage">{{errorMessage}}</div>
     </mat-form-field>
     <div class="buttons">
-      <button mat-icon-button aria-label="add" (click)="add()">
+      <button [disabled]="hasNoInput()" mat-icon-button aria-label="add" (click)="add()">
         <mat-icon>add</mat-icon>
       </button>
-      <button mat-icon-button aria-label="search" (click)="search()">
+      <button [disabled]="hasNoInput()" mat-icon-button aria-label="search" (click)="search()">
         <mat-icon>search</mat-icon>
       </button>
     </div>
   </form>
   <div class="search-response-sep"></div>
-  <app-data-viewer [search]="embeddingSearch"></app-data-viewer>
+  <app-data-viewer [search]="searchSpec"></app-data-viewer>
   </div>

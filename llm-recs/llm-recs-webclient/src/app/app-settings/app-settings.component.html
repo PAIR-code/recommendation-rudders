@@ -3,10 +3,26 @@
   <div>
     <mat-form-field class="full-width">
       <mat-label>App Name</mat-label>
-      <textarea matInput [formControl]="appNameControl"></textarea>
+      <input matInput placeholder="Write a name for your app"
+        [formControl]="appNameControl">
     </mat-form-field>
   </div>
-
-  <button mat-button color="warn" (click)="reset()">Reset/clear all data</button>
+  <div class="appinfo">App data: <span>{{sizeString()}}</span></div>
+  <button mat-button color="accent" aria-label="Download" (click)="download(downloadLink)">
+    <mat-icon>download</mat-icon> Download a snapshot
+    <a hidden #downloadLink [download]="downloadName()" target="_top"></a>
+  </button>
+  <button mat-button color="accent" aria-label="Upload" (click)="inputFile.click()">
+    <mat-icon>upload</mat-icon> Upload and Replace
+    <input
+      type="file"
+      hidden
+      #inputFile
+      accept="text/json"
+      (change)="upload(inputFile.files![0])"
+    />
+  </button>
+  <button mat-button color="warn" (click)="reset()">Clear all data</button>
+  <mat-progress-bar *ngIf="waiting" [mode]="'indeterminate'"></mat-progress-bar>
 </form>
 </div>
