@@ -65,7 +65,7 @@ export class SavedDataService {
     this.data.set(data);
   }
 
-  async add(text: string, embeddings: ItemEmbeddings = {}): Promise<boolean> {
+  async add(text: string, embeddings: ItemEmbeddings): Promise<boolean> {
     const id = `${new Date().valueOf()}`;
     const data = this.data();
     data.items[id] = {

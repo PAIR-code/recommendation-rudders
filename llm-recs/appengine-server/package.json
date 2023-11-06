@@ -12,14 +12,18 @@
   "license": "Apache-2.0",
   "dependencies": {
     "express": "^4.18.2",
+    "google-auth-library": "^9.2.0",
     "ts-node": "^10.9.1"
   },
   "devDependencies": {
+    "@tsconfig/node18": "^18.2.2",
     "@types/express": "^4.17.20",
     "@types/mocha": "^10.0.3",
     "@types/supertest": "^2.0.15",
     "c8": "^8.0.1",
+    "eslint": "^8.53.0",
     "mocha": "^10.2.0",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "typescript": "~5.1.3"
   }
 }

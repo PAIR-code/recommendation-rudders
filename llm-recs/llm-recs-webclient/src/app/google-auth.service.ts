@@ -39,9 +39,9 @@ export class GoogleAuthService {
     this.jwtCredential = signal(null);
     this.credential = computed(() => {
       const jwt = this.jwtCredential();
-      console.log('Got credentials', jwt);
+      // console.log('Got credentials', jwt);
       if (!jwt) { return null; }
-      console.log(jose.decodeJwt(jwt));
+      // console.log(jose.decodeJwt(jwt));
       return jose.decodeJwt(jwt);
     });
 

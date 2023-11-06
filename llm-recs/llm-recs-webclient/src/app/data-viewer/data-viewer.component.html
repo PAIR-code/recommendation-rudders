@@ -1,11 +1,9 @@
 <div class="main">
 
-  <p>Items in the store: <span>{{size()}}</span></p>
-
-  <button mat-button color="warn" (click)="deleteData()">Delete all data</button>
+  <p>Items count: <span>{{size()}}</span></p>
 
   <div *ngFor="let d of data(); let i = index" class="item">
-    <app-data-item [item]="d" (deleteEvent)="deleteItem(d)"></app-data-item>
+    <app-data-item [item]="d" (deleteEvent)="deleteItem(d)"
+      [rank]="itemRank(d)"></app-data-item>
   </div>
-
 </div>

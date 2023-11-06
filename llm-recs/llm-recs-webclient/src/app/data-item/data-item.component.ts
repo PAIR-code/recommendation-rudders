@@ -9,7 +9,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { DataItem, SavedDataService } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
-import { VertexApiService } from '../vertex-api.service';
+import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 
 @Component({
@@ -23,13 +23,14 @@ export class DataItemComponent implements OnInit {
   public saveError?: string;
 
   @Input() item!: DataItem;
+  @Input() rank!: number;
   @Output() deleteEvent = new EventEmitter<void>();
 
   public itemTextControl!: FormControl<string | null>;
 
   constructor(
     public dataService: SavedDataService,
-    public vertex: VertexApiService) {
+    public lmApi: LmApiService) {
   }
 
   ngOnInit(): void {
@@ -48,7 +49,7 @@ export class DataItemComponent implements OnInit {
     delete this.saveError;
 
     this.item.text = this.itemTextControl.value || this.item.text;
-    const embedResponse = await this.vertex.embedder.embed(this.item.text);
+    const embedResponse = await this.lmApi.embedder.embed(this.item.text);
     if (isEmbedError(embedResponse)) {
       this.waiting = false;
       this.saveError = embedResponse.error;
