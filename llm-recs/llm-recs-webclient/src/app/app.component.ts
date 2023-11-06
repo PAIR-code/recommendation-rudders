@@ -39,6 +39,9 @@ export class AppComponent implements OnInit {
   }
 
   ngAfterViewInit() {
+    // TODO: enable this to login automatically when app starts.
+    // also uncomment stuff in html.
+    //
     // this.authService.prompt();
     // // @ts-ignore
     // google.accounts.id.renderButton(
@@ -51,18 +54,4 @@ export class AppComponent implements OnInit {
     //   }
     // );
   }
-
-  // async handleCredentialResponse(response: any) {
-  //   // Here will be your response from Google.
-  //   // this.ngZone.run(() => this.localVariable = "newValue");
-  //   console.log(response);
-  // }
-
-  // console.log('ngOnInit');
-  // this.route.fragment.subscribe(f => console.log(f));
-  // this.route.queryParams.subscribe(params => console.log(params));
-
-  // // this.route.outlet .subscribe(f => console.log(f));
-  // console.log('this.router.routerState.root');
-
 }

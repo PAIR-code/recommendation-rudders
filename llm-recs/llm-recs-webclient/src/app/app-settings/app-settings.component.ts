@@ -1,6 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild, effect } from '@angular/core';
-import { SavedDataService } from '../saved-data.service';
+import { AppData, SavedDataService } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
+import { LmApiService } from '../lm-api.service';
+import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 
 @Component({
   selector: 'app-app-settings',
@@ -11,10 +13,15 @@ export class AppSettingsComponent implements OnInit {
   public appNameControl!: FormControl<string | null>;
   public downloadUrl?: string;
   public waiting: boolean = false;
+  public errorMessage?: string;
+  public errorCount: number = 0;
 
   @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
 
-  constructor(public dataService: SavedDataService) {
+  constructor(
+    public dataService: SavedDataService,
+    public lmApi: LmApiService
+  ) {
     effect(() => {
       const newName = this.dataService.appName();
       if (this.appNameControl && this.appNameControl.value !== null
@@ -37,6 +44,14 @@ export class AppSettingsComponent implements OnInit {
     this.appNameControl.setValue(this.dataService.appName());
   }
 
+  deleteEmbeddings() {
+    const data = this.dataService.data();
+    for (const item of Object.values(data.items)) {
+      item.embeddings = {};
+    }
+    this.dataService.data.set(data);
+  }
+
   download(anchorLink: HTMLAnchorElement) {
     const json = JSON.stringify(this.dataService.data());
     const blob = new Blob([json], { type: "data:application/json;charset=utf-8" });
@@ -56,9 +71,27 @@ export class AppSettingsComponent implements OnInit {
   upload(file: Blob) {
     this.waiting = true;
     const reader = new FileReader();
-    reader.onload = (progressEvent) => {
-      this.dataService.data.set(
-        JSON.parse(progressEvent.target!.result as string));
+
+    reader.onload = async (progressEvent) => {
+      const uploadedData =
+        JSON.parse(progressEvent.target!.result as string) as AppData;
+
+      for (const item of Object.values(uploadedData.items)) {
+        if (Object.keys(item.embeddings).length === 0) {
+          const embedResult = await this.lmApi.embedder.embed(item.text);
+          if (isEmbedError(embedResult)) {
+            if (!this.errorMessage) {
+              this.errorMessage = embedResult.error;
+            }
+            console.error(embedResult.error);
+            this.errorCount += 1;
+          } else {
+            item.embeddings[item.text] = embedResult.embedding;
+          }
+        }
+      }
+
+      this.dataService.data.set(uploadedData);
       this.waiting = false;
     };
     reader.readAsText(file);

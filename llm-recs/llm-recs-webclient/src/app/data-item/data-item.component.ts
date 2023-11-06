@@ -69,4 +69,13 @@ export class DataItemComponent implements OnInit {
     this.deleteEvent.emit();
   }
 
+  itemEmbeddingStr(item: DataItem): string {
+    const embeddingKeys = Object.keys(item.embeddings)
+    if (embeddingKeys.length > 0) {
+      const embedding = item.embeddings[embeddingKeys[0]];
+      return `${embedding.length}:${JSON.stringify(embedding.slice(0, 3))}`
+    } else {
+      return "none";
+    }
+  }
 }
