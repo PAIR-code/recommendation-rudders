@@ -52,7 +52,6 @@ export class DataViewerComponent implements OnInit {
       if (!searchSpec) {
         Object.values(items).forEach(item =>
           ranks[item.id] = parseInt(item.id));
-        console.log(JSON.stringify(ranks, null, 2));
         return ranks;
       }
 
