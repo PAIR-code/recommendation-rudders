@@ -28,6 +28,7 @@ import { MatListModule } from '@angular/material/list';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { VertexApiService } from './vertex-api.service';
 import { SavedDataService } from './saved-data.service';
@@ -61,6 +62,7 @@ import { PageNotFoundComponent } from './page-not-found/page-not-found.component
     MatFormFieldModule,
     MatInputModule,
     MatMenuModule,
+    MatProgressBarModule,
   ],
   providers: [
     VertexApiService,

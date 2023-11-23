@@ -26,6 +26,10 @@ $toolbar-height: 60px;
   flex: 1;
 }
 
+.page {
+  margin-left: 20px;
+  margin-right: 20px;
+}
 
 .title {
   font-weight: 400;
@@ -58,6 +62,12 @@ $toolbar-height: 60px;
   // align-items: flex-start;
   // max-width: 600px;
   // min-height: 600px;
+}
+
+.profileImg {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
 }
 
 // .menu-buttons li {

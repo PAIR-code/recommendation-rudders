@@ -9,7 +9,7 @@
 }
 
 .id {
-  font-size:x-small;
+  font-size: x-small;
   display: inline-block;
   padding: 5px;
   padding-top: 1px;
@@ -20,6 +20,7 @@
 }
 
 .timestamp {
+  margin-left: 5px;
   font-size:x-small;
   display: inline-block;
   padding: 5px;
@@ -30,26 +31,77 @@
   border: solid 1px #ddd;
 }
 
+.embedding {
+  margin-left: 5px;
+  font-size: x-small;
+  display: inline-block;
+  padding: 5px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  border-radius: 5px;
+  background-color: #eeeeee;
+  border: solid 1px #ddd;
+  max-width: 15em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .full-width {
   width: 100%;
 }
 
 .text {
   display: inline-block;
+}
+
+
+.error {
+  padding: 5px;
+  border-radius: 5px;
+  background-color: #FAA;
+  border: solid 1px #A00;
+  // color: #FF0000;
+}
+
+.view-header {
+  display: flex;
+  align-items: center;
+  // justify-content: flex-start;
+  margin-top: -1px;
+  // background-color: rgba(0,0,0,.87);
+  // color: white;
+  // font-weight: 600;
+  // flex: 0 0 $toolbar-height;
+}
+
+.details {
+  align-self: flex-start;
+  // flex-grow: 1;
+  // height: auto;
+  display: flex;
+  align-items: flex-start;
+}
+
+.edit-form {
+  margin-bottom: 20px;
+}
+
+.edit-form mat-form-field {
+  margin-bottom: -10px;
+}
+
+.item {
+}
+
+.item-text {
   padding: 5px;
   border: solid 1px #ddd;
   border-radius: 5px;
 }
 
-.smallBtn {
-  // --mdc-icon-button-icon-size: 16px;
-  transform: scale(0.75);
-  // font-size: 12px;
-  // width: 100%;
-}
-
-
-.view .hoverSmallBtn {
+// hoverBtn appears when mouse hovers over view.
+.item .hoverBtn {
   opacity: 0.0;
   transition: opacity .5s ease-out;
   -moz-transition: opacity .5s ease-out;
@@ -57,6 +109,36 @@
   -o-transition: opacity .5s ease-out;
 }
 
-.view:hover .hoverSmallBtn {
+.item:hover .hoverBtn {
   opacity: 1.0;
+}
+
+
+.small-icon-button {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  & > *[role=img] {
+     width: 16px;
+     height: 16px;
+     font-size: 16px;
+
+     svg {
+        width: 16px;
+        height: 16px;
+     }
+  }
+
+  .mat-mdc-button-touch-target {
+     width: 24px !important;
+     height: 24px !important;
+  }
+}
+
+.spacer {
+  flex: 1;
 }

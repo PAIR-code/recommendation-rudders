@@ -1,5 +1,15 @@
 # README
 
+## CURL tickling of the server
+
+```sh
+curl \
+-X POST \
+-H "Content-Type: application/json" \
+http://localhost:8080/api/embed \
+-d $'{ "text": "I love flowers" }'
+```
+
 ## Running and developing locally
 
 ```sh

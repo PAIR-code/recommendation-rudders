@@ -6,10 +6,11 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component } from '@angular/core';
+import { Component, WritableSignal, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { VertexApiService } from '../vertex-api.service';
-import { SavedDataService } from '../saved-data.service';
+import { ItemEmbeddings, SavedDataService } from '../saved-data.service';
+import { LmApiService } from '../lm-api.service';
+import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 
 @Component({
   selector: 'app-rudders-home',
@@ -17,26 +18,53 @@ import { SavedDataService } from '../saved-data.service';
   styleUrls: ['./rudders-home.component.scss']
 })
 export class RuddersHomeComponent {
-
-  public searchControl: FormControl<string | null>;
-  public addControl: FormControl<string | null>;
+  public itemTextControl: FormControl<string | null>;
+  public waiting: boolean = false;
+  public errorMessage?: string;
+  public embeddingSearch: WritableSignal<number[] | null>;
 
   constructor(
-    private llmService: VertexApiService,
+    private lmApiService: LmApiService,
     private dataService: SavedDataService
   ) {
-    this.searchControl = new FormControl<string | null>('');
-    this.addControl = new FormControl<string | null>('');
+    this.embeddingSearch = signal(null);
+    this.itemTextControl = new FormControl<string | null>('');
   }
 
-  search() {
-    console.log(`searching for ${this.searchControl.value}.`);
+  async search() {
+    delete this.errorMessage;
+    this.waiting = true;
+    if (!this.itemTextControl.value) {
+      console.error('no value to search for; this should not be possible');
+      return;
+    }
+    const embedResult = await this.lmApiService.embedder.embed(
+      this.itemTextControl.value);
+
+    if (isEmbedError(embedResult)) {
+      this.errorMessage = embedResult.error;
+      return;
+    }
+    this.embeddingSearch.set(embedResult.embedding);
+    this.waiting = false;
+    // console.log(`searching for ${this.itemTextControl.value}.`);
   }
 
-  add() {
-    console.log(`adding ${this.addControl.value}.`);
-    if (this.addControl.value) {
-      this.dataService.add(this.addControl.value);
+  async add() {
+    this.waiting = true;
+    const text = this.itemTextControl.value;
+    console.log(`adding ${text}.`);
+    if (text) {
+      const embedResponse = await this.lmApiService.embedder.embed(text);
+      if (isEmbedError(embedResponse)) {
+        this.waiting = false;
+        this.errorMessage = embedResponse.error;
+        return;
+      }
+      const embeddings = {} as ItemEmbeddings;
+      embeddings[text] = embedResponse.embedding;
+      this.dataService.add(text, embeddings);
+      this.waiting = false;
     }
   }
 
