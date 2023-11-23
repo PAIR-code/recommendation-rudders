@@ -6,7 +6,7 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, WritableSignal, signal } from '@angular/core';
+import { Component, Signal, computed } from '@angular/core';
 import { DataItem, SavedDataService } from '../saved-data.service';
 // import { EventEmitter, Input, OnInit, Output, effect } from '@angular/core';
 
@@ -16,24 +16,24 @@ import { DataItem, SavedDataService } from '../saved-data.service';
   styleUrls: ['./data-viewer.component.scss']
 })
 export class DataViewerComponent {
-  data = signal([] as DataItem[]) as WritableSignal<DataItem[]>;
+  // Local copy of the data items
+  public data: Signal<DataItem[]>;
 
   constructor(private dataService: SavedDataService) {
-    this.data.set(this.dataService.data);
+    this.data = computed(() =>
+      Object.values(this.dataService.data().items).sort(
+        (a, b) => a.id < b.id ? -1 : 1));
   }
 
   size(): number {
     return this.data().length;
   }
-
   deleteData() {
-    this.dataService.clear();
-    this.data.set(this.dataService.data);
+    this.dataService.clearItems();
   }
   deleteItem(d: DataItem) {
     console.log('delete', d);
     this.dataService.deleteItem(d);
-    this.data.set(this.dataService.data);
   }
 
 }

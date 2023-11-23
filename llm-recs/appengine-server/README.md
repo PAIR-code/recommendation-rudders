@@ -1,6 +1,6 @@
 # README
 
-## Running and developing localy
+## Running and developing locally
 
 ```sh
 npm run start
