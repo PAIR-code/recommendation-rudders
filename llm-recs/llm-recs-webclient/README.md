@@ -6,6 +6,15 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 Run `npm run start` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
+Note: this will redirect API calls to http://localhost:8080/ This uses the backend API-server in ../appengine-server so you should also run in a separate tab:
+
+```sh
+cd ../appengine-server
+npm run start
+```
+
+You'll see local logs printed there form the backend server. This backend server will itself you gcloud default credentials, so it assumes you have that setup. You can see the docs in ../appengine-server/README for more information.
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.

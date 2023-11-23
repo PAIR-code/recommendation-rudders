@@ -9,7 +9,7 @@
     <!-- <span class="id">id:{{item.id}}</span> -->
     <span class="timestamp">rank: {{rank}}</span>
     <span class="timestamp">time: {{item.date}}</span>
-    <span class="embedding">embed:[{{item.embeddings[item.text][0]}}, {{item.embeddings[item.text][2]}}, {{item.embeddings[item.text][2]}}, ...]</span>
+    <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
   </div>
 </div>
 </div>
@@ -45,7 +45,7 @@
       <!-- <span class="id">id:{{item.id}}</span> -->
       <span class="timestamp">rank: {{rank}}</span>
       <span class="timestamp">time: {{item.date}}</span>
-      <span class="embedding">embed:[{{item.embeddings[item.text][0]}}, {{item.embeddings[item.text][2]}}, {{item.embeddings[item.text][2]}}, ...]</span>
+      <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
     </div>
   </div>
 </form>

@@ -32,6 +32,8 @@ function initialAppData(): AppData {
 export class SavedDataService {
   public data: WritableSignal<AppData>;
   public appName: Signal<string>;
+  public dataSize: Signal<number>;
+  public dataJson: Signal<string>;
 
   constructor() {
     // The data.
@@ -40,10 +42,11 @@ export class SavedDataService {
 
     // Convenience signal for the appName.
     this.appName = computed(() => this.data().settings.name);
-
+    this.dataJson = computed(() => JSON.stringify(this.data()));
+    this.dataSize = computed(() => this.dataJson().length);
     // Save whenever data changes.
     effect(() => {
-      localStorage.setItem('data', JSON.stringify(this.data()));
+      localStorage.setItem('data', this.dataJson());
     });
   }
 

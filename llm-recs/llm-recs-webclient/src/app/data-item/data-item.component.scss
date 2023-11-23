@@ -11,37 +11,48 @@
 .id {
   font-size: x-small;
   display: inline-block;
-  padding: 5px;
-  padding-top: 1px;
-  padding-bottom: 1px;
-  border-radius: 5px;
-  background-color: #eeeeee;
-  border: solid 1px #ddd;
+  padding: 2px;
+  // padding-top: 1px;
+  // padding-bottom: 1px;
+  // border-radius: 5px;
+  // background-color: #eeeeee;
+  // border: solid 1px #ddd;
+  min-width: 5em;
+  max-width: 15em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timestamp {
-  margin-left: 5px;
+  margin-left: 1em;
   font-size:x-small;
   display: inline-block;
-  padding: 5px;
-  padding-top: 1px;
-  padding-bottom: 1px;
-  border-radius: 5px;
-  background-color: #eeeeee;
-  border: solid 1px #ddd;
+  padding: 2px;
+  // padding-top: 1px;
+  // padding-bottom: 1px;
+  // border-radius: 5px;
+  // background-color: #eeeeee;
+  // border: solid 1px #ddd;
+  min-width: 5em;
+  max-width: 15em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .embedding {
-  margin-left: 5px;
+  margin-left: 1em;
   font-size: x-small;
   display: inline-block;
-  padding: 5px;
-  padding-top: 1px;
-  padding-bottom: 1px;
-  border-radius: 5px;
-  background-color: #eeeeee;
-  border: solid 1px #ddd;
-  max-width: 15em;
+  padding: 2px;
+  // padding-top: 1px;
+  // padding-bottom: 1px;
+  // border-radius: 5px;
+  // background-color: #eeeeee;
+  // border: solid 1px #ddd;
+  min-width: 5em;
+  max-width: 25em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -55,30 +66,21 @@
   display: inline-block;
 }
 
-
 .error {
   padding: 5px;
   border-radius: 5px;
   background-color: #FAA;
   border: solid 1px #A00;
-  // color: #FF0000;
 }
 
 .view-header {
   display: flex;
   align-items: center;
-  // justify-content: flex-start;
   margin-top: -1px;
-  // background-color: rgba(0,0,0,.87);
-  // color: white;
-  // font-weight: 600;
-  // flex: 0 0 $toolbar-height;
 }
 
 .details {
   align-self: flex-start;
-  // flex-grow: 1;
-  // height: auto;
   display: flex;
   align-items: flex-start;
 }
@@ -113,6 +115,9 @@
   opacity: 1.0;
 }
 
+.spacer {
+  flex: 1;
+}
 
 .small-icon-button {
   width: 24px !important;
@@ -137,8 +142,4 @@
      width: 24px !important;
      height: 24px !important;
   }
-}
-
-.spacer {
-  flex: 1;
 }
