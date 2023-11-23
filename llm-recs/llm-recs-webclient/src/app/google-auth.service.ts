@@ -1,5 +1,6 @@
 import { Injectable, NgZone, Signal, WritableSignal, computed, signal } from '@angular/core';
 import * as jose from 'jose'
+import { environment } from 'src/environments/environment.development';
 
 interface LoginJWT {
   credential: string;
@@ -47,7 +48,7 @@ export class GoogleAuthService {
 
     // @ts-ignore
     google.accounts.id.initialize({
-      client_id: '296942359052-nak57g1koo8fctnjdj9vbq0blu4p8eqg.apps.googleusercontent.com',
+      client_id: environment.oauthClientId,
       callback: (loginState: LoginJWT) => {
         this.ngZone.run(() => {
           this.jwtCredential.set(loginState.credential);

@@ -2,17 +2,43 @@
 
 # Setup
 
-1. This application is for running in AppEngine in a Google Cloud Project. You can create one at https://console.cloud.google.com/ This runs on needs to have billing enabled, which you can do at: https://console.cloud.google.com/billing
+1. This application is for running in AppEngine in a Google Cloud Project. You
+   can create one at https://console.cloud.google.com/ This runs on needs to
+   have billing enabled, which you can do at:
+   https://console.cloud.google.com/billing
 
-1. Enable the Vertex AI Platform APIs. You can do this with the command:
+1. All further commands assume you have installed gcloud command, and set your
+   project:
 
 ```sh
+gcloud config set project ${PROJECT_ID}
+```
+
+1. You will need to setup some OAuth2 credentials for users to be able to login
+   to the app so they can save/load data from google sheets. You can do this in
+   the UI at: https://pantheon.corp.google.com/apis/credentials To do local
+   development, you need to specify that http://localhost is listed in the
+   "Authorised JavaScript origins". Once you have done this, you will need to
+   copy the ClientID from the WebUI into a copy of
+   `llm-recs-webclient/src/environments/gcloud_env.template.ts` named
+   `llm-recs-webclient/src/environments/gcloud_env.ts`.
+
+1. Enable the Vertex AI Platform APIs and Sheets APIs. You can do this with the
+   command:
+
+```sh
+gcloud services enable sheets.googleapis.com
 gcloud services enable aiplatform.googleapis.com
 ```
 
-1. You need to create, or have an existing AppEngine setup for your cloud project too. It can be enabled in the web UI at https://console.cloud.google.com/appengine/start/create This will happen when you first deploy also, but it has to be setup before you can give permissions in the next step.
+1. You need to create, or have an existing AppEngine setup for your cloud
+   project too. It can be enabled in the web UI at
+   https://console.cloud.google.com/appengine/start/create This will happen when
+   you first deploy also, but it has to be setup before you can give permissions
+   in the next step.
 
-1. The AppEngine service account needs to have permission to make prediction requests. You can give this permission using:
+1. The AppEngine service account needs to have permission to make prediction
+   requests. You can give this permission using:
 
 ```sh
 gcloud iam service-accounts add-iam-policy-binding \
@@ -21,7 +47,10 @@ gcloud iam service-accounts add-iam-policy-binding \
     --role=serviceAccount:roles/aiplatform.user
 ```
 
-Note: this gives a little more than just the strict prediction ability. You can make a custom role if you want it to be more constrained. But in practice, something like this will be convenient for extending to add other kinds of AI Platform features.
+Note: this gives a little more than just the strict prediction ability. You can
+make a custom role if you want it to be more constrained. But in practice,
+something like this will be convenient for extending to add other kinds of AI
+Platform features.
 
 This application uses the App Engine standard environment in nodejs. More about that is at: https://cloud.google.com/appengine/docs/standard/nodejs/runtime
 
@@ -37,9 +66,19 @@ http://localhost:8080/api/embed \
 
 ## Running and developing locally
 
+You need to have setup application-default credentials (a cache of your credentials on your machine for the local server to be able to access google cloud APIs). You can do this with the command:
+
+```sh
+gcloud auth application-default login
+```
+
+Once that has been done, you can just run the following to start a local server that should act very similarly to how it would on cloud:
+
 ```sh
 npm run start
 ```
+
+Sources of difference can be that on cloud it will run as the appengine service worker that has different access permissions to the application-default credentials, which act with the permissions that you have.
 
 ## Automated Tests
 
