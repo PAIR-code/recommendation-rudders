@@ -19,7 +19,7 @@ import { GoogleAuthService } from './google-auth.service';
 export class AppComponent implements OnInit {
   public loc: 'home' | 'llm-config' | 'prompts' = 'home';
 
-  @ViewChild('googleButton') googleButton!: ElementRef;
+  @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
 
   constructor(
     private route: ActivatedRoute,
@@ -35,23 +35,12 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-
   }
 
   ngAfterViewInit() {
     // TODO: enable this to login automatically when app starts.
     // also uncomment stuff in html.
-    //
-    // this.authService.prompt();
-    // // @ts-ignore
-    // google.accounts.id.renderButton(
-    //   this.googleButton.nativeElement,
-    //   {
-    //     theme: "outline",
-    //     // type: "icon",
-    //     size: "medium",
-    //     width: "215",
-    //   }
-    // );
+    this.authService.prompt();
+    this.authService.renderLoginButton(this.googleButton.nativeElement);
   }
 }

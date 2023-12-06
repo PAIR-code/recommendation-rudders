@@ -28,5 +28,17 @@
   <div class='error' *ngIf="errorMessage">
     There are {{errorCount}} errors. The first one is: {{errorMessage}}
   </div>
+
+  <div>
+  <mat-form-field>
+    <mat-label>Sheets ID</mat-label>
+    <input matInput placeholder="Sheets ID"
+      [formControl]="sheetsUrlOrIdControl">
+  </mat-form-field>
+  <button mat-button color="accent" aria-label="Download from sheet" (click)="linkToSheet()">
+    <mat-icon>upload</mat-icon> upload from sheet
+  </button>
+  </div>
+
 </form>
 </div>

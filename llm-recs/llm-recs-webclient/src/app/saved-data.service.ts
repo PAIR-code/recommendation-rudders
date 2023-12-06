@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
+
 import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 
 export interface ItemEmbeddings { [key: string]: number[] };
@@ -10,6 +18,7 @@ export interface AppData {
 
 export interface AppSettings {
   name: string;
+  sheetsUrl: string;
 }
 
 export interface DataItem {
@@ -21,7 +30,7 @@ export interface DataItem {
 
 function initialAppData(): AppData {
   return {
-    settings: { name: 'A Rudders App' },
+    settings: { name: 'A Rudders App', sheetsUrl: '' },
     items: {},
   }
 }
@@ -52,8 +61,10 @@ export class SavedDataService {
 
   setAppName(name: string) {
     const data = this.data();
-    data.settings.name = name;
-    this.data.set(data);
+    if (data.settings.name !== name) {
+      data.settings.name = name;
+      this.data.set(data);
+    }
   }
 
   saveItem(item: DataItem) {
