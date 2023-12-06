@@ -14,14 +14,20 @@
 gcloud config set project ${PROJECT_ID}
 ```
 
+1. You will need to setup an API key that has access to the sheets API, and from
+   the domain that this applications runs from. For local development
+   add `localhost` too.
+
 1. You will need to setup some OAuth2 credentials for users to be able to login
    to the app so they can save/load data from google sheets. You can do this in
-   the UI at: https://pantheon.corp.google.com/apis/credentials To do local
-   development, you need to specify that http://localhost is listed in the
-   "Authorised JavaScript origins". Once you have done this, you will need to
-   copy the ClientID from the WebUI into a copy of
+   the UI at: https://pantheon.corp.google.com/apis/credentials
+
+   * You will need the OAuth scopes to include:
+     `https://www.googleapis.com/auth/spreadsheets` and `https://www.googleapis.com/auth/drive.file`
+
+   * To do local development, you need to specify that http://localhost is listed in the "Authorised JavaScript origins". Once you have done this, you will need to copy the ClientID from the WebUI into a copy of
    `llm-recs-webclient/src/environments/gcloud_env.template.ts` named
-   `llm-recs-webclient/src/environments/gcloud_env.ts`.
+   `llm-recs-webclient/src/environments/gcloud_env.ts`. Also copy the API Key from the previous into here too.
 
 1. Enable the Vertex AI Platform APIs and Sheets APIs. You can do this with the
    command:
@@ -45,6 +51,13 @@ gcloud iam service-accounts add-iam-policy-binding \
     ${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com \
     --member=${SERVICE_ACCOUNT_NAME}@appspot.gserviceaccount.com \
     --role=serviceAccount:roles/aiplatform.user
+```
+
+1.
+
+```sh
+gcloud iam service-accounts keys create key.json \
+  --iam-account=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
 Note: this gives a little more than just the strict prediction ability. You can
