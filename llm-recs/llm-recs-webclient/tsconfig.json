@@ -19,7 +19,6 @@
     "target": "ES2022",
     "module": "ES2022",
     "useDefineForClassFields": false,
-    "types": ["gapi", "gapi.client.sheets-v4", "gapi.client.discovery-v1"],
     "lib": [
       "ES2022",
       "dom"

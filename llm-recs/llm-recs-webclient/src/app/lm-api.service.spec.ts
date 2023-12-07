@@ -7,7 +7,6 @@
 ==============================================================================*/
 
 import { TestBed } from '@angular/core/testing';
-
 import { LmApiService } from './lm-api.service';
 
 describe('LmApiService', () => {
