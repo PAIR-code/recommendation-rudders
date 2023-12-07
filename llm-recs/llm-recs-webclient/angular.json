@@ -72,10 +72,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "llm-recs-webclient:build:production"
+              "buildTarget": "llm-recs-webclient:build:production"
             },
             "development": {
-              "browserTarget": "llm-recs-webclient:build:development"
+              "buildTarget": "llm-recs-webclient:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -83,7 +83,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "llm-recs-webclient:build"
+            "buildTarget": "llm-recs-webclient:build"
           }
         },
         "test": {
