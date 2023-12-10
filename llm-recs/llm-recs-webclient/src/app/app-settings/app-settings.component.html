@@ -25,10 +25,15 @@
   <button mat-button color="warn" (click)="reset()">Clear all data</button>
   <button mat-button color="warn" (click)="deleteEmbeddings()">Delete embeddings</button>
   <mat-progress-bar *ngIf="waiting" [mode]="'indeterminate'"></mat-progress-bar>
-  <div class='error' *ngIf="errorMessage">
-    There are {{errorCount}} errors. The first one is: {{errorMessage}}
-  </div>
-
+  @if (errorMessage && errorCount > 1) {
+    <div class='error'>
+      There are {{errorCount}} errors. The first error is: {{errorMessage}}
+    </div>
+  } @else if (errorMessage) {
+    <div class='error'>
+      {{errorMessage}}
+    </div>
+  }
   <div>
   <mat-form-field>
     <mat-label>Sheets ID</mat-label>

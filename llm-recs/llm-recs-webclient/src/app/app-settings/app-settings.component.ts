@@ -11,7 +11,7 @@ import { AppData, SavedDataService } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
-import { environment } from 'src/environments/environment';
+import { GoogleSheetsService } from '../google-sheets.service';
 
 
 @Component({
@@ -31,7 +31,8 @@ export class AppSettingsComponent implements OnInit {
 
   constructor(
     public dataService: SavedDataService,
-    public lmApi: LmApiService
+    public lmApi: LmApiService,
+    public sheetsService: GoogleSheetsService,
   ) {
     this.sheetsUrlOrIdControl = new FormControl<string>('');
     this.appNameControl = new FormControl<string | null>(
@@ -46,7 +47,7 @@ export class AppSettingsComponent implements OnInit {
         && this.appNameControl.value !== newName) {
         this.appNameControl.setValue(newName, { emitEvent: false });
       }
-      const sheetsUrl = this.dataService.data().settings.sheetsUrl;
+      const sheetsUrl = this.dataService.data().settings.sheetsId;
       if (this.sheetsUrlOrIdControl.value !== null
         && this.sheetsUrlOrIdControl.value !== sheetsUrl) {
         this.sheetsUrlOrIdControl.setValue(sheetsUrl, { emitEvent: false });
@@ -115,67 +116,19 @@ export class AppSettingsComponent implements OnInit {
     reader.readAsText(file);
   }
 
-  linkToSheet() {
-    if (this.sheetsUrlOrIdControl.value) {
-      console.log(gapi.client);
-      const data = { ...this.dataService.data() };
-      data.settings.sheetsUrl = this.sheetsUrlOrIdControl.value;
-      this.dataService.data.set(data);
-
-      // TODO(developer): Set to client ID and API key from the Developer Console
-      const API_KEY = environment.sheetsApiKey;
-
-      // Discovery doc URL for APIs used by the quickstart
-      const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-
-      /**
-       * Callback after api.js is loaded.
-       */
-      gapi.load('client', initializeGapiClient);
-
-      /**
-       * Callback after the API client is loaded. Loads the
-       * discovery doc to initialize the API.
-       */
-      async function initializeGapiClient() {
-        await gapi.client.init({
-          apiKey: API_KEY,
-          discoveryDocs: [DISCOVERY_DOC],
-        });
-        console.log('gapiInited');
-        console.log(gapi.client.sheets);
-        listMajors();
-      }
-
-      /**
-       * Print the names and majors of students in a sample spreadsheet:
-       * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-       */
-      async function listMajors() {
-        let response;
-        try {
-          // Fetch first 10 files
-          response = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-            range: 'Class Data!A2:E',
-          });
-        } catch (err) {
-          console.error((err as Error)!.message);
-          return;
-        }
-        const range = response.result;
-        if (!range || !range.values || range.values.length == 0) {
-          console.warn('No values found.');
-          return;
-        }
-        // Flatten to string to display
-        const output = range.values.reduce(
-          (str: string, row: string[]) => `${str}${row[0]}, ${row[4]}\n`,
-          'Name, Major:\n');
-        console.log(output);
-      }
-
+  async linkToSheet() {
+    this.waiting = true;
+    this.errorCount = 0;
+    const currentSheetStr = this.sheetsUrlOrIdControl.value || '';
+    const data = { ...this.dataService.data() };
+    data.settings.sheetsId = currentSheetStr;
+    this.dataService.data.set(data);
+    const info = await this.sheetsService.getSheetInfo(currentSheetStr);
+    if (info.error) {
+      this.errorMessage = info.error;
+      this.errorCount++;
     }
+    this.waiting = false;
   }
 
   sizeString() {

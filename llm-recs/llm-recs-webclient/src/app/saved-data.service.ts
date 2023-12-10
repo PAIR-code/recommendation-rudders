@@ -18,7 +18,7 @@ export interface AppData {
 
 export interface AppSettings {
   name: string;
-  sheetsUrl: string;
+  sheetsId: string;
 }
 
 export interface DataItem {
@@ -30,7 +30,7 @@ export interface DataItem {
 
 function initialAppData(): AppData {
   return {
-    settings: { name: 'A Rudders App', sheetsUrl: '' },
+    settings: { name: 'A Rudders App', sheetsId: '' },
     items: {},
   }
 }
