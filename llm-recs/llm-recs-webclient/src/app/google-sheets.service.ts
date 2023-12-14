@@ -29,7 +29,9 @@ export class GoogleSheetsService {
       });
   }
 
-  async getSheetInfo(steetIdOrUrl: string): Promise<SheetInfoOrError> {
+  async getSheetInfo(steetIdOrUrl: string,
+    accessToken?: google.accounts.oauth2.TokenResponse | null
+  ): Promise<SheetInfoOrError> {
     await this.onceReady;
 
     const match =
@@ -48,9 +50,17 @@ export class GoogleSheetsService {
     // let response;
     try {
       // Fetch first 10 files
-      const spreadsheetResponse = await gapi.client.sheets.spreadsheets.get({
-        spreadsheetId: sheetId
-      });
+      const request = {
+        spreadsheetId: sheetId,
+      } as {
+        spreadsheetId: string,
+        access_token?: string,
+      };
+      if (accessToken) {
+        request.access_token = accessToken.access_token
+      }
+
+      const spreadsheetResponse = await gapi.client.sheets.spreadsheets.get(request);
       console.log(spreadsheetResponse);
       console.log(spreadsheetResponse.status);
       if (spreadsheetResponse.status !== 200) {

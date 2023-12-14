@@ -41,17 +41,19 @@ interface Credential {
   providedIn: 'root'
 })
 export class GoogleAuthService {
-  public jwtCredential: WritableSignal<string | null>;
+  public jwtCredential = signal<string | null>(null);
   public credential: Signal<Credential | null>;
+  public tokenResponse = signal<google.accounts.oauth2.TokenResponse | null>(null);
   public googleGciClientLoaded: Promise<void>;
   public promptOnLoad = false;
 
   constructor(private ngZone: NgZone) {
-    this.jwtCredential = signal(null);
     this.credential = computed(() => {
       const jwt = this.jwtCredential();
       if (!jwt) { return null; }
-      return jose.decodeJwt(jwt);
+      const decodedToken = jose.decodeJwt(jwt) as Credential;
+      console.log(decodedToken);
+      return decodedToken;
     });
 
     const script = document.createElement('script');
@@ -63,7 +65,6 @@ export class GoogleAuthService {
     this.googleGciClientLoaded = (new Promise<void>(
       (resolve, reject) => script.onload = () => { resolve(); }))
       .then(() =>
-        // @ts-ignore
         google.accounts.id.initialize({
           client_id: environment.oauthClientId,
           callback: (loginState: LoginJWT) => {
@@ -76,58 +77,123 @@ export class GoogleAuthService {
       );
   }
 
-  onLoaded() {
-    // function start() {
-    //   // 2. Initialize the JavaScript client library.
-    //   gapi.client.init({
-    //     'apiKey': 'YOUR_API_KEY',
-    //     // Your API key will be automatically added to the Discovery Document URLs.
-    //     'discoveryDocs': ['https://people.googleapis.com/$discovery/rest'],
-    //     // clientId and scope are optional if auth is not required.
-    //     'clientId': 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
-    //     'scope': 'profile',
-    //   }).then(function () {
-    //     // 3. Initialize and make the API request.
-    //     return gapi.client.people.people.get({
-    //       'resourceName': 'people/me',
-    //       'requestMask.includeField': 'person.names'
-    //     });
-    //   }).then(function (response) {
-    //     console.log(response.result);
-    //   }, function (reason) {
-    //     console.log('Error: ' + reason.result.error.message);
-    //   });
-    // };
-    // // 1. Load the JavaScript client library.
-    // gapi.load('client', start);
+  async getToken(scope: string
+  ): Promise<google.accounts.oauth2.TokenResponse | null> {
+    let curToken = this.tokenResponse();
+    if (!curToken ||
+      !google.accounts.oauth2.hasGrantedAllScopes(curToken, scope)
+    ) {
+      curToken = await this.authorize(scope)
+      this.tokenResponse.set(curToken);
+    }
+    console.log(curToken.expires_in)
+    return curToken;
   }
 
-  prompt() {
-    this.googleGciClientLoaded.then(() =>
-      // @ts-ignore
-      google.accounts.id.prompt()
+  async authorize(scope: string): Promise<google.accounts.oauth2.TokenResponse> {
+    return new Promise((resolve, reject) => {
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: environment.oauthClientId,
+        scope, callback: resolve,
+      });
+      tokenClient.requestAccessToken();
+    });
+  }
+
+  logout() {
+    const token = this.tokenResponse();
+    if (!token) {
+      return;
+    }
+    google.accounts.oauth2.revoke(token.access_token, () => {
+      this.jwtCredential.set(null);
+      this.tokenResponse.set(null);
+    });
+    // (done: any) => {
+    // console.log(done);
+    // console.log(done.successful);
+    // console.log(done.error);
+    // console.log(done.error_description);
+  }
+
+  // function start() {
+  //   // 2. Initialize the JavaScript client library.
+  //   gapi.client.init({
+  //     'apiKey': 'YOUR_API_KEY',
+  //     // Your API key will be automatically added to the Discovery Document URLs.
+  //     'discoveryDocs': ['https://people.googleapis.com/$discovery/rest'],
+  //     // clientId and scope are optional if auth is not required.
+  //     'clientId': 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+  //     'scope': 'profile',
+  //   }).then(function () {
+  //     // 3. Initialize and make the API request.
+  //     return gapi.client.people.people.get({
+  //       'resourceName': 'people/me',
+  //       'requestMask.includeField': 'person.names'
+  //     });
+  //   }).then(function (response) {
+  //     console.log(response.result);
+  //   }, function (reason) {
+  //     console.log('Error: ' + reason.result.error.message);
+  //   });
+  // };
+  // // 1. Load the JavaScript client library.
+  // gapi.load('client', start);
+  // }
+
+  async prompt() {
+    await this.googleGciClientLoaded;
+    google.accounts.id.prompt();
+  }
+
+  async renderLoginButton(element: HTMLElement) {
+    await this.googleGciClientLoaded;
+    google.accounts.id.renderButton(
+      element,
+      {
+        type: "standard",
+        theme: "outline",
+        size: "medium",
+        width: 215,
+      }
     );
   }
 
-  renderLoginButton(element: HTMLElement) {
-    this.googleGciClientLoaded.then(() =>
-      // @ts-ignore
-      google.accounts.id.renderButton(
-        element,
-        {
-          theme: "outline",
-          // type: "icon",
-          size: "medium",
-          width: "215",
-        }
-      )
-    );
+  async signout() {
+    await this.googleGciClientLoaded;
+
+    google.accounts.id.disableAutoSelect();
   }
 
-  signout() {
-    this.googleGciClientLoaded.then(() =>
-      // @ts-ignore
-      google.accounts.id.disableAutoSelect()
-    );
-  }
+  // async addScope(scope: string) {
+  //   if (scope in this.scopes) {
+  //     return true;
+  //   }
+  //   // this.authorize([scope])
+  // }
+
+  // authorize(scopes: string[]): Promise<google.accounts.oauth2.TokenClient> {
+  //   return new Promise((resolve, reject) => {
+  //     this.tokenClient = google.accounts.oauth2.initTokenClient({
+  //       client_id: environment.oauthClientId,
+  //       scope: scopes.join(','),
+  //       // 'https://www.googleapis.com/auth/spreadsheets.readonly',
+  //       callback: (tokenResponse) => {
+  //         if (tokenResponse && tokenResponse.access_token) {
+  //           this.tokenResponse.set(tokenResponse);
+  //           if (google.accounts.oauth2.hasGrantedAllScopes(tokenResponse,
+  //             'https://www.googleapis.com/auth/spreadsheets.readonly')) {
+  //             console.log('user already has sheets permission');
+  //             return;
+  //           }
+  //         }
+  //         console.log('user said no to sheets permissions.');
+  //         return;
+  //       }
+  //     });
+  //     this.tokenClient.requestAccessToken();
+
+  //     resolve(this.tokenClient);
+  //   });
+  // }
 }

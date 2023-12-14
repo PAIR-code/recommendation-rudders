@@ -12,6 +12,7 @@ import { FormControl } from '@angular/forms';
 import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 import { GoogleSheetsService } from '../google-sheets.service';
+import { GoogleAuthService } from '../google-auth.service';
 
 
 @Component({
@@ -33,6 +34,7 @@ export class AppSettingsComponent implements OnInit {
     public dataService: SavedDataService,
     public lmApi: LmApiService,
     public sheetsService: GoogleSheetsService,
+    public authService: GoogleAuthService,
   ) {
     this.sheetsUrlOrIdControl = new FormControl<string>('');
     this.appNameControl = new FormControl<string | null>(
@@ -124,7 +126,10 @@ export class AppSettingsComponent implements OnInit {
     const data = { ...this.dataService.data() };
     data.settings.sheetsId = currentSheetStr;
     this.dataService.data.set(data);
-    const info = await this.sheetsService.getSheetInfo(currentSheetStr);
+
+    const token = await this.authService.getToken(
+      'https://www.googleapis.com/auth/spreadsheets.readonly');
+    const info = await this.sheetsService.getSheetInfo(currentSheetStr, token);
     if (info.error) {
       this.errorMessage = info.error;
       this.errorCount++;
