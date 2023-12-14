@@ -81,7 +81,7 @@ export class SavedDataService {
 
   async add(text: string, embeddings: ItemEmbeddings): Promise<boolean> {
     const id = `${new Date().valueOf()}`;
-    const data = this.data();
+    const data = { ... this.data() };
     data.items[id] = {
       id,
       date: new Date().toISOString(),

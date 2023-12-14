@@ -118,6 +118,7 @@ export class AppSettingsComponent implements OnInit {
 
   async linkToSheet() {
     this.waiting = true;
+    delete this.errorMessage;
     this.errorCount = 0;
     const currentSheetStr = this.sheetsUrlOrIdControl.value || '';
     const data = { ...this.dataService.data() };

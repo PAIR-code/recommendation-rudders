@@ -33,7 +33,7 @@ export class GoogleSheetsService {
     await this.onceReady;
 
     const match =
-      steetIdOrUrl.match(/^(https\:\/\/docs.google.com\/spreadsheets\/d\/)?([a-zA-Z0-9_\-]{5,})\/?/);
+      steetIdOrUrl.match(/^(https\:\/\/docs\.google\.com\/spreadsheets\/d\/)?([a-zA-Z0-9_\-]{5,})\/?/);
     if (!match) {
       return { error: 'No sheet URL or ID entered.' };
     }
