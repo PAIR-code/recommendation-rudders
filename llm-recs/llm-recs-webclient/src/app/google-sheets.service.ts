@@ -3,7 +3,7 @@ import { environment } from 'src/environments/environment';
 
 export interface SheetInfoOrError {
   error?: string;
-
+  sheets?: gapi.client.sheets.Sheet[];
 }
 
 type SheetResponse = gapi.client.Response<gapi.client.sheets.Spreadsheet>;
@@ -61,16 +61,19 @@ export class GoogleSheetsService {
       }
 
       const spreadsheetResponse = await gapi.client.sheets.spreadsheets.get(request);
-      console.log(spreadsheetResponse);
-      console.log(spreadsheetResponse.status);
+      // console.log(spreadsheetResponse);
+      // console.log(spreadsheetResponse.status);
       if (spreadsheetResponse.status !== 200) {
         return { error: spreadsheetResponse.statusText };
       }
-      console.log(spreadsheetResponse.result)
+      // console.log(spreadsheetResponse.result)
       // response = await gapi.client.sheets.spreadsheets.values.get({
       //   spreadsheetId: sheetId,
       //   range: 'Class Data!A2:E',
       // });
+      return {
+        sheets: spreadsheetResponse.result.sheets
+      }
     } catch (err: unknown) {
       const sheetResponseError = err as SheetResponse;
       console.warn(err);
@@ -84,8 +87,6 @@ export class GoogleSheetsService {
       // }
       return { error: `Unknown error (${sheetResponseError.status}), sorry.` };
     }
-
-    return {};
     // const range = response.result;
     // if (!range || !range.values || range.values.length == 0) {
     //   console.warn('No values found.');

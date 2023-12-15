@@ -134,6 +134,10 @@ export class AppSettingsComponent implements OnInit {
       this.errorMessage = info.error;
       this.errorCount++;
     }
+    if (info.sheets) {
+      // info.sheets[0].data[0].rowData[0].values
+    }
+
     this.waiting = false;
   }
 
