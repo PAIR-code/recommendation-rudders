@@ -29,6 +29,10 @@ async function main() {
   });
   const projectId = await auth.getProjectId();
   const client = await auth.getClient();
+  const credentials = await auth.getCredentials();
+  const serviceAccountEmail = credentials.client_email;
+  console.log('Running as serviceAccountEmail: ', serviceAccountEmail);
+
   const embedder = new VertexEmbedder(client, projectId);
 
   app.get('/submit', (req: Request, res: Response) => {

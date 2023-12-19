@@ -1,4 +1,6 @@
-<div *ngIf="mode == 'view'; else editView" >
+@if (!item) {
+  <div>No item given to component</div>
+} @else if (mode == 'view') {
 <div class="item">
   <div class="item-text"><span>{{item.text}}</span></div>
   <div class="view-header">
@@ -12,9 +14,7 @@
     <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
   </div>
 </div>
-</div>
-
-<ng-template #editView>
+} @else {
   <div>
   <form class="edit-form" (submit)="save()">
     <mat-form-field class="full-width">
@@ -24,33 +24,30 @@
     <mat-progress-bar *ngIf="waiting" [mode]="'indeterminate'"></mat-progress-bar>
     <div class='error' *ngIf="saveError">{{saveError}}</div>
 
-  <div class="view-header">
-    <button type="button" mat-icon-button aria-label="More actions" [matMenuTriggerFor]="menu">
-      <mat-icon>more_vert</mat-icon>
-    </button>
-    <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="deleteItem()">Delete</button>
-      <button mat-menu-item (click)="revert()">Revert</button>
-      <button mat-menu-item (click)="viewMode()">Cancel</button>
-    </mat-menu>
-    <button color="primary" type="submit" mat-flat-button aria-label="Edit">
-      save
-    </button>
-<!--
-    <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
-      <mat-icon>edit</mat-icon>
-    </button> -->
-    <div class="spacer"></div>
-    <div class="details">
-      <!-- <span class="id">id:{{item.id}}</span> -->
-      <span class="timestamp">rank: {{rank}}</span>
-      <span class="timestamp">time: {{item.date}}</span>
-      <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
+    <div class="view-header">
+      <button type="button" mat-icon-button aria-label="More actions" [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="deleteItem()">Delete</button>
+        <button mat-menu-item (click)="revert()">Revert</button>
+        <button mat-menu-item (click)="viewMode()">Cancel</button>
+      </mat-menu>
+      <button color="primary" type="submit" mat-flat-button aria-label="Edit">
+        save
+      </button>
+  <!--
+      <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
+        <mat-icon>edit</mat-icon>
+      </button> -->
+      <div class="spacer"></div>
+      <div class="details">
+        <!-- <span class="id">id:{{item.id}}</span> -->
+        <span class="timestamp">rank: {{rank}}</span>
+        <span class="timestamp">time: {{item.date}}</span>
+        <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
+      </div>
     </div>
+  </form>
   </div>
-</form>
-
-</div></ng-template>
-
-<!--
- -->
+}

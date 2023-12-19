@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
+
 import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 
 export interface ItemEmbeddings { [key: string]: number[] };
@@ -10,6 +18,7 @@ export interface AppData {
 
 export interface AppSettings {
   name: string;
+  sheetsId: string;
 }
 
 export interface DataItem {
@@ -21,7 +30,7 @@ export interface DataItem {
 
 function initialAppData(): AppData {
   return {
-    settings: { name: 'A Rudders App' },
+    settings: { name: 'A Rudders App', sheetsId: '' },
     items: {},
   }
 }
@@ -52,8 +61,10 @@ export class SavedDataService {
 
   setAppName(name: string) {
     const data = this.data();
-    data.settings.name = name;
-    this.data.set(data);
+    if (data.settings.name !== name) {
+      data.settings.name = name;
+      this.data.set(data);
+    }
   }
 
   saveItem(item: DataItem) {
@@ -70,7 +81,7 @@ export class SavedDataService {
 
   async add(text: string, embeddings: ItemEmbeddings): Promise<boolean> {
     const id = `${new Date().valueOf()}`;
-    const data = this.data();
+    const data = { ... this.data() };
     data.items[id] = {
       id,
       date: new Date().toISOString(),

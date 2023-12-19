@@ -8,7 +8,20 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatListModule } from '@angular/material/list';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+
 import { RuddersHomeComponent } from './rudders-home.component';
+import { DataViewerComponent } from '../data-viewer/data-viewer.component';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('RuddersHomeComponent', () => {
   let component: RuddersHomeComponent;
@@ -16,7 +29,24 @@ describe('RuddersHomeComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [RuddersHomeComponent]
+      declarations: [
+        RuddersHomeComponent,
+        DataViewerComponent,
+      ],
+      imports: [
+        NoopAnimationsModule,
+        MatButtonModule,
+        MatSelectModule,
+        MatButtonToggleModule,
+        MatIconModule,
+        MatListModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatMenuModule,
+        MatProgressBarModule,
+      ],
     });
     fixture = TestBed.createComponent(RuddersHomeComponent);
     component = fixture.componentInstance;

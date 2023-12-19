@@ -1,8 +1,19 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
+
 import { Component, ElementRef, OnInit, ViewChild, effect } from '@angular/core';
 import { AppData, SavedDataService } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
+import { GoogleSheetsService } from '../google-sheets.service';
+import { GoogleAuthService } from '../google-auth.service';
+
 
 @Component({
   selector: 'app-app-settings',
@@ -10,7 +21,8 @@ import { isEmbedError } from 'src/lib/text-embeddings/embedder';
   styleUrls: ['./app-settings.component.scss']
 })
 export class AppSettingsComponent implements OnInit {
-  public appNameControl!: FormControl<string | null>;
+  public appNameControl: FormControl<string | null>;
+  public sheetsUrlOrIdControl: FormControl<string | null>;
   public downloadUrl?: string;
   public waiting: boolean = false;
   public errorMessage?: string;
@@ -20,23 +32,32 @@ export class AppSettingsComponent implements OnInit {
 
   constructor(
     public dataService: SavedDataService,
-    public lmApi: LmApiService
+    public lmApi: LmApiService,
+    public sheetsService: GoogleSheetsService,
+    public authService: GoogleAuthService,
   ) {
-    effect(() => {
-      const newName = this.dataService.appName();
-      if (this.appNameControl && this.appNameControl.value !== null
-        && this.appNameControl.value !== newName) {
-        this.appNameControl.setValue(newName, { emitEvent: false });
-      }
-    });
-  }
-
-  ngOnInit(): void {
+    this.sheetsUrlOrIdControl = new FormControl<string>('');
     this.appNameControl = new FormControl<string | null>(
       this.dataService.appName());
     this.appNameControl.valueChanges.forEach(n => {
       if (n) { this.dataService.setAppName(n); };
     });
+
+    effect(() => {
+      const newName = this.dataService.appName();
+      if (this.appNameControl.value !== null
+        && this.appNameControl.value !== newName) {
+        this.appNameControl.setValue(newName, { emitEvent: false });
+      }
+      const sheetsUrl = this.dataService.data().settings.sheetsId;
+      if (this.sheetsUrlOrIdControl.value !== null
+        && this.sheetsUrlOrIdControl.value !== sheetsUrl) {
+        this.sheetsUrlOrIdControl.setValue(sheetsUrl, { emitEvent: false });
+      }
+    });
+  }
+
+  ngOnInit(): void {
   }
 
   reset() {
@@ -95,6 +116,29 @@ export class AppSettingsComponent implements OnInit {
       this.waiting = false;
     };
     reader.readAsText(file);
+  }
+
+  async linkToSheet() {
+    this.waiting = true;
+    delete this.errorMessage;
+    this.errorCount = 0;
+    const currentSheetStr = this.sheetsUrlOrIdControl.value || '';
+    const data = { ...this.dataService.data() };
+    data.settings.sheetsId = currentSheetStr;
+    this.dataService.data.set(data);
+
+    const token = await this.authService.getToken(
+      'https://www.googleapis.com/auth/spreadsheets.readonly');
+    const info = await this.sheetsService.getSheetInfo(currentSheetStr, token);
+    if (info.error) {
+      this.errorMessage = info.error;
+      this.errorCount++;
+    }
+    if (info.sheets) {
+      // info.sheets[0].data[0].rowData[0].values
+    }
+
+    this.waiting = false;
   }
 
   sizeString() {

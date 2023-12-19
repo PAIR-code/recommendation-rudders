@@ -34,7 +34,8 @@ export class DataItemComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.itemTextControl = new FormControl<string | null>(this.item.text);
+    this.itemTextControl = new FormControl<string | null>(
+      this.item ? this.item.text : '');
   }
 
   editMode(): void {

@@ -7,11 +7,27 @@
         [formControl]="appNameControl">
     </mat-form-field>
   </div>
-  <div class="appinfo">App data: <span>{{sizeString()}}</span></div>
+  <div class="row">
+    <div class="appinfo">App data: <span>{{sizeString()}}</span></div>
+    <div class="spacer"></div>
+    <button mat-button color="warn" (click)="deleteEmbeddings()">Delete embeddings</button>
+  </div>
   <button mat-button color="accent" aria-label="Download" (click)="download(downloadLink)">
     <mat-icon>download</mat-icon> Download a snapshot
     <a hidden #downloadLink [download]="downloadName()" target="_top"></a>
   </button>
+  @if (waiting) {
+    <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+  }
+  @if (errorMessage && errorCount > 1) {
+    <div class='error'>
+      There are {{errorCount}} errors. The first error is: {{errorMessage}}
+    </div>
+  } @else if (errorMessage) {
+    <div class='error'>
+      {{errorMessage}}
+    </div>
+  }
   <button mat-button color="accent" aria-label="Upload" (click)="inputFile.click()">
     <mat-icon>upload</mat-icon> Upload and Replace
     <input
@@ -23,10 +39,16 @@
     />
   </button>
   <button mat-button color="warn" (click)="reset()">Clear all data</button>
-  <button mat-button color="warn" (click)="deleteEmbeddings()">Delete embeddings</button>
-  <mat-progress-bar *ngIf="waiting" [mode]="'indeterminate'"></mat-progress-bar>
-  <div class='error' *ngIf="errorMessage">
-    There are {{errorCount}} errors. The first one is: {{errorMessage}}
+  <div>
+  <mat-form-field>
+    <mat-label>Sheets ID</mat-label>
+    <input matInput placeholder="Sheets ID"
+      [formControl]="sheetsUrlOrIdControl">
+  </mat-form-field>
+  <button mat-button color="accent" aria-label="Download from sheet" (click)="linkToSheet()">
+    <mat-icon>upload</mat-icon> upload from sheet
+  </button>
   </div>
+
 </form>
 </div>
