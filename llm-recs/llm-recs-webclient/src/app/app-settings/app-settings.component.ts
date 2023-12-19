@@ -11,7 +11,7 @@ import { AppData, SavedDataService } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
-import { GoogleSheetsService } from '../google-sheets.service';
+import { GoogleSheetsService, isSheetsError } from '../google-sheets.service';
 import { GoogleAuthService } from '../google-auth.service';
 
 
@@ -22,7 +22,10 @@ import { GoogleAuthService } from '../google-auth.service';
 })
 export class AppSettingsComponent implements OnInit {
   public appNameControl: FormControl<string | null>;
+
   public sheetsUrlOrIdControl: FormControl<string | null>;
+  public sheetsRangeControl: FormControl<string | null>;
+
   public downloadUrl?: string;
   public waiting: boolean = false;
   public errorMessage?: string;
@@ -37,12 +40,20 @@ export class AppSettingsComponent implements OnInit {
     public authService: GoogleAuthService,
   ) {
     this.sheetsUrlOrIdControl = new FormControl<string>('');
+    this.sheetsRangeControl = new FormControl<string>('');
     this.appNameControl = new FormControl<string | null>(
       this.dataService.appName());
     this.appNameControl.valueChanges.forEach(n => {
-      if (n) { this.dataService.setAppName(n); };
+      if (n) { this.dataService.setSetting('name', n); };
+    });
+    this.sheetsUrlOrIdControl.valueChanges.forEach(n => {
+      if (n) { this.dataService.setSetting('sheetsId', n); };
+    });
+    this.sheetsRangeControl.valueChanges.forEach(n => {
+      if (n) { this.dataService.setSetting('sheetsRange', n); };
     });
 
+    // When app data changes, update the fields in this UI.
     effect(() => {
       const newName = this.dataService.appName();
       if (this.appNameControl.value !== null
@@ -53,6 +64,11 @@ export class AppSettingsComponent implements OnInit {
       if (this.sheetsUrlOrIdControl.value !== null
         && this.sheetsUrlOrIdControl.value !== sheetsUrl) {
         this.sheetsUrlOrIdControl.setValue(sheetsUrl, { emitEvent: false });
+      }
+      const sheetsRange = this.dataService.data().settings.sheetsRange;
+      if (this.sheetsRangeControl.value !== null
+        && this.sheetsRangeControl.value !== sheetsUrl) {
+        this.sheetsRangeControl.setValue(sheetsRange, { emitEvent: false });
       }
     });
   }
@@ -123,20 +139,35 @@ export class AppSettingsComponent implements OnInit {
     delete this.errorMessage;
     this.errorCount = 0;
     const currentSheetStr = this.sheetsUrlOrIdControl.value || '';
-    const data = { ...this.dataService.data() };
-    data.settings.sheetsId = currentSheetStr;
-    this.dataService.data.set(data);
+    const currentRangeStr = this.sheetsRangeControl.value || '';
 
     const token = await this.authService.getToken(
       'https://www.googleapis.com/auth/spreadsheets.readonly');
-    const info = await this.sheetsService.getSheetInfo(currentSheetStr, token);
-    if (info.error) {
-      this.errorMessage = info.error;
+    const data = await this.sheetsService.getSheetValues(
+      currentSheetStr, currentRangeStr, token);
+
+    // const info = await this.sheetsService.getSheetInfo(currentSheetStr, token);
+    if (isSheetsError(data)) {
+      this.errorMessage = data.error;
       this.errorCount++;
+      this.waiting = false;
+      return;
     }
-    if (info.sheets) {
-      // info.sheets[0].data[0].rowData[0].values
-    }
+    console.log(data.values);
+
+    // if (data.sheets) {
+    //   info.sheets.forEach(sheet => {
+    //     console.log(sheet.properties?.title);
+    //     console.log(sheet.properties?.index);
+    //     console.log(sheet.properties?.sheetId);
+    //     console.log('data', sheet.data);
+    //     if () {
+    //       const info = await this.sheetsService.getSheetInfo(currentSheetStr, token);
+    //     }
+    //   });
+    // data.settings.sheetsColumnName
+    // info.sheets[0].data[0].rowData[0].values
+    // }
 
     this.waiting = false;
   }

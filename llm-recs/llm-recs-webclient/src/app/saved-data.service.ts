@@ -19,6 +19,7 @@ export interface AppData {
 export interface AppSettings {
   name: string;
   sheetsId: string;
+  sheetsRange: string;
 }
 
 export interface DataItem {
@@ -30,7 +31,11 @@ export interface DataItem {
 
 function initialAppData(): AppData {
   return {
-    settings: { name: 'A Rudders App', sheetsId: '' },
+    settings: {
+      name: 'A Rudders App',
+      sheetsId: '',
+      sheetsRange: '', // e.g.
+    },
     items: {},
   }
 }
@@ -59,18 +64,18 @@ export class SavedDataService {
     });
   }
 
-  setAppName(name: string) {
+  setSetting(settingKey: keyof AppSettings, settingValue: string) {
     const data = this.data();
-    if (data.settings.name !== name) {
-      data.settings.name = name;
-      this.data.set(data);
+    if (data.settings[settingKey] !== settingValue) {
+      data.settings[settingKey] = settingValue;
+      this.data.set({ ...data });
     }
   }
 
   saveItem(item: DataItem) {
     const data = this.data();
     data.items[item.id] = item;
-    this.data.set(data);
+    this.data.set({ ...data });
   }
 
   deleteItem(item: DataItem) {
@@ -95,7 +100,7 @@ export class SavedDataService {
   clearItems() {
     const data = this.data();
     data.items = {};
-    this.data.set(data);
+    this.data.set({ ...data });
   }
 
   reset() {

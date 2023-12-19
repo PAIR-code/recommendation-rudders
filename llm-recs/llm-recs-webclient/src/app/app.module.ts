@@ -17,6 +17,9 @@ import { LlmApiConfigComponent } from './llm-api-config/llm-api-config.component
 import { RuddersHomeComponent } from './rudders-home/rudders-home.component';
 import { PromptsConfigComponent } from './prompts-config/prompts-config.component';
 import { DataViewerComponent } from './data-viewer/data-viewer.component';
+import { DataItemComponent } from './data-item/data-item.component';
+import { AppSettingsComponent } from './app-settings/app-settings.component';
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
@@ -32,9 +35,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { VertexApiService } from './vertex-api.service';
 import { SavedDataService } from './saved-data.service';
-import { DataItemComponent } from './data-item/data-item.component';
-import { AppSettingsComponent } from './app-settings/app-settings.component';
-import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { LmApiService } from './lm-api.service';
+import { GoogleAuthService } from './google-auth.service';
+import { GoogleSheetsService } from './google-sheets.service';
 
 @NgModule({
   declarations: [
@@ -67,6 +70,9 @@ import { PageNotFoundComponent } from './page-not-found/page-not-found.component
   providers: [
     VertexApiService,
     SavedDataService,
+    LmApiService,
+    GoogleAuthService,
+    GoogleSheetsService,
   ],
   bootstrap: [AppComponent]
 })

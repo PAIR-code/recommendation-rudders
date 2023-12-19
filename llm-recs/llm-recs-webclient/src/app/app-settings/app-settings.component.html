@@ -41,12 +41,17 @@
   <button mat-button color="warn" (click)="reset()">Clear all data</button>
   <div>
   <mat-form-field>
-    <mat-label>Sheets ID</mat-label>
-    <input matInput placeholder="Sheets ID"
+    <mat-label>Sheets ID or URL</mat-label>
+    <input matInput placeholder="Sheets ID or URL"
       [formControl]="sheetsUrlOrIdControl">
   </mat-form-field>
+  <mat-form-field>
+    <mat-label>Range (e.g. 'Class Data!A2:E')</mat-label>
+    <input matInput placeholder="Range"
+      [formControl]="sheetsRangeControl">
+  </mat-form-field>
   <button mat-button color="accent" aria-label="Download from sheet" (click)="linkToSheet()">
-    <mat-icon>upload</mat-icon> upload from sheet
+    <mat-icon>upload</mat-icon> add columns from sheet
   </button>
   </div>
 
