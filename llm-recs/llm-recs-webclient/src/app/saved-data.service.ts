@@ -81,7 +81,7 @@ export class SavedDataService {
   deleteItem(item: DataItem) {
     const data = this.data();
     delete data.items[item.id];
-    this.data.set(data);
+    this.data.set({ ...data });
   }
 
   async add(text: string, embeddings: ItemEmbeddings): Promise<boolean> {
@@ -93,7 +93,7 @@ export class SavedDataService {
       text,
       embeddings: embeddings
     };
-    this.data.set(data);
+    this.data.set({ ...data });
     return true;
   }
 

@@ -17,7 +17,6 @@
   <div class="infobarItemsSep"></div>
 
   <div *ngFor="let d of data(); let i = index" class="item">
-    <app-data-item [item]="d" (deleteEvent)="deleteItem(d)"
-      [rank]="itemRank(d)"></app-data-item>
+    <app-data-item [item]="d" [rank]="itemRank(d)"></app-data-item>
   </div>
 </div>

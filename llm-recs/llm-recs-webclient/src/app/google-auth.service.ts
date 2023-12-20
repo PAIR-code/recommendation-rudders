@@ -52,7 +52,6 @@ export class GoogleAuthService {
       const jwt = this.jwtCredential();
       if (!jwt) { return null; }
       const decodedToken = jose.decodeJwt(jwt) as Credential;
-      console.log(decodedToken);
       return decodedToken;
     });
 
