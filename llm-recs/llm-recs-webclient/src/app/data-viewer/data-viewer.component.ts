@@ -59,7 +59,6 @@ export class DataViewerComponent implements OnInit {
         ranks[item.id] = maxOf(Object.values(item.embeddings).map(
           e => dotProd(e, searchSpec.embedding))));
 
-      console.log(JSON.stringify(ranks, null, 2));
       return ranks;
     });
 

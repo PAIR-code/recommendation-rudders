@@ -155,6 +155,33 @@ export class AppSettingsComponent implements OnInit {
     }
     console.log(data.values);
 
+    for (const row of data.values) {
+      if (row.length > 1) {
+        this.errorMessage = 'You entered a range with more than one column, but indexing of a sheet only works on a single column right now.';
+        this.errorCount++;
+        this.waiting = false;
+        return;
+      }
+      const itemTextSet = new Set<string>();
+      Object.values(this.dataService.data().items).forEach(i =>
+        itemTextSet.add(i.text));
+
+      const s = row[0];
+      // Skip empty items, or items that we already have.
+      if (s.match(/^\s*$/) || (itemTextSet.has(s))) {
+        break;
+      }
+      // For new items, get their embedding and add them.
+      const response = await this.lmApi.embedder.embed(s);
+      if (isEmbedError(response)) {
+        this.errorMessage = response.error;
+        this.errorCount++;
+        return;
+      }
+      const embeddings = {} as { [key: string]: number[] };
+      embeddings[s] = response.embedding;
+      this.dataService.add(row[0], embeddings);
+    }
     // if (data.sheets) {
     //   info.sheets.forEach(sheet => {
     //     console.log(sheet.properties?.title);

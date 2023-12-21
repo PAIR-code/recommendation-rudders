@@ -27,7 +27,6 @@ async function sendEmbedRequest(request: EmbedRequest): Promise<EmbedResponse> {
     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
     body: JSON.stringify(request), // body data type must match "Content-Type" header
   });
-  console.log(response);
   return (await response.json() as EmbedResponse); // parses JSON response into native JavaScript objects
 }
 

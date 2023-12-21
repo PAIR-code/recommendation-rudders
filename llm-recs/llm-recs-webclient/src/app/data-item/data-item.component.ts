@@ -67,7 +67,8 @@ export class DataItemComponent implements OnInit {
   }
 
   deleteItem(): void {
-    this.deleteEvent.emit();
+    this.dataService.deleteItem(this.item);
+    // this.deleteEvent.emit();
   }
 
   itemEmbeddingStr(item: DataItem): string {
