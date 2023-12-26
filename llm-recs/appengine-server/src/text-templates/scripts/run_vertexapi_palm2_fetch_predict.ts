@@ -13,7 +13,7 @@ See https://github.com/nvm-sh/nvm
 
 Usage:
 
-npx ts-node --esm ./run_vertexapi_palm2_predict.ts \
+npx ts-node --esm ./run_vertexapi_palm2_fetch_predict.ts \
   --project=$(gcloud config get-value project) \
   --accessToken=$(gcloud auth print-access-token) \
   --movie="The Untouchables"

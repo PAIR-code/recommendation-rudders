@@ -75,11 +75,10 @@ async function postDataToLLM(
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
     headers: {
       'Content-Type': 'application/json',
-      // 'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: JSON.stringify(data), // body data type must match "Content-Type" header
   });
-  return response.data; // parses JSON response into native JavaScript objects
+  return response.data;
 }
 
 export async function sendEmbedRequest(

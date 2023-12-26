@@ -48,8 +48,6 @@ async function main() {
   });
 
   app.post('/api/embed', async (req: Request, res: Response) => {
-    // TODO: will the token expire after an hour? and then we'll need some
-    // kind of token refresh?
     const embedding = await embedder.embed((req.body as SimpleEmbedRequest).text);
     res.send(embedding);
   });
