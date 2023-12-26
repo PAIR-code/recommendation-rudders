@@ -10,6 +10,7 @@ import { flatten } from 'underscore';
 import { Template, escapeStr, template, nv, unEscapeStr } from './template';
 import { NamedVar } from './variable';
 import { FewShotTemplate } from './fewshot_template';
+import { expect } from 'chai';
 
 // // ----------------------------------------------------------------------------
 // const movieSuggestionPrompt: Template<never> = template``;
@@ -53,7 +54,7 @@ describe('fewshot_template', () => {
     const criteriaTempl: Template<never> = nCriteriaTempl.apply(
       numberedCriteriaPoints);
 
-    expect(criteriaTempl.escaped).toEqual(
+    expect(criteriaTempl.escaped).to.equal(
       `(1) Concise: not waffley.
 (2) No synposes: do not give plot synopses.
 (3) Specific: not vague (i.e. not "an amazing movie.", "a classic.").`);
@@ -93,7 +94,7 @@ describe('fewshot_template', () => {
           value: nv('evaluation'),
         }]);
 
-    expect(movieRecEvalTempl.escaped).toEqual(
+    expect(movieRecEvalTempl.escaped).to.equal(
       `Movie: "{{movie}}"
 Recommendation: "{{recommendation}}"
 Evaluation: "{{evaluation}}"`);
@@ -135,7 +136,7 @@ Evaluation: "`;
         nCriticExamplesTempl.apply(fewShotCriticExamples).escaped
     });
 
-    expect(criticWithConstitutionAndExamples.escaped).toEqual(
+    expect(criticWithConstitutionAndExamples.escaped).to.equal(
       `Given the following criteria for movie recommendations:
 (1) Concise: not waffley.
 (2) No synposes: do not give plot synopses.

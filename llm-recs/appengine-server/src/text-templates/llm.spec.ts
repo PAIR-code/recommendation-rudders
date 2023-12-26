@@ -13,6 +13,7 @@ Showing how the LLM class works...
 import { LookupTableFakeLLM, PredictResponse, ScoreResponse, ScoredCompletion, fillTemplate } from "./llm";
 import { Palm2Response, preparePalm2Request } from "./llm_vertexapi_palm2";
 import { nv, template } from "./template";
+import { expect } from 'chai';
 
 describe('llm', () => {
   let fakeLLM: LookupTableFakeLLM;
@@ -116,11 +117,11 @@ summary: ['${nv('summary')}']`;
     const substsList = await fillTemplate(
       fakeLLM, promptTempl.substs({ movie: 'The Godfather' }));
     console.log('substsList: ', substsList);
-    expect(substsList.length).toEqual(4);
-    expect(substsList[0].substs!.summary).toEqual(`an operatic tale of a powerful family`);
-    expect(substsList[1].substs!.summary).toEqual(`an operatic tragedy about a powerful Italian American crime family', 'a sprawling epic of violence and betrayal`);
-    expect(substsList[2].substs!.summary).toEqual(`epic crime saga with iconic performances', 'an operatic tale of family, loyalty, and betrayal`);
-    expect(substsList[3].substs!.summary).toEqual(`a timeless mafia masterpiece', 'an operatic tale of a family\\'s descent into darkness`);
+    expect(substsList.length).to.equal(4);
+    expect(substsList[0].substs!.summary).to.equal(`an operatic tale of a powerful family`);
+    expect(substsList[1].substs!.summary).to.equal(`an operatic tragedy about a powerful Italian American crime family', 'a sprawling epic of violence and betrayal`);
+    expect(substsList[2].substs!.summary).to.equal(`epic crime saga with iconic performances', 'an operatic tale of family, loyalty, and betrayal`);
+    expect(substsList[3].substs!.summary).to.equal(`a timeless mafia masterpiece', 'an operatic tale of a family\\'s descent into darkness`);
   });
 
   // ----------------------------------------------------------------------------
@@ -146,10 +147,10 @@ rating (1 to 5 scale): ${nv('rating', { match: '[12345](\.\\d)?' })}
 synopsis: '${nv('synopsis')}'`;
 
     const responses = await fillTemplate(fakeLLM, t.substs({ movie }));
-    expect(responses[0].substs!.summaries).toEqual(` 80s cop drama with an amazing cast', 'stylish and suspenseful`);
-    expect(responses[0].substs!.rating).toEqual(`4`);
-    expect(responses[1].substs!.summaries).toEqual(` stylish and gritty gangster movie of the prohibition era', 'the classic good vs evil tale`);
-    expect(responses[1].substs!.rating).toEqual(`4.5`);
+    expect(responses[0].substs!.summaries).to.equal(` 80s cop drama with an amazing cast', 'stylish and suspenseful`);
+    expect(responses[0].substs!.rating).to.equal(`4`);
+    expect(responses[1].substs!.summaries).to.equal(` stylish and gritty gangster movie of the prohibition era', 'the classic good vs evil tale`);
+    expect(responses[1].substs!.rating).to.equal(`4.5`);
   });
 });
 

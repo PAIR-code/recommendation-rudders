@@ -7,6 +7,7 @@
 ==============================================================================*/
 
 import { Template, escapeStr, template, nv, unEscapeStr, matchTemplate } from './template';
+import { expect } from 'chai';
 
 describe('template', () => {
   beforeEach(() => {
@@ -29,7 +30,7 @@ describe('template', () => {
     // in the template, and are auto-completed, and anything else is an 'as you
     // type' type error.
     let whatIsTabletoB = whatIsAtoB.vars.thing.substStr('table');
-    expect(whatIsTabletoB.escaped).toEqual(
+    expect(whatIsTabletoB.escaped).to.equal(
       'what is a table to {{thing2}}?');
 
     // You can also reference the var names directly using a template's
@@ -52,9 +53,9 @@ describe('template', () => {
       whatIsAtoB.vars.thing2.renameVar('target');
     // Note: the nice automatic type inference:
     //   whatIsAtoTarget: Template<'thing', 'target'>
-    expect(Object.keys(whatIsAtoTarget.vars).sort()).toEqual(
+    expect(Object.keys(whatIsAtoTarget.vars).sort()).to.deep.equal(
       ['thing', 'target'].sort());
-    expect(whatIsAtoTarget.escaped).toEqual(
+    expect(whatIsAtoTarget.escaped).to.equal(
       'what is a {{thing}} to {{target}}?');
 
     // Variables can also be merged progamatrically too.
@@ -64,12 +65,12 @@ describe('template', () => {
     //   whatIsThingtoItself: Template<'thing'>
     //
     // We can verify that we merged 'thing', 'thing2' into 'thing'
-    expect(Object.keys(whatIsThingtoItself.vars).sort()).toEqual(
+    expect(Object.keys(whatIsThingtoItself.vars).sort()).to.deep.equal(
       ['thing'].sort());
 
     // And we can verify the underlying escaped string value of the template
     // like so:
-    expect(whatIsThingtoItself.escaped).toEqual(
+    expect(whatIsThingtoItself.escaped).to.equal(
       'what is a {{thing}} to {{thing}}?');
 
     // You can also substitute variables for templates. New extra variables are
@@ -83,13 +84,13 @@ describe('template', () => {
     // When you make new templates, you can also just use other templates as
     // part of them...
     const fooAndBig = template`foo ${whatIsTabletoBigB}`;
-    expect(fooAndBig.escaped).toEqual(
+    expect(fooAndBig.escaped).to.equal(
       'foo what is a table to big {{bigThing}}?');
 
     // Also, variables are properies, so you can do things like check if they
     // occur in other escaped string templates too.
     expect(fooAndBig.vars.bigThing.occurs(big.escaped))
-      .toBeTruthy();
+      .to.equal(true);
   });
 
   it('Replacing a var with a string', () => {
@@ -97,12 +98,12 @@ describe('template', () => {
     const p = new Template(`what is a ${thingVar}?`,
       [thingVar]);
 
-    expect(p.varList()[0]).toBe(thingVar);
+    expect(p.varList()[0]).to.equal(thingVar);
 
     const p2 = p.vars.thing.substStr('bar');
 
-    expect(p2.varList().length).toBe(0);
-    expect(p2.escaped).toEqual('what is a bar?');
+    expect(p2.varList().length).to.equal(0);
+    expect(p2.escaped).to.equal('what is a bar?');
   });
 
   it('Replacing a var with a template', () => {
@@ -115,8 +116,8 @@ describe('template', () => {
 
     const p3 = p.vars.thing.substTempl(p2);
 
-    expect(p3.escaped).toEqual(`what is a big {{bigThingName}}?`);
-    expect(p3.vars.bigThingName.name).toEqual(`bigThingName`);
+    expect(p3.escaped).to.equal(`what is a big {{bigThingName}}?`);
+    expect(p3.vars.bigThingName.name).to.equal(`bigThingName`);
   });
 
   it('make a template with vars', () => {
@@ -130,8 +131,8 @@ describe('template', () => {
 
     const p3 = p.vars.thing.substTempl(p2);
 
-    expect(p3.escaped).toEqual(`what is a big {{bigThing}} to {{thing2}}?`);
-    expect(p3.vars.bigThing.name).toEqual(`bigThing`);
+    expect(p3.escaped).to.equal(`what is a big {{bigThing}} to {{thing2}}?`);
+    expect(p3.vars.bigThing.name).to.equal(`bigThing`);
   });
 
   it('templates substition by the variable parameter', () => {
@@ -147,20 +148,20 @@ describe('template', () => {
 
   it('escaping', () => {
     const s = 'blah \\\\ {{foo}}';
-    expect(escapeStr(s)).toEqual('blah \\\\\\\\ \\{\\{foo}}');
+    expect(escapeStr(s)).to.equal('blah \\\\\\\\ \\{\\{foo}}');
   });
 
   it('unescaping', () => {
     const s = 'blah \\\\ \\{\\{foo}}';
-    expect(unEscapeStr(s)).toEqual('blah \\ {{foo}}');
+    expect(unEscapeStr(s)).to.equal('blah \\ {{foo}}');
   });
 
   it('parts', () => {
     const t = template`what is an ${nv('x')} to a ${nv('y')} anyway?`;
     const parts = t.parts();
-    expect(parts.prefix).toEqual('what is an ');
-    expect(parts.variables.map(x => x.postfix)).toEqual([' to a ', ' anyway?']);
-    expect(parts.variables.map(x => x.variable.name)).toEqual(['x', 'y']);
+    expect(parts.prefix).to.equal('what is an ');
+    expect(parts.variables.map(x => x.postfix)).to.deep.equal([' to a ', ' anyway?']);
+    expect(parts.variables.map(x => x.variable.name)).to.deep.equal(['x', 'y']);
   });
 
   it('parts template matching', () => {
@@ -168,19 +169,19 @@ describe('template', () => {
     const parts = t.parts();
     const s1 = 'what is an bug to a fly anyway?';
     const m1 = matchTemplate(parts, s1);
-    expect(m1).toEqual({ x: 'bug', y: 'fly' });
+    expect(m1).to.deep.equal({ x: 'bug', y: 'fly' });
 
     const s2 = 'what is an bug to a pants!';
     const m2 = matchTemplate(parts, s2);
-    expect(m2).toEqual({ x: 'bug', y: 'pants!' });
+    expect(m2).to.deep.equal({ x: 'bug', y: 'pants!' });
 
     const s3 = 'bonkers!'
     const m3 = matchTemplate(parts, s3);
-    expect(m3).toEqual(null);
+    expect(m3).to.equal(null);
 
     const s4 = 'what is an bugfoo';
     const m4 = matchTemplate(parts, s4);
-    expect(m4).toEqual({ x: 'bugfoo', y: '' });
+    expect(m4).to.deep.equal({ x: 'bugfoo', y: '' });
   });
 
   it('parts template matching with match-string', () => {
@@ -189,27 +190,27 @@ describe('template', () => {
     const parts = t.parts();
     const s1 = 'what is an 3 to a fly anyway?';
     const m1 = matchTemplate(parts, s1);
-    expect(m1).toEqual({ x: '3', y: 'fly' });
+    expect(m1).to.deep.equal({ x: '3', y: 'fly' });
 
     const s2 = 'what is an 2 to a pants!';
     const m2 = matchTemplate(parts, s2);
-    expect(m2).toEqual({ x: '2', y: 'pants!' });
+    expect(m2).to.deep.equal({ x: '2', y: 'pants!' });
 
     const s3 = 'bonkers!'
     const m3 = matchTemplate(parts, s3);
-    expect(m3).toEqual(null);
+    expect(m3).to.equal(null);
 
     const s4 = 'what is an 4';
     const m4 = matchTemplate(parts, s4);
-    expect(m4).toEqual({ x: '4', y: '' });
+    expect(m4).to.deep.equal({ x: '4', y: '' });
 
     const s5 = 'what is an foo to a pants!';
     const m5 = matchTemplate(parts, s5);
-    expect(m5).toEqual(null);
+    expect(m5).to.equal(null);
 
     const s6 = 'what is an 2 and a 3?';
     const m6 = matchTemplate(parts, s6);
-    expect(m6).toEqual({ x: '2', y: '' });
+    expect(m6).to.deep.equal({ x: '2', y: '' });
   });
 
 
@@ -223,27 +224,27 @@ describe('template', () => {
   //   const parts = t.parts();
   //   const s1 = 'what is an 3 to a fly anyway?';
   //   const m1 = matchTemplate(parts, s1);
-  //   expect(m1).toEqual({ x: '3', y: 'fly' });
+  //   expect(m1).to.equal({ x: '3', y: 'fly' });
 
   //   const s2 = 'what is an 2 to a pants!';
   //   const m2 = matchTemplate(parts, s2);
-  //   expect(m2).toEqual({ x: '2', y: 'pants!' });
+  //   expect(m2).to.equal({ x: '2', y: 'pants!' });
 
   //   const s3 = 'bonkers!'
   //   const m3 = matchTemplate(parts, s3);
-  //   expect(m3).toEqual(null);
+  //   expect(m3).to.equal(null);
 
   //   const s4 = 'what is an 4';
   //   const m4 = matchTemplate(parts, s4);
-  //   expect(m4).toEqual({ x: '4', y: '' });
+  //   expect(m4).to.equal({ x: '4', y: '' });
 
   //   const s5 = 'what is an foo to a pants!';
   //   const m5 = matchTemplate(parts, s5);
-  //   expect(m5).toEqual(null);
+  //   expect(m5).to.equal(null);
 
   //   const s6 = 'what is an 2 and a 3?';
   //   const m6 = matchTemplate(parts, s6);
-  //   expect(m6).toEqual({ x: '2', y: '' });
+  //   expect(m6).to.equal({ x: '2', y: '' });
   // });
 
 
@@ -267,10 +268,10 @@ Types of property 'vars' are incompatible.
     // const p3 = template`foo ${p2}, bar ${p}`;
 
     // TODO: complete the test once the bug is fixed...
-    // expect(p3.template).toEqual(
+    // expect(p3.template).to.equal(
     //   `foo what is {{thing}} to {{person}}, bar {{bigThing}}?`);
-    // expect(p3.vars.bigThing.name).toEqual(bigThingHole.name);
-    // expect(p3.vars.person.name).toEqual(personHole.name);
+    // expect(p3.vars.bigThing.name).to.equal(bigThingHole.name);
+    // expect(p3.vars.person.name).to.equal(personHole.name);
   });
 });
 
