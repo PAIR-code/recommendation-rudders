@@ -11,10 +11,14 @@
     <div class="appinfo">App data: <span>{{sizeString()}}</span></div>
     <div class="spacer"></div>
     <button mat-button color="warn" (click)="deleteEmbeddings()">Delete embeddings</button>
+    <button mat-button color="warn" (click)="reset()">Clear all data</button>
   </div>
-  <button mat-button color="accent" aria-label="Download" (click)="download(downloadLink)">
+  <button mat-button aria-label="Download" (click)="download(downloadLink)">
     <mat-icon>download</mat-icon> Download a snapshot
     <a hidden #downloadLink [download]="downloadName()" target="_top"></a>
+  </button>
+  <button mat-button aria-label="Save to Google Drive" (click)="saveToGoogleDrive()">
+    <mat-icon>save</mat-icon> Save to Google Drive
   </button>
   @if (waiting) {
     <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
@@ -28,7 +32,7 @@
       {{errorMessage}}
     </div>
   }
-  <button mat-button color="accent" aria-label="Upload" (click)="inputFile.click()">
+  <button mat-button aria-label="Upload" (click)="inputFile.click()">
     <mat-icon>upload</mat-icon> Upload and Replace
     <input
       type="file"
@@ -38,7 +42,6 @@
       (change)="upload(inputFile.files![0])"
     />
   </button>
-  <button mat-button color="warn" (click)="reset()">Clear all data</button>
   <div>
   <mat-form-field>
     <mat-label>Sheets ID or URL</mat-label>
@@ -50,8 +53,8 @@
     <input matInput placeholder="Range"
       [formControl]="sheetsRangeControl">
   </mat-form-field>
-  <button mat-button color="accent" aria-label="Download from sheet" (click)="linkToSheet()">
-    <mat-icon>upload</mat-icon> add columns from sheet
+  <button mat-button aria-label="Download from sheet" (click)="addEntriesFromSheetColumn()">
+    <mat-icon>upload</mat-icon> add entriews column from sheet
   </button>
   </div>
 

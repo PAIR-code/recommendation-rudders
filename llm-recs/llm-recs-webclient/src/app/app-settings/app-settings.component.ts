@@ -13,6 +13,7 @@ import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 import { GoogleSheetsService, isSheetsError } from '../google-sheets.service';
 import { GoogleAuthService } from '../google-auth.service';
+import { GoogleDriveAppdataService } from '../google-drive-appdata.service';
 
 
 @Component({
@@ -37,6 +38,7 @@ export class AppSettingsComponent implements OnInit {
     public dataService: SavedDataService,
     public lmApi: LmApiService,
     public sheetsService: GoogleSheetsService,
+    public driveService: GoogleDriveAppdataService,
     public authService: GoogleAuthService,
   ) {
     this.sheetsUrlOrIdControl = new FormControl<string>('');
@@ -89,6 +91,17 @@ export class AppSettingsComponent implements OnInit {
     this.dataService.data.set(data);
   }
 
+  async saveToGoogleDrive() {
+    const json = JSON.stringify(this.dataService.data());
+    const token = await this.authService.getToken(
+      'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file');
+
+    const response = await this.driveService.saveData(
+      json, `${this.dataService.appName()}.json`, '', token);
+
+    console.log('saveToGoogleDrive:response', response);
+  }
+
   download(anchorLink: HTMLAnchorElement) {
     const json = JSON.stringify(this.dataService.data());
     const blob = new Blob([json], { type: "data:application/json;charset=utf-8" });
@@ -134,7 +147,7 @@ export class AppSettingsComponent implements OnInit {
     reader.readAsText(file);
   }
 
-  async linkToSheet() {
+  async addEntriesFromSheetColumn() {
     this.waiting = true;
     delete this.errorMessage;
     this.errorCount = 0;

@@ -20,6 +20,7 @@
     "@types/express": "^4.17.20",
     "@types/mocha": "^10.0.3",
     "@types/supertest": "^2.0.15",
+    "@types/yargs": "^17.0.32",
     "c8": "^8.0.1",
     "eslint": "^8.53.0",
     "mocha": "^10.2.0",

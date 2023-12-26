@@ -35,6 +35,7 @@ gcloud config set project ${PROJECT_ID}
 ```sh
 gcloud services enable sheets.googleapis.com
 gcloud services enable aiplatform.googleapis.com
+gcloud services enable drive.googleapis.com
 ```
 
 1. You need to create, or have an existing AppEngine setup for your cloud
@@ -53,10 +54,10 @@ gcloud iam service-accounts add-iam-policy-binding \
     --role=serviceAccount:roles/aiplatform.user
 ```
 
-1.
+1. The following create a service account key locally [not cuyrrently used]
 
 ```sh
-gcloud iam service-accounts keys create key.json \
+gcloud iam service-accounts keys create .config/key.json \
   --iam-account=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
@@ -91,7 +92,17 @@ Once that has been done, you can just run the following to start a local server 
 npm run start
 ```
 
-Sources of difference can be that on cloud it will run as the appengine service worker that has different access permissions to the application-default credentials, which act with the permissions that you have.
+### Trouble shooting & common Errors
+
+* API permissions errors: the main sources of differences running locally vs
+  cloud deployed behaviour is that, in a cloud deployment, the service will run
+  as the appengine-service-worker, but locally it will run as the
+  `application-default` credentials (`application-default` credentials act as
+  the permissions that your logged in account has); these may have different access permissions.
+
+* `Error: Unable to detect a Project Id in the current environment.`: Make sure
+  you have set the cloud project (command `gcloud config set project ${PROJECT_ID}`), and that you have created default credentials (command `$ gcloud auth application-default login`).
+
 
 ## Automated Tests
 
@@ -143,3 +154,4 @@ https://console.developers.google.com/appengine/services
 And look at the service entry for this application (by default it is the
 "default" service) and click on logs button at the far right to see this
 service's logs.
+
