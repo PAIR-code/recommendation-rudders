@@ -47,6 +47,7 @@ export class RuddersHomeComponent {
       this.itemTextControl.value!);
 
     if (isEmbedError(embedResult)) {
+      this.waiting = false;
       this.errorMessage = embedResult.error;
       return;
     }
@@ -57,6 +58,10 @@ export class RuddersHomeComponent {
       });
     this.waiting = false;
     // console.log(`searching for ${this.itemTextControl.value}.`);
+  }
+
+  dismissError() {
+    delete this.errorMessage;
   }
 
   async add() {
