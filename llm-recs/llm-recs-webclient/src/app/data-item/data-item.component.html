@@ -2,17 +2,18 @@
   <div>No item given to component</div>
 } @else if (mode == 'view') {
 <div class="item">
+  <div class="bullet">&#8226;</div>
   <div class="item-text"><span>{{item.text}}</span></div>
-  <div class="view-header">
-    <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
-      <mat-icon>edit</mat-icon>
-    </button>
+  <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
+    <mat-icon>edit</mat-icon>
+  </button>
+  <!-- <div class="view-header">
     <div class="spacer"></div>
-    <!-- <span class="id">id:{{item.id}}</span> -->
+    <span class="id">id:{{item.id}}</span>
     <span class="timestamp">rank: {{rank}}</span>
     <span class="timestamp">time: {{item.date}}</span>
     <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
-  </div>
+  </div> -->
 </div>
 } @else {
   <div>

@@ -7,6 +7,7 @@
 ==============================================================================*/
 
 import { RegExpVar } from './variable';
+import { expect } from 'chai';
 
 describe('named variables', () => {
   beforeEach(() => {
@@ -18,14 +19,14 @@ describe('named variables', () => {
     const thingVar = new RegExpVar('thing');
     const bigThingVar = new RegExpVar('bigThing');
     // Variables are first class properies, and you can do stuff with them.
-    expect(bigThingVar.occurs('blah {{bigThing}}')).toBeTruthy();
-    expect(thingVar.occurs('blah {{bigthing}}')).toBeFalsy();
+    expect(bigThingVar.occurs('blah {{bigThing}}')).to.equal(true);
+    expect(thingVar.occurs('blah {{bigthing}}')).to.equal(false);
   });
 
   it('Substituting a var in a string', () => {
     const thingVar = new RegExpVar('thing');
     const s2 = thingVar.subst(`what is a ${thingVar}?`, 'bar');
-    expect(s2).toEqual('what is a bar?');
+    expect(s2).to.equal('what is a bar?');
   });
 
   // Sadly there is no way to override loose equality for classes in JS.

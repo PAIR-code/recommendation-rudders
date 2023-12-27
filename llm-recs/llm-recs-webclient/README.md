@@ -13,6 +13,14 @@ npm run start
 
 You'll see local logs printed there form the backend server. This backend server will itself you gcloud default credentials, so it assumes you have that setup. You can see the docs in [`../appengine-server/README`](../appengine-server/README) for more information.
 
+## Cloud project setup
+
+The webpage hosted service uses an API key to allow it to access Sheets and Drive APIs. This means you have to enable those APIs for your cloud project and then also add then also make sure the `API Key` also has access (e.g. list then in the restrict section of API akey access). This API key should allow access from `localhost` domain access, as well as your deployment domain. More generic details are at https://developers.google.com/workspace/guides/create-credentials#api-key
+
+## Recommended editor setup
+
+This code is being developed using [Visual Studio Code](https://code.visualstudio.com/). Make sure to install the angular extension.
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.

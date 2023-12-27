@@ -3,8 +3,17 @@
     <mat-form-field class="item-text-form">
       <mat-label>Item Text</mat-label>
       <textarea matInput [formControl]="itemTextControl"></textarea>
-      <mat-progress-bar *ngIf="waiting" [mode]="'indeterminate'"></mat-progress-bar>
-      <div class='error' *ngIf="errorMessage">{{errorMessage}}</div>
+      @if (waiting) {
+        <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+      }
+      @if (errorMessage) {
+        <div class="error">
+          <div class="error-message">{{errorMessage}}</div>
+          <button mat-icon-button aria-label="dismiss error" (click)="dismissError()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      }
     </mat-form-field>
     <div class="buttons">
       <button [disabled]="hasNoInput()" mat-icon-button aria-label="add" (click)="add()">

@@ -14,6 +14,7 @@ interface EmbedRequest {
 
 async function sendEmbedRequest(request: EmbedRequest): Promise<EmbedResponse> {
   // Default options are marked with *
+  // try {
   const response = await fetch(`/api/embed`, {
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
     mode: 'cors', // no-cors, *cors, same-origin
@@ -27,7 +28,16 @@ async function sendEmbedRequest(request: EmbedRequest): Promise<EmbedResponse> {
     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
     body: JSON.stringify(request), // body data type must match "Content-Type" header
   });
-  return (await response.json() as EmbedResponse); // parses JSON response into native JavaScript objects
+  // parses JSON response into native JavaScript objects
+  if (response.status !== 200) {
+    console.error(response.statusText);
+    return { error: `fetch request failed (${response.status}): ${response.statusText}` };
+  }
+  return (await response.json() as EmbedResponse);
+  // } catch (e: unknown) {
+  //   console.error(e);
+  //   return { error: `fetch request failed: ${(e as Error).message}` };
+  // }
 }
 
 export class SimpleEmbedder implements Embedder<{}> {

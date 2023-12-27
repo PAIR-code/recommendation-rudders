@@ -94,12 +94,25 @@
 }
 
 .item {
+  display: flex;
 }
 
 .item-text {
   padding: 5px;
-  border: solid 1px #ddd;
-  border-radius: 5px;
+  //
+  // padding: 2px;
+  // margin: 3px;
+  // padding-left: 5px;
+  // margin-left: 0px;
+  // border-left: solid 1px #ddd;
+  //
+  // border: solid 1px #ddd;
+  // border-radius: 5px;
+  flex: 1;
+}
+
+.bullet {
+  padding: 5px;
 }
 
 // hoverBtn appears when mouse hovers over view.
