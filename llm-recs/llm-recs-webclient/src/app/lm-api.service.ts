@@ -9,6 +9,7 @@
 import { Injectable } from '@angular/core';
 // import { VertexPalm2LLM } from '../lib/text-templates/llm_vertexapi_palm2';
 import { SimpleEmbedder } from 'src/lib/text-embeddings/embedder_api';
+import { SimpleLlm } from 'src/lib/text-templates/llm_api';
 
 // TODO: Unclear to me if this is needed or helpful...
 //
@@ -18,10 +19,11 @@ import { SimpleEmbedder } from 'src/lib/text-embeddings/embedder_api';
   providedIn: 'root'
 })
 export class LmApiService {
-  // public llm: VertexPalm2LLM;
+  public llm: SimpleLlm;
   public embedder: SimpleEmbedder;
 
   constructor() {
     this.embedder = new SimpleEmbedder();
+    this.llm = new SimpleLlm();
   }
 }

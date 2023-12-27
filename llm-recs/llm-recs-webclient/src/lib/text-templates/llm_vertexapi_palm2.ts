@@ -107,7 +107,7 @@ export async function sendPalm2Request(
   // .catch((err) => console.error(err));
 }
 
-interface Palm2ApiOptions {
+export interface Palm2ApiOptions {
   modelId: string,
   apiEndpoint: string,
   requestParameters: Palm2ApiParams
