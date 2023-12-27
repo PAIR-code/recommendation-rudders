@@ -27,21 +27,6 @@ interface SimpleLLMRequest {
   modelId: string;
 }
 
-interface Palm2ApiOptions {
-  modelId: string,
-  apiEndpoint: string,
-  requestParameters: Palm2ApiParams
-}
-
-interface Palm2ApiParams {
-  candidateCount: number, // 1 to 8
-  maxOutputTokens: number, // 256, 1024
-  stopSequences: string[], // e.g. ']
-  temperature: number,  // e.g. 0.2 (0=deterministic, 1=wild, x>1=crazy)
-  topP: number,  // e.g. 0.8 (0-1, smaller = restricts crazyiness)
-  topK: number  // e.g. 40 (0-numOfTokens, smaller = restricts crazyiness)
-}
-
 async function main() {
 
   const auth = new GoogleAuth({
@@ -76,6 +61,8 @@ async function main() {
 
   app.post('/api/llm', async (req: Request, res: Response) => {
     const request = (req.body as SimpleLLMRequest)
+    // TODO: we now have duplicated definitions of default options, we might want to
+    // remove one of them.
     const options = {
       modelId: request.modelId || 'text-bison',
       apiEndpoint: 'us-central1-aiplatform.googleapis.com',
@@ -87,7 +74,7 @@ async function main() {
         maxOutputTokens: 256,
         stopSequences: [],
       }
-    } as Palm2ApiOptions;
+    };
     const llm = new VertexPalm2LLM(
       projectId,
       client,
