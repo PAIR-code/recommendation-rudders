@@ -125,33 +125,35 @@ interface Palm2ApiOptions {
 
 export class VertexPalm2LLM implements LLM<Palm2ApiOptions> {
   public name: string;
-  public defaultOptions: Palm2ApiOptions = {
-    modelId: 'text-bison',
-    apiEndpoint: 'us-central1-aiplatform.googleapis.com',
-    requestParameters: {
-      temperature: 0.7,
-      topK: 40,
-      topP: 0.95,
-      candidateCount: 4,
-      maxOutputTokens: 256,
-      stopSequences: [],
-    }
-  };
+  public options: Palm2ApiOptions;
 
   constructor(
     public projectId: string,
     public client: AuthClient,
+    public params?: Palm2ApiOptions,
   ) {
-    this.name = `VertexLLM:` + this.defaultOptions.modelId;
+    const defaultOptions = {
+      modelId: 'text-bison',
+      apiEndpoint: 'us-central1-aiplatform.googleapis.com',
+      requestParameters: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        candidateCount: 4,
+        maxOutputTokens: 256,
+        stopSequences: [],
+      }
+    } as Palm2ApiOptions;
+    this.options = params ? params : defaultOptions;
+    this.name = `VertexLLM:` + this.options.modelId;
   }
 
-  //
   async predict(
     query: string, params?: Palm2ApiOptions
   ): Promise<PredictResponse> {
 
     const apiParams = params ? params.requestParameters
-      : this.defaultOptions.requestParameters;
+      : this.options.requestParameters;
     const apiRequest: Palm2ApiRequest = {
       instances: [{ content: query }],
       parameters: apiParams
@@ -161,8 +163,8 @@ export class VertexPalm2LLM implements LLM<Palm2ApiOptions> {
       this.projectId,
       this.client,
       apiRequest,
-      this.defaultOptions.modelId,
-      this.defaultOptions.apiEndpoint);
+      this.options.modelId,
+      this.options.apiEndpoint);
 
     // The API doesn't include the actual stop sequence that it found, so we
     // can never know the true stop seqeunce, so we just pick the first one,

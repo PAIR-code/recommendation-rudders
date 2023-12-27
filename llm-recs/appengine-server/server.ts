@@ -9,6 +9,7 @@
 import express, { Express, Request, Response } from 'express';
 import { GoogleAuth } from 'google-auth-library';
 import { VertexEmbedder } from './src/text-embeddings/embedder_gaxois_vertexapi';
+import { VertexPalm2LLM } from './src/text-templates/llm_gaxois_vertexapi_palm2';
 import * as path from 'path';
 
 export const app: Express = express();
@@ -18,6 +19,27 @@ app.use(express.urlencoded({ extended: true }));  // for PUT requests
 
 interface SimpleEmbedRequest {
   text: string;
+}
+
+interface SimpleLLMRequest {
+  text: string;
+  temperature: number;
+  modelId: string;
+}
+
+interface Palm2ApiOptions {
+  modelId: string,
+  apiEndpoint: string,
+  requestParameters: Palm2ApiParams
+}
+
+interface Palm2ApiParams {
+  candidateCount: number, // 1 to 8
+  maxOutputTokens: number, // 256, 1024
+  stopSequences: string[], // e.g. ']
+  temperature: number,  // e.g. 0.2 (0=deterministic, 1=wild, x>1=crazy)
+  topP: number,  // e.g. 0.8 (0-1, smaller = restricts crazyiness)
+  topK: number  // e.g. 40 (0-numOfTokens, smaller = restricts crazyiness)
 }
 
 async function main() {
@@ -50,6 +72,29 @@ async function main() {
   app.post('/api/embed', async (req: Request, res: Response) => {
     const embedding = await embedder.embed((req.body as SimpleEmbedRequest).text);
     res.send(embedding);
+  });
+
+  app.post('/api/llm', async (req: Request, res: Response) => {
+    const request = (req.body as SimpleLLMRequest)
+    const options = {
+      modelId: request.modelId || 'text-bison',
+      apiEndpoint: 'us-central1-aiplatform.googleapis.com',
+      requestParameters: {
+        temperature: request.temperature || 0.7,
+        topK: 40,
+        topP: 0.95,
+        candidateCount: 4,
+        maxOutputTokens: 256,
+        stopSequences: [],
+      }
+    } as Palm2ApiOptions;
+    const llm = new VertexPalm2LLM(
+      projectId,
+      client,
+      options,
+    );
+    const response = await llm.predict(request.text, options);
+    res.send(response);
   });
 
   // Listen to the App Engine-specified port, or 8080 otherwise
