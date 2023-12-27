@@ -7,6 +7,9 @@
 ==============================================================================*/
 
 import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { isEmbedError, EmbedError } from 'src/lib/text-embeddings/embedder';
+import { ItemInterpreterService } from './item-interpreter.service';
+import { LmApiService } from './lm-api.service';
 
 export interface ItemEmbeddings { [key: string]: number[] };
 export interface DataItems { [id: string]: DataItem }
@@ -25,7 +28,9 @@ export interface AppSettings {
 export interface DataItem {
   id: string;
   date: string;
+  title: string;
   text: string;
+  originalText: string;
   embeddings: ItemEmbeddings;
 }
 
@@ -49,7 +54,10 @@ export class SavedDataService {
   public dataSize: Signal<number>;
   public dataJson: Signal<string>;
 
-  constructor() {
+  constructor(
+    private lmApiService: LmApiService,
+    private itemInterpreterService: ItemInterpreterService
+  ) {
     // The data.
     this.data = signal(JSON.parse(
       localStorage.getItem('data') || JSON.stringify(initialAppData())));
@@ -84,17 +92,39 @@ export class SavedDataService {
     this.data.set({ ...data });
   }
 
-  async add(text: string, embeddings: ItemEmbeddings): Promise<boolean> {
+  async addRaw(
+    title: string, text: string, embeddings: ItemEmbeddings
+  ): Promise<DataItem> {
     const id = `${new Date().valueOf()}`;
     const data = { ... this.data() };
-    data.items[id] = {
+    const dataItem: DataItem = {
       id,
       date: new Date().toISOString(),
+      title,
       text,
+      originalText: text,
       embeddings: embeddings
     };
+    data.items[id] = dataItem;
     this.data.set({ ...data });
-    return true;
+    return dataItem;
+  }
+
+  async add(text: string): Promise<EmbedError | DataItem> {
+    if (!text) {
+      return { error: 'Cannot add empty text!' };
+    }
+    const item = this.itemInterpreterService.interpretItemText(text);
+    const embeddings = {} as ItemEmbeddings;
+    for (const key of item.keys) {
+      const embedResponse = await this.lmApiService.embedder.embed(key);
+      if (isEmbedError(embedResponse)) {
+        return embedResponse;
+      }
+      embeddings[key] = embedResponse.embedding;
+    }
+    const dataItem = this.addRaw(item.title, item.text, embeddings);
+    return dataItem;
   }
 
   clearItems() {

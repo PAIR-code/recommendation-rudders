@@ -11,7 +11,7 @@ import { DataItem, SavedDataService } from '../saved-data.service';
 // import { EventEmitter, Input, OnInit, Output, effect } from '@angular/core';
 
 export interface SearchSpec {
-  text: string;
+  query: string;
   embedding: number[];
 }
 

@@ -14,6 +14,7 @@ import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 import { GoogleSheetsService, isSheetsError } from '../google-sheets.service';
 import { GoogleAuthService } from '../google-auth.service';
 import { GoogleDriveAppdataService } from '../google-drive-appdata.service';
+import { ItemInterpreterService } from '../item-interpreter.service';
 
 
 @Component({
@@ -35,11 +36,12 @@ export class AppSettingsComponent implements OnInit {
   @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
 
   constructor(
-    public dataService: SavedDataService,
-    public lmApi: LmApiService,
-    public sheetsService: GoogleSheetsService,
-    public driveService: GoogleDriveAppdataService,
-    public authService: GoogleAuthService,
+    private dataService: SavedDataService,
+    private lmApiService: LmApiService,
+    private sheetsService: GoogleSheetsService,
+    private driveService: GoogleDriveAppdataService,
+    private authService: GoogleAuthService,
+    private itemInterpreterService: ItemInterpreterService
   ) {
     this.sheetsUrlOrIdControl = new FormControl<string>('');
     this.sheetsRangeControl = new FormControl<string>('');
@@ -128,7 +130,7 @@ export class AppSettingsComponent implements OnInit {
 
       for (const item of Object.values(uploadedData.items)) {
         if (Object.keys(item.embeddings).length === 0) {
-          const embedResult = await this.lmApi.embedder.embed(item.text);
+          const embedResult = await this.lmApiService.embedder.embed(item.text);
           if (isEmbedError(embedResult)) {
             if (!this.errorMessage) {
               this.errorMessage = embedResult.error;
@@ -184,16 +186,13 @@ export class AppSettingsComponent implements OnInit {
       if (s.match(/^\s*$/) || (itemTextSet.has(s))) {
         break;
       }
-      // For new items, get their embedding and add them.
-      const response = await this.lmApi.embedder.embed(s);
-      if (isEmbedError(response)) {
-        this.errorMessage = response.error;
+
+      const result = this.dataService.add(s);
+      if (isEmbedError(result)) {
+        this.errorMessage = result.error;
         this.errorCount++;
         return;
       }
-      const embeddings = {} as { [key: string]: number[] };
-      embeddings[s] = response.embedding;
-      this.dataService.add(row[0], embeddings);
     }
     // if (data.sheets) {
     //   info.sheets.forEach(sheet => {
