@@ -6,6 +6,7 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
+import { llmInput } from '../recommender-prompts/item-interpreter';
 import { Template, escapeStr, template, nv, unEscapeStr, matchTemplate } from './template';
 
 describe('template', () => {
@@ -212,6 +213,14 @@ describe('template', () => {
     expect(m6).toEqual({ x: '2', y: '' });
   });
 
+  it('parts template matching with longer match-string', () => {
+    const t = template`what is an ${nv('x', { match: '[12345]' })} to a ${nv('y')} anyway?`;
+
+    const parts = t.parts();
+    const s1 = 'what is an 3 to a fly anyway? and more';
+    const m1 = matchTemplate(parts, s1);
+    expect(m1).toEqual({ x: '3', y: 'fly' });
+  });
 
   // it('parts template matching with match-string', () => {
   //   const t = template`']\nrating: `;

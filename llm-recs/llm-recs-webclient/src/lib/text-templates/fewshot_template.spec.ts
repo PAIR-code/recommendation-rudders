@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { flatten } from 'underscore';
-import { Template, escapeStr, template, nv, unEscapeStr } from './template';
+import { Template, escapeStr, template, nv, unEscapeStr, matchTemplate } from './template';
 import { NamedVar } from './variable';
 import { FewShotTemplate } from './fewshot_template';
 
@@ -156,4 +156,28 @@ Movie: "{{movie}}"
 Recommendation: "{{recommendation}}"
 Evaluation: "`);
   });
+
+  it('parts template matching with multi-line match-string', () => {
+    const itemExperienceTempl = template`Short experience description: "${nv('experience')}"
+About: ${nv('aboutEntity')} (${nv('aboutDetails')})
+Liked or Disliked: ${nv('likedOrDisliked')}, because:
+[
+  ${nv('characteristics')}
+]`;
+
+    const t = itemExperienceTempl.substs({
+      experience: 'The Garden of Forking Paths: like it'
+    });
+
+    const parts = t.parts();
+    const s1 = "The Garden of Forking Paths (short story by Jorge Luis Borges)\nLiked or Disliked: Liked, because:\n[\n  \"Intriguing\",\n  \"Philosophical\",\n  \"Thought-provoking\"\n]\n\nfoo foo\n]";
+    const m1 = matchTemplate(parts, s1, false);
+    expect(m1).toEqual({
+      aboutEntity: 'The Garden of Forking Paths',
+      aboutDetails: 'short story by Jorge Luis Borges',
+      likedOrDisliked: 'Liked',
+      characteristics: '\"Intriguing\",\n  \"Philosophical\",\n  \"Thought-provoking\"'
+    });
+  });
+
 });
