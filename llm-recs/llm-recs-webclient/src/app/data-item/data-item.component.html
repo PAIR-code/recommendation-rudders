@@ -1,9 +1,9 @@
-@if (!item) {
+@if (!initialDataItem) {
   <div>No item given to component</div>
 } @else if (mode == 'view') {
 <div class="item">
   <div class="bullet">&#8226;</div>
-  <div class="item-text"><span class="title">{{item.title}}</span>. <span class="text">{{item.text}}</span></div>
+  <div class="item-text"><span class="title">{{this.dataItem().title}}</span>. <span class="text">{{this.dataItem().text}}</span></div>
   <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
     <mat-icon>edit</mat-icon>
   </button>
@@ -20,16 +20,16 @@
   <form class="edit-form" (submit)="save()">
     <mat-form-field class="full-width title-input">
       <mat-label>Item Title</mat-label>
-      <input matInput [formControl]="itemTitleControl">
+      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().title" (ngModelChange)="setTitle($event)">
     </mat-form-field>
     <mat-form-field class="full-width text-input">
       <mat-label>Item Text</mat-label>
-      <textarea matInput [formControl]="itemTextControl"></textarea>
+      <textarea matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().text" (ngModelChange)="setText($event)"></textarea>
     </mat-form-field>
     @for (key of keys; track $index) {
       <mat-form-field class="full-width key-input">
         <mat-label>Key</mat-label>
-        <input matInput [formControl]="keyControls[$index]">
+        <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="key" (ngModelChange)="keys[$index] = $event">
       </mat-form-field>
     }
     <mat-progress-bar *ngIf="waiting" [mode]="'indeterminate'"></mat-progress-bar>
@@ -50,8 +50,8 @@
       <div class="details">
         <!-- <span class="id">id:{{item.id}}</span> -->
         <span class="timestamp">rank: {{rank}}</span>
-        <span class="timestamp">time: {{item.date}}</span>
-        <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
+        <span class="timestamp">time: {{this.dataItem().date}}</span>
+        <span class="embedding">embed: {{itemEmbeddingStr(this.dataItem())}}</span>
       </div>
       <button type="button" mat-icon-button aria-label="More actions" [matMenuTriggerFor]="menu">
         <mat-icon>more_vert</mat-icon>

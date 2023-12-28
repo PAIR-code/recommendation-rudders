@@ -6,44 +6,71 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { DataItem, SavedDataService } from '../saved-data.service';
+import { Component, computed, EventEmitter, Input, OnInit, Output, Signal, signal, WritableSignal } from '@angular/core';
+import { DataItem, SavedDataService, dummyItem } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
+
+
+// class SignalModel<T> {
+//   public signalValue: WritableSignal<T>;
+
+//   constructor(initialValue: T) {
+//     this.signalValue = signal(initialValue);
+//   }
+
+//   set model(value: T) {
+//     this.signalValue.set(value);
+//   }
+
+//   get model(): T {
+//     return this.signalValue();
+//   }
+// }
+
 
 @Component({
   selector: 'app-data-item',
   templateUrl: './data-item.component.html',
   styleUrls: ['./data-item.component.scss']
 })
-export class DataItemComponent implements OnInit {
+export class DataItemComponent {
   public mode: 'view' | 'edit' = 'view';
   public waiting: boolean = false;
   public saveError?: string;
+  public dataItem = signal<DataItem>(dummyItem);
   public keys: string[] = [];
+  // Set by the initialization call of the @Input()
+  public initialDataItem!: DataItem;
 
-  @Input() item!: DataItem;
+  @Input()
+  set item(i: DataItem) {
+    this.dataItem.set(i);
+    this.initialDataItem = i;
+    this.keys = Object.keys(i.embeddings);
+  }
   @Input() rank!: number;
-
-  public itemTextControl!: FormControl<string | null>;
-  public itemTitleControl!: FormControl<string | null>;
-  public keyControls: FormControl<string | null>[] = [];
 
   constructor(
     public dataService: SavedDataService,
     public lmApi: LmApiService) {
   }
 
-  ngOnInit(): void {
-    this.itemTitleControl = new FormControl<string | null>(
-      this.item ? this.item.title : '');
-    this.itemTextControl = new FormControl<string | null>(
-      this.item ? this.item.text : '');
-    for (const key of Object.keys(this.item.embeddings)) {
-      this.keys.push(key);
-      this.keyControls.push(new FormControl<string | null>(key));
-    }
+  setTitle(s: string): void {
+    const newItem = { ...this.dataItem() };
+    newItem.title = s;
+    this.dataItem.set(newItem);
+  }
+
+  setText(s: string): void {
+    const newItem = { ...this.dataItem() };
+    newItem.text = s;
+    this.dataItem.set(newItem);
+  }
+
+  addKey() {
+    this.keys.push('');
   }
 
   editMode(): void {
@@ -57,16 +84,14 @@ export class DataItemComponent implements OnInit {
     this.waiting = true;
     delete this.saveError;
 
-    this.item.text = this.itemTextControl.value || this.item.text;
-    this.item.title = this.itemTitleControl.value || this.item.title
+    const dataItem = this.dataItem();
 
     const newEmbeddings: { [key: string]: number[] } = {};
     for (const key of this.keys) {
-      if (key.match(/\s*/)) {
-        // Don't add empty keys
-        continue;
-      } else if (key in this.item.embeddings) {
-        newEmbeddings[key] = this.item.embeddings[key];
+      if (key.match(/^\s*$/) !== null) {
+        continue;  // Don't add empty keys
+      } else if (key in dataItem.embeddings) {
+        newEmbeddings[key] = dataItem.embeddings[key];
       } else {
         const embedResponse = await this.lmApi.embedder.embed(key);
         if (isEmbedError(embedResponse)) {
@@ -77,21 +102,15 @@ export class DataItemComponent implements OnInit {
         newEmbeddings[key] = embedResponse.embedding;
       }
     }
-
-    this.item.embeddings = newEmbeddings;
-    this.dataService.saveItem(this.item);
+    this.keys = Object.keys(newEmbeddings);
+    dataItem.embeddings = newEmbeddings;
+    this.dataService.saveItem(dataItem);
     this.viewMode();
     this.waiting = false;
   }
 
-  addKey() {
-    this.keys.push('');
-    this.keyControls.push(new FormControl<string | null>(''));
-  }
-
   revert(): void {
-    this.itemTitleControl.setValue(this.item.title);
-    this.itemTextControl.setValue(this.item.text);
+    this.dataItem.set(this.initialDataItem);
   }
 
   deleteItem(): void {

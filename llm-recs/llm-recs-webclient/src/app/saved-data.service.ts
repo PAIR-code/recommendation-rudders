@@ -34,6 +34,15 @@ export interface DataItem {
   embeddings: ItemEmbeddings;
 }
 
+export const dummyItem: DataItem = {
+  id: 'dummyItemId',
+  date: 'dummyItemDate',
+  title: 'dummyItemTitle',
+  text: 'dummyItemText',
+  originalText: 'dummyItemText',
+  embeddings: { 'dummyItemTitle': [1, 2, 3] },
+}
+
 function initialAppData(): AppData {
   return {
     settings: {
