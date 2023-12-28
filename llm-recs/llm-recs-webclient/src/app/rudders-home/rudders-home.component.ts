@@ -12,6 +12,7 @@ import { ItemEmbeddings, SavedDataService } from '../saved-data.service';
 import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 import { SearchSpec } from '../data-viewer/data-viewer.component';
+import { ItemInterpreterService } from '../item-interpreter.service';
 
 @Component({
   selector: 'app-rudders-home',
@@ -26,6 +27,7 @@ export class RuddersHomeComponent {
 
   constructor(
     private lmApiService: LmApiService,
+    private itemInterpreterService: ItemInterpreterService,
     private dataService: SavedDataService
   ) {
     this.searchSpec = signal(null);
@@ -53,7 +55,7 @@ export class RuddersHomeComponent {
     }
     this.searchSpec.set(
       {
-        text: this.itemTextControl.value!,
+        query: this.itemTextControl.value!,
         embedding: embedResult.embedding
       });
     this.waiting = false;
@@ -68,18 +70,16 @@ export class RuddersHomeComponent {
     this.waiting = true;
     const text = this.itemTextControl.value;
     console.log(`adding ${text}.`);
-    if (text) {
-      const embedResponse = await this.lmApiService.embedder.embed(text);
-      if (isEmbedError(embedResponse)) {
-        this.waiting = false;
-        this.errorMessage = embedResponse.error;
-        return;
-      }
-      const embeddings = {} as ItemEmbeddings;
-      embeddings[text] = embedResponse.embedding;
-      this.dataService.add(text, embeddings);
-      this.waiting = false;
+    if (!text) {
+      console.error('called when text was null');
+      return;
     }
+    const addResultItemOrError = await this.dataService.add(text);
+    if (isEmbedError(addResultItemOrError)) {
+      this.waiting = false;
+      this.errorMessage = addResultItemOrError.error;
+    }
+    this.waiting = false;
   }
 
   hasNoInput() {

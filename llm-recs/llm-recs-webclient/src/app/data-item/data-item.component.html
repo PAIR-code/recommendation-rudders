@@ -3,7 +3,7 @@
 } @else if (mode == 'view') {
 <div class="item">
   <div class="bullet">&#8226;</div>
-  <div class="item-text"><span>{{item.text}}</span></div>
+  <div class="item-text"><span class="title">{{item.title}}</span>. <span class="text">{{item.text}}</span></div>
   <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
     <mat-icon>edit</mat-icon>
   </button>
@@ -18,14 +18,30 @@
 } @else {
   <div>
   <form class="edit-form" (submit)="save()">
-    <mat-form-field class="full-width">
+    <mat-form-field class="full-width title-input">
+      <mat-label>Item Title</mat-label>
+      <input matInput [formControl]="itemTitleControl">
+    </mat-form-field>
+    <mat-form-field class="full-width text-input">
       <mat-label>Item Text</mat-label>
       <textarea matInput [formControl]="itemTextControl"></textarea>
     </mat-form-field>
+    @for (key of keys; track $index) {
+      <mat-form-field class="full-width key-input">
+        <mat-label>Key</mat-label>
+        <input matInput [formControl]="keyControls[$index]">
+      </mat-form-field>
+    }
     <mat-progress-bar *ngIf="waiting" [mode]="'indeterminate'"></mat-progress-bar>
     <div class='error' *ngIf="saveError">{{saveError}}</div>
 
     <div class="view-header">
+      <button type="button" mat-button aria-label="add key" (click)="addKey()">
+        <mat-icon>add</mat-icon> add key
+      </button>
+      <button color="primary" type="submit" mat-flat-button aria-label="Edit">
+        save
+      </button>
       <button type="button" mat-icon-button aria-label="More actions" [matMenuTriggerFor]="menu">
         <mat-icon>more_vert</mat-icon>
       </button>
@@ -34,9 +50,6 @@
         <button mat-menu-item (click)="revert()">Revert</button>
         <button mat-menu-item (click)="viewMode()">Cancel</button>
       </mat-menu>
-      <button color="primary" type="submit" mat-flat-button aria-label="Edit">
-        save
-      </button>
   <!--
       <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
         <mat-icon>edit</mat-icon>

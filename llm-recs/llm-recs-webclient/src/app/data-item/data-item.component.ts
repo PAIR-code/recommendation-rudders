@@ -21,12 +21,14 @@ export class DataItemComponent implements OnInit {
   public mode: 'view' | 'edit' = 'view';
   public waiting: boolean = false;
   public saveError?: string;
+  public keys: string[] = [];
 
   @Input() item!: DataItem;
   @Input() rank!: number;
-  @Output() deleteEvent = new EventEmitter<void>();
 
   public itemTextControl!: FormControl<string | null>;
+  public itemTitleControl!: FormControl<string | null>;
+  public keyControls: FormControl<string | null>[] = [];
 
   constructor(
     public dataService: SavedDataService,
@@ -34,8 +36,14 @@ export class DataItemComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.itemTitleControl = new FormControl<string | null>(
+      this.item ? this.item.title : '');
     this.itemTextControl = new FormControl<string | null>(
       this.item ? this.item.text : '');
+    for (const key of Object.keys(this.item.embeddings)) {
+      this.keys.push(key);
+      this.keyControls.push(new FormControl<string | null>(key));
+    }
   }
 
   editMode(): void {
@@ -50,25 +58,44 @@ export class DataItemComponent implements OnInit {
     delete this.saveError;
 
     this.item.text = this.itemTextControl.value || this.item.text;
-    const embedResponse = await this.lmApi.embedder.embed(this.item.text);
-    if (isEmbedError(embedResponse)) {
-      this.waiting = false;
-      this.saveError = embedResponse.error;
-      return;
+    this.item.title = this.itemTitleControl.value || this.item.title
+
+    const newEmbeddings: { [key: string]: number[] } = {};
+    for (const key of this.keys) {
+      if (key.match(/\s*/)) {
+        // Don't add empty keys
+        continue;
+      } else if (key in this.item.embeddings) {
+        newEmbeddings[key] = this.item.embeddings[key];
+      } else {
+        const embedResponse = await this.lmApi.embedder.embed(key);
+        if (isEmbedError(embedResponse)) {
+          this.waiting = false;
+          this.saveError = embedResponse.error;
+          return;
+        }
+        newEmbeddings[key] = embedResponse.embedding;
+      }
     }
-    this.item.embeddings[this.item.text] = embedResponse.embedding;
+
+    this.item.embeddings = newEmbeddings;
     this.dataService.saveItem(this.item);
     this.viewMode();
     this.waiting = false;
   }
 
+  addKey() {
+    this.keys.push('');
+    this.keyControls.push(new FormControl<string | null>(''));
+  }
+
   revert(): void {
+    this.itemTitleControl.setValue(this.item.title);
     this.itemTextControl.setValue(this.item.text);
   }
 
   deleteItem(): void {
     this.dataService.deleteItem(this.item);
-    // this.deleteEvent.emit();
   }
 
   itemEmbeddingStr(item: DataItem): string {
