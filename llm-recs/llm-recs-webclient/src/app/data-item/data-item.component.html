@@ -42,14 +42,6 @@
       <button color="primary" type="submit" mat-flat-button aria-label="Edit">
         save
       </button>
-      <button type="button" mat-icon-button aria-label="More actions" [matMenuTriggerFor]="menu">
-        <mat-icon>more_vert</mat-icon>
-      </button>
-      <mat-menu #menu="matMenu">
-        <button mat-menu-item (click)="deleteItem()">Delete</button>
-        <button mat-menu-item (click)="revert()">Revert</button>
-        <button mat-menu-item (click)="viewMode()">Cancel</button>
-      </mat-menu>
   <!--
       <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
         <mat-icon>edit</mat-icon>
@@ -61,6 +53,14 @@
         <span class="timestamp">time: {{item.date}}</span>
         <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
       </div>
+      <button type="button" mat-icon-button aria-label="More actions" [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="deleteItem()">Delete</button>
+        <button mat-menu-item (click)="revert()">Revert</button>
+        <button mat-menu-item (click)="viewMode()">Cancel</button>
+      </mat-menu>
     </div>
   </form>
   </div>
