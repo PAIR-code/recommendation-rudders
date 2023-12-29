@@ -10,8 +10,10 @@ import { Injectable } from '@angular/core';
 import { LmApiService } from './lm-api.service';
 
 export interface InterpretedItem {
-  title: string;
+  entityTitle: string;
   text: string;
+  entityDetails: string;
+  sentiment: string;
   keys: string[];
 }
 
@@ -28,7 +30,9 @@ export class ItemInterpreterService {
 
   interpretItemText(text: string): InterpretedItem {
     const title = text.slice(0, 20);
+    const entityDetails = text.slice(20, 50);
+    const sentiment = "liked";
     const keys = [... new Set<string>(text.split('.'))];
-    return { title, text, keys };
+    return { entityTitle: title, text, entityDetails, sentiment, keys };
   }
 }

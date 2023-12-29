@@ -28,18 +28,20 @@ export interface AppSettings {
 export interface DataItem {
   id: string;
   date: string;
-  title: string;
   text: string;
-  originalText: string;
+  entityTitle: string;
+  entityDetails: string;
+  sentiment: string;
   embeddings: ItemEmbeddings;
 }
 
 export const dummyItem: DataItem = {
   id: 'dummyItemId',
   date: 'dummyItemDate',
-  title: 'dummyItemTitle',
   text: 'dummyItemText',
-  originalText: 'dummyItemText',
+  entityTitle: 'dummyItemTitle',
+  entityDetails: 'dummyItemDetails',
+  sentiment: 'dummySentiment',
   embeddings: { 'dummyItemTitle': [1, 2, 3] },
 }
 
@@ -102,17 +104,18 @@ export class SavedDataService {
   }
 
   async addRaw(
-    title: string, text: string, embeddings: ItemEmbeddings
+    entityTitle: string, text: string, entityDetails: string, sentiment: string, embeddings: ItemEmbeddings
   ): Promise<DataItem> {
     const id = `${new Date().valueOf()}`;
     const data = { ... this.data() };
     const dataItem: DataItem = {
       id,
       date: new Date().toISOString(),
-      title,
       text,
-      originalText: text,
-      embeddings: embeddings
+      entityTitle,
+      entityDetails,
+      sentiment,
+      embeddings,
     };
     data.items[id] = dataItem;
     this.data.set({ ...data });
@@ -126,13 +129,16 @@ export class SavedDataService {
     const item = this.itemInterpreterService.interpretItemText(text);
     const embeddings = {} as ItemEmbeddings;
     for (const key of item.keys) {
+      if (key.trim() === '') {
+        continue;
+      }
       const embedResponse = await this.lmApiService.embedder.embed(key);
       if (isEmbedError(embedResponse)) {
         return embedResponse;
       }
       embeddings[key] = embedResponse.embedding;
     }
-    const dataItem = this.addRaw(item.title, item.text, embeddings);
+    const dataItem = this.addRaw(item.entityTitle, item.text, item.entityDetails, item.sentiment, embeddings);
     return dataItem;
   }
 

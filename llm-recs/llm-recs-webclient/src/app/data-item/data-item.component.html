@@ -3,7 +3,23 @@
 } @else if (mode == 'view') {
 <div class="item">
   <div class="bullet">&#8226;</div>
-  <div class="item-text"><span class="title">{{this.dataItem().title}}</span>. <span class="text">{{this.dataItem().text}}</span></div>
+  <div class="item-and-characteristics">
+    <div class="item-text-parts">
+      <div>
+        <span class="item-title">{{this.dataItem().entityTitle}}</span>
+        (<span class="item-details">{{this.dataItem().entityDetails}}</span>)
+      </div>
+      <div>
+        <span class="item-text">{{this.dataItem().text}}</span>
+      </div>
+    </div> 
+    <div class="item-characteristics">
+      @for (key of keys; track $index) {
+        <span class="characteristic">{{key}}</span>
+      }
+    </div>
+  </div>
+  
   <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
     <mat-icon>edit</mat-icon>
   </button>
@@ -15,12 +31,21 @@
     <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
   </div> -->
 </div>
+
 } @else {
   <div>
   <form class="edit-form" (submit)="save()">
     <mat-form-field class="full-width title-input">
       <mat-label>Item Title</mat-label>
-      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().title" (ngModelChange)="setTitle($event)">
+      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityTitle" (ngModelChange)="setTitle($event)">
+    </mat-form-field>
+    <mat-form-field class="full-width text-input">
+      <mat-label>Item Details</mat-label>
+      <textarea matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityDetails" (ngModelChange)="setDetails($event)"></textarea>
+    </mat-form-field>
+    <mat-form-field class="full-width text-input">
+      <mat-label>Sentiment</mat-label>
+      <textarea matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().sentiment" (ngModelChange)="setSentiment($event)"></textarea>
     </mat-form-field>
     <mat-form-field class="full-width text-input">
       <mat-label>Item Text</mat-label>
@@ -28,7 +53,7 @@
     </mat-form-field>
     @for (key of keys; track $index) {
       <mat-form-field class="full-width key-input">
-        <mat-label>Key</mat-label>
+        <mat-label>Characteristic</mat-label>
         <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="key" (ngModelChange)="keys[$index] = $event">
       </mat-form-field>
     }

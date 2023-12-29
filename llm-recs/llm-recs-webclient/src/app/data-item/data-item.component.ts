@@ -59,13 +59,25 @@ export class DataItemComponent {
 
   setTitle(s: string): void {
     const newItem = { ...this.dataItem() };
-    newItem.title = s;
+    newItem.entityTitle = s;
     this.dataItem.set(newItem);
   }
 
   setText(s: string): void {
     const newItem = { ...this.dataItem() };
     newItem.text = s;
+    this.dataItem.set(newItem);
+  }
+
+  setDetails(s: string): void {
+    const newItem = { ...this.dataItem() };
+    newItem.entityDetails = s;
+    this.dataItem.set(newItem);
+  }
+
+  setSentiment(s: string): void {
+    const newItem = { ...this.dataItem() };
+    newItem.sentiment = s;
     this.dataItem.set(newItem);
   }
 
