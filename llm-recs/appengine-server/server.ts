@@ -55,7 +55,11 @@ async function main() {
   });
 
   app.post('/api/embed', async (req: Request, res: Response) => {
-    const embedding = await embedder.embed((req.body as SimpleEmbedRequest).text);
+    const query = (req.body as SimpleEmbedRequest).text
+    if(query.match(/^(\s|\n|\r)*$/) !== null) {
+      return res.send({ error: 'Empty string does not have an embedding.' });
+    }
+    const embedding = await embedder.embed(query);
     res.send(embedding);
   });
 
