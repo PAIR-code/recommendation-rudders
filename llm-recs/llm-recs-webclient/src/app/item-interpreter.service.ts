@@ -8,6 +8,8 @@
 
 import { Injectable } from '@angular/core';
 import { LmApiService } from './lm-api.service';
+import { llmInput } from '../lib/recommender-prompts/item-interpreter';
+import { fillTemplate } from 'src/lib/text-templates/llm';
 
 export interface InterpretedItem {
   entityTitle: string;
@@ -28,11 +30,29 @@ export class ItemInterpreterService {
     // public interpretationPrompt: Template<input, title, keys>
   ) { }
 
-  interpretItemText(text: string): InterpretedItem {
-    const title = text.slice(0, 20);
-    const entityDetails = text.slice(20, 50);
-    const sentiment = "liked";
-    const keys = [... new Set<string>(text.split('.'))];
+  async interpretItemText(text: string): Promise<InterpretedItem> {
+    const responses = await fillTemplate(
+      this.lmApiService.llm,
+      llmInput.substs({experience: text}));
+    
+    const badlyFormedResponsesCount = responses.filter(r => !r.substs).length;
+    console.log(`badlyFormedResponses count: ${badlyFormedResponsesCount}`);
+    console.log(`responses: ${JSON.stringify(responses, null, 2)} `);    
+
+    if(responses.length === 0) {
+      throw new Error('no responses');
+    }
+
+    const substs = responses[0].substs;
+    if(!substs) {
+      throw new Error('no substs for initial response');
+    }
+    const title = substs.aboutEntity;
+    const entityDetails = substs.aboutEntity;
+    const sentiment = substs.likedOrDisliked;
+    const characteristicsListStr = `[ ${substs.characteristics} ]`;
+    console.log('characteristicsListStr:', characteristicsListStr);
+    const keys = JSON.parse(characteristicsListStr) as string[];
     return { entityTitle: title, text, entityDetails, sentiment, keys };
   }
 }

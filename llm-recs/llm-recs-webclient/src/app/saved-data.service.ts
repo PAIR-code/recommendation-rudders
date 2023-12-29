@@ -126,7 +126,7 @@ export class SavedDataService {
     if (!text) {
       return { error: 'Cannot add empty text!' };
     }
-    const item = this.itemInterpreterService.interpretItemText(text);
+    const item = await this.itemInterpreterService.interpretItemText(text);
     const embeddings = {} as ItemEmbeddings;
     for (const key of item.keys) {
       if (key.trim() === '') {
