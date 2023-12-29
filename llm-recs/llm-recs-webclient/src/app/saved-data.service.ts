@@ -129,10 +129,9 @@ export class SavedDataService {
     const item = this.itemInterpreterService.interpretItemText(text);
     const embeddings = {} as ItemEmbeddings;
     for (const key of item.keys) {
-      if (key.match(/^(\s|\n|\r)*$/) !== null) {
+      if (key.trim() === '') {
         continue;
       }
-      console.log('non-empty key:', key);
       const embedResponse = await this.lmApiService.embedder.embed(key);
       if (isEmbedError(embedResponse)) {
         return embedResponse;
