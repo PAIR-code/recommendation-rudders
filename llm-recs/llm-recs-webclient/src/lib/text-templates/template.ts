@@ -138,8 +138,11 @@ export function matchTemplate<Ns extends string>(
     if (!v.variable.contentMatchStr) {
       // Match variable as free text, and require postfix or EOS to indicate
       // variable end.
+      //
+      // Note: the 's' flag makes '.' in regexp match all char (otherwise it
+      // doesn't match newlines).
       const varAndPostfixRegexp = new RegExp(
-        `^(.+?)(${escapeStringInMatch(v.postfix)}|$)`);
+        `^(.+?)(${escapeStringInMatch(v.postfix)}|$)`, 's');
       const varAndPostfixMatch = s.match(varAndPostfixRegexp);
 
       if (!varAndPostfixMatch) {
