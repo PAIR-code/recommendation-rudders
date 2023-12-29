@@ -62,9 +62,9 @@ const experienceTemplEntries: ExperienceTemplEntry[] = criteriaPoints.map(
   })
 
 const itemExperienceTempl = template`Short experience description: "${nv('experience')}"
-About: ${nv('aboutEntity')} (${nv('aboutDetails')})
-Liked or Disliked: ${nv('likedOrDisliked')}
-Key characteristics: [
+About-Entity: ${nv('aboutEntity')} (${nv('aboutDetails')})
+Liked-Or-Disliked: ${nv('likedOrDisliked')}
+Key-Characteristics: [
   ${nv('characteristics')}
 ]`;
 
@@ -74,8 +74,7 @@ const itemInterpreterTempl = template`Given a short description of an experience
 
 ${nv('pastExperiences')}
 
-${itemExperienceTempl}
-`;
+${itemExperienceTempl}`;
 
 
 // Example usage.

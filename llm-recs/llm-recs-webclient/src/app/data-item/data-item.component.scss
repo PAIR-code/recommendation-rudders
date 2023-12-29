@@ -8,11 +8,86 @@
   background-color: #eeeeee;
 }
 
-.item-characteristics {
+.item-and-characteristics {
+  padding: 5px;
+  flex: 1;
+}
+
+.item-title {
+  font-weight: 800;
+}
+
+.item-details {
+  display: flex;
+  align-items: center;
+  padding-left: 0.5em;
+  margin-right: 5px;
+}
+
+.item-details-content {
+  display: inline-block;
+  max-width: 15em;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+
+.item-text-parts {
+  // display: inline;
+  margin-bottom: 5px;
+  // padding: 5px;
+  //
+  // padding: 2px;
+  // margin: 3px;
+  // padding-left: 5px;
+  // margin-left: 0px;
+  // border-left: solid 1px #ddd;
+  //
+  // border: solid 1px #ddd;
+  // border-radius: 5px;
+  // flex: 1;
+}
+
+.item-text-parts-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.item-sentiment {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 3px;
+  padding-left: 8px;
+  padding-right: 8px;
+  max-width: 20em;
+  white-space: nowrap;
+  font-size: smaller;
+  border-radius: 25px;
+  background-color: #eeeeee;
   margin-top: 10px;
+  font-weight: 800;
+  // display: inline-block;
+  // margin-right: 5px;
+  // padding: 3px;
+  // padding-left: 8px;
+  // padding-right: 8px;
+  // max-width: 10em;
+  // white-space: nowrap;
+  // font-size: smaller;
+  // border-radius: 25px;
+  // background-color: #eeeeee;
+}
+
+.item-characteristics {
+  // margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  // line-height: 105%;
 }
 .characteristic {
-  
   display: inline-block;
   margin-right: 5px;
   padding: 3px;
@@ -25,6 +100,7 @@
   font-size: smaller;
   border-radius: 25px;
   background-color: #eeeeee;
+  margin-top: 10px;
 }
 
 .id {
@@ -114,10 +190,6 @@
   // margin-bottom: -10px;
 }
 
-.item-title {
-  font-weight: 800;
-}
-
 .title-input {
   font-weight: 800;
 }
@@ -136,27 +208,6 @@
 
 .item {
   display: flex;
-}
-
-.item-and-characteristics {
-  padding: 5px;
-  flex: 1;
-}
-
-.item-text-parts {
-  display: inline;
-  margin-bottom: 5px;
-  // padding: 5px;
-  //
-  // padding: 2px;
-  // margin: 3px;
-  // padding-left: 5px;
-  // margin-left: 0px;
-  // border-left: solid 1px #ddd;
-  //
-  // border: solid 1px #ddd;
-  // border-radius: 5px;
-  // flex: 1;
 }
 
 .bullet {

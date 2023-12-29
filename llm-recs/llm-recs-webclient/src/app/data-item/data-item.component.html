@@ -5,21 +5,22 @@
   <div class="bullet">&#8226;</div>
   <div class="item-and-characteristics">
     <div class="item-text-parts">
-      <div>
-        <span class="item-title">{{this.dataItem().entityTitle}}</span>
-        (<span class="item-details">{{this.dataItem().entityDetails}}</span>)
+      <div class="item-text-parts-header">
+        <span class="item-title">{{this.dataItem().entityTitle}}</span>.
+        <span class="item-details">(<span class="item-details-content">{{this.dataItem().entityDetails.trim()}}</span>)</span>
       </div>
       <div>
         <span class="item-text">{{this.dataItem().text}}</span>
       </div>
-    </div> 
+    </div>
     <div class="item-characteristics">
+      <span class="item-sentiment">{{this.dataItem().sentiment}}</span>
       @for (key of keys; track $index) {
         <span class="characteristic">{{key}}</span>
       }
     </div>
   </div>
-  
+
   <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
     <mat-icon>edit</mat-icon>
   </button>
