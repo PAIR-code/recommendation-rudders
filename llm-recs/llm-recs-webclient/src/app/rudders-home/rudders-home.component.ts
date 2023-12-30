@@ -8,7 +8,7 @@
 
 import { Component, WritableSignal, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { ItemEmbeddings, SavedDataService } from '../saved-data.service';
+import { DataItem, ItemEmbeddings, SavedDataService, emptyItem } from '../saved-data.service';
 import { LmApiService } from '../lm-api.service';
 import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 import { SearchSpec } from '../data-viewer/data-viewer.component';
@@ -24,6 +24,7 @@ export class RuddersHomeComponent {
   public waiting: boolean = false;
   public errorMessage?: string;
   public searchSpec: WritableSignal<SearchSpec | null>;
+  public itemToAdd: DataItem | null = null;
 
   constructor(
     private lmApiService: LmApiService,
@@ -67,20 +68,34 @@ export class RuddersHomeComponent {
   }
 
   async add() {
-    this.waiting = true;
     const text = this.itemTextControl.value;
-    console.log(`adding ${text}.`);
-    if (!text) {
+    if (text === null) {
       console.error('called when text was null');
       return;
     }
-    const addResultItemOrError = await this.dataService.add(text);
-    if (isEmbedError(addResultItemOrError)) {
-      this.waiting = false;
-      this.errorMessage = addResultItemOrError.error;
+    if (text.trim() === '') {
+      this.itemToAdd = emptyItem();
+      return;
     }
+
+    this.waiting = true;
+    const itemOrError = await this.dataService.createItem(text);
+    if (isEmbedError(itemOrError)) {
+      this.waiting = false;
+      this.errorMessage = itemOrError.error;
+      return;
+    }
+    this.itemToAdd = itemOrError;
     this.waiting = false;
   }
+
+  saveOrCancelAdd(event: 'saved' | 'cancelled') {
+    this.itemToAdd = null;
+    if (event === 'saved') {
+      this.itemTextControl.setValue('');
+    }
+  }
+
 
   hasNoInput() {
     return !this.itemTextControl.value

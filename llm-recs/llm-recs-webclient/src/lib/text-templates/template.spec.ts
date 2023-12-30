@@ -6,7 +6,6 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { llmInput } from '../recommender-prompts/item-interpreter';
 import { Template, escapeStr, template, nv, unEscapeStr, matchTemplate } from './template';
 
 describe('template', () => {
@@ -124,7 +123,6 @@ describe('template', () => {
     const thingVar = nv('thing');
     const thing2Var = nv('thing2')
     const p = template`what is a ${thingVar} to ${thing2Var}?`;
-    console.log('p.template', p.escaped);
 
     const bigThingVar = nv('bigThing')
     const p2 = template`big ${bigThingVar}`;
@@ -167,50 +165,57 @@ describe('template', () => {
   it('parts template matching', () => {
     const t = template`what is an ${nv('x')} to a ${nv('y')} anyway?`;
     const parts = t.parts();
+
     const s1 = 'what is an bug to a fly anyway?';
     const m1 = matchTemplate(parts, s1);
-    expect(m1).toEqual({ x: 'bug', y: 'fly' });
+    expect(m1.substs).toEqual({ x: 'bug', y: 'fly' });
+    expect(m1.curPart).toEqual(undefined);
 
     const s2 = 'what is an bug to a pants!';
     const m2 = matchTemplate(parts, s2);
-    expect(m2).toEqual({ x: 'bug', y: 'pants!' });
+    expect(m2.substs).toEqual({ x: 'bug', y: 'pants!' });
+    expect(m2.curPart!.variable.name).toEqual('y');
+    expect(m2.finalStr).toEqual('');
 
     const s3 = 'bonkers!'
     const m3 = matchTemplate(parts, s3);
-    expect(m3).toEqual(null);
+    expect(m3.finalStr).toEqual(m3.str);
 
     const s4 = 'what is an bugfoo';
     const m4 = matchTemplate(parts, s4);
-    expect(m4).toEqual({ x: 'bugfoo', y: '' });
+    expect(m4.substs).toEqual({ x: 'bugfoo', y: '' });
+    expect(m4.curPart?.variable.name).toEqual('y');
+    expect(m4.finalStr).toEqual('')
   });
 
   it('parts template matching with match-string', () => {
     const t = template`what is an ${nv('x', { match: '[12345]' })} to a ${nv('y')} anyway?`;
-
     const parts = t.parts();
+
     const s1 = 'what is an 3 to a fly anyway?';
     const m1 = matchTemplate(parts, s1);
-    expect(m1).toEqual({ x: '3', y: 'fly' });
+    expect(m1.substs).toEqual({ x: '3', y: 'fly' });
 
     const s2 = 'what is an 2 to a pants!';
     const m2 = matchTemplate(parts, s2);
-    expect(m2).toEqual({ x: '2', y: 'pants!' });
+    expect(m2.substs).toEqual({ x: '2', y: 'pants!' });
 
     const s3 = 'bonkers!'
     const m3 = matchTemplate(parts, s3);
-    expect(m3).toEqual(null);
+    expect(m3.finalStr).toEqual(m3.str);
 
     const s4 = 'what is an 4';
     const m4 = matchTemplate(parts, s4);
-    expect(m4).toEqual({ x: '4', y: '' });
+    expect(m4.substs).toEqual({ x: '4', y: '' });
 
     const s5 = 'what is an foo to a pants!';
     const m5 = matchTemplate(parts, s5);
-    expect(m5).toEqual(null);
+    expect(m5.curPart?.variable.name).toEqual('x');
+    expect(m5.matchedPartsCount).toEqual(0);
 
     const s6 = 'what is an 2 and a 3?';
     const m6 = matchTemplate(parts, s6);
-    expect(m6).toEqual({ x: '2', y: '' });
+    expect(m6.substs).toEqual({ x: '2', y: '' });
   });
 
   it('parts template matching with longer match-string', () => {
@@ -219,7 +224,8 @@ describe('template', () => {
     const parts = t.parts();
     const s1 = 'what is an 3 to a fly anyway? and more';
     const m1 = matchTemplate(parts, s1);
-    expect(m1).toEqual({ x: '3', y: 'fly' });
+    expect(m1.substs).toEqual({ x: '3', y: 'fly' });
+    expect(m1.finalStr).toEqual(' and more');
   });
 
   // it('parts template matching with match-string', () => {

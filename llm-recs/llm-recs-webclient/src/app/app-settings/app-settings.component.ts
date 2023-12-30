@@ -187,12 +187,13 @@ export class AppSettingsComponent implements OnInit {
         break;
       }
 
-      const result = this.dataService.add(s);
+      const result = await this.dataService.createItem(s);
       if (isEmbedError(result)) {
         this.errorMessage = result.error;
         this.errorCount++;
         return;
       }
+      this.dataService.addDataItem(result);
     }
     // if (data.sheets) {
     //   info.sheets.forEach(sheet => {

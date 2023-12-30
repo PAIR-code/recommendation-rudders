@@ -96,103 +96,128 @@ export interface TemplateParts<Ns extends string> {
 
 // Escape a string so that it can be matched literally in a regexp expression.
 // "$&" is the matched string. i.e. the character we need to escape.
-function escapeStringInMatch(s: string) {
+export function escapeStringInMatch(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 // $$ is the results in writing out $, so $$$$ ends up as "$$" in the final
 // string. e.g. $ ==> $$
-function escapeStringInReplacement(s: string) {
+export function escapeStringInReplacement(s: string) {
   return s.replace(/\$/g, '$$$$');
 }
+
+export interface TemplateMatch<Ns extends string> {
+  // The template parts to be matched.
+  parts: TemplateParts<Ns>,
+  // The substitutions for the variable-parts in the template.
+  substs: { [Key in Ns]: string }
+  // The string matched by this template.
+  str: string,
+  // This is not set when all variables in the template were fully matched,
+  // and the final post-fix was empty indicating that the final variable can't
+  // be further added to. Otherwise curPart is the final variable being matched,
+  // which may be added to further.
+  curPart?: TemplatePart<Ns>,
+  matchedPartsCount: number,
+  // this is '' when the full string `str` was matched.
+  finalStr: string,
+}
+
+// type TemplateMatch<Ns extends string> =
+//   PartialMatch<Ns> | FullMatch<Ns> | NoMatch<Ns>;
+
 
 // ----------------------------------------------------------------------------
 // Given a string, match the string against the template parts filling in the
 // variables, returning the variable substitutions.
 export function matchTemplate<Ns extends string>(
   parts: TemplateParts<Ns>,
-  s: string,
+  strToMatch: string,
   matchPrefix = true,
-): { [Key in Ns]: string } | null {
-  const substs = {} as { [Key in Ns]: string };
+): TemplateMatch<Ns> {
+  const match: TemplateMatch<Ns> = {
+    parts,
+    str: strToMatch,
+    substs: {} as { [Key in Ns]: string },
+    matchedPartsCount: 0,
+    finalStr: strToMatch,
+  }
+  parts.variables.forEach(v => match.substs[v.variable.name] = '');
+  // const substs = {} as { [Key in Ns]: string };
 
   if (matchPrefix) {
-    const prefixMatch = s.match(`^${escapeStringInMatch(parts.prefix)}`);
+    const prefixMatch = match.finalStr.match(`^${escapeStringInMatch(parts.prefix)}`);
     if (prefixMatch) {
-      s = s.slice(prefixMatch[0].length);
+      match.finalStr = match.finalStr.slice(prefixMatch[0].length);
     } else {
-      return null;
+      return match;
     }
   }
 
   for (const v of parts.variables) {
-    if (s.length === 0) {
-      substs[v.variable.name] = '';
-    }
+    match.curPart = v;
+
     // If the var is the last thing in the template, then the whole response
     // is the variable.
     if (v.postfix === '') {
-      substs[v.variable.name] = s;
-      s = '';
+      match.substs[v.variable.name] = match.finalStr;
+      match.finalStr = '';
+    }
+
+    if (match.finalStr.length === 0) {
+      return match;
     }
 
     if (!v.variable.contentMatchStr) {
-      // Match variable as free text, and require postfix or EOS to indicate
-      // variable end.
-      //
-      // Note: the 's' flag makes '.' in regexp match all char (otherwise it
-      // doesn't match newlines).
-      const varAndPostfixRegexp = new RegExp(
-        `^(.+?)(${escapeStringInMatch(v.postfix)}|$)`, 's');
-      const varAndPostfixMatch = s.match(varAndPostfixRegexp);
-
-      if (!varAndPostfixMatch) {
-        // if there is no match, then this variable has not been found or is the
-        // empty string. We treat that as a failure to fill in the variable.
+      if (v.postfix !== '') {
+        // Match variable as free text, and require postfix or EOS to indicate
+        // variable end.
         //
-        // If this was the first variable, then no varaibles have been found, and
-        // we can directly fail and say that no variable was matched.
-        if (Object.keys(substs).length === 0) {
-          return null;
+        // Note: the 's' flag makes '.' in regexp match all char (otherwise it
+        // doesn't match newlines).
+        const varAndPostfixRegexp = new RegExp(
+          `^(.+?)(${escapeStringInMatch(v.postfix)}|$)`, 's');
+        const varAndPostfixMatch = match.finalStr.match(varAndPostfixRegexp);
+
+        if (!varAndPostfixMatch) {
+          // if there is no match, then this variable has not been found or is the
+          // empty string. We treat that as a failure to fill in the variable.
+          //
+          // If this was the first variable, then no varaibles have been found, and
+          // we can directly fail and say that no variable was matched.
+          return match;
+        } else {
+          match.substs[v.variable.name] = varAndPostfixMatch[1];
+          match.finalStr = match.finalStr.slice(varAndPostfixMatch[0].length);
+          if (varAndPostfixMatch[2] === v.postfix) {
+            delete match.curPart;
+            match.matchedPartsCount++;
+          }
         }
-        substs[v.variable.name] = '';
-        // Setting s = '' will make all future vars null.
-        s = '';
-      } else {
-        substs[v.variable.name] = varAndPostfixMatch[1];
-        s = s.slice(varAndPostfixMatch[0].length);
       }
     } else {
       // We have a special variable constraint, so match it first, then postfix.
       const varRegexp = new RegExp(`^(${v.variable.contentMatchStr})`);
-      const varMatch = s.match(varRegexp);
+      const varMatch = match.finalStr.match(varRegexp);
       if (!varMatch) {
-
-        // if there is no match, then this variable has not been found or is the
-        // empty string. We treat that as a failure to fill in the variable.
-        //
-        // If this was the first variable, then no varaibles have been found, and
-        // we can directly fail and say that no variable was matched.
-        if (Object.keys(substs).length === 0) {
-          return null;
-        }
-        substs[v.variable.name] = '';
-        // Setting s = '' will make all future vars null.
-        s = '';
+        return match;
       } else {
-        substs[v.variable.name] = varMatch[1];
-        s = s.slice(varMatch[0].length);
+        match.substs[v.variable.name] = varMatch[1];
+        match.finalStr = match.finalStr.slice(varMatch[0].length);
       }
-
-      const postfixRegexp = new RegExp(escapeStringInMatch(v.postfix));
-      const postfixMatch = s.match(postfixRegexp);
-      if (!postfixMatch) {
-        s = '';
-      } else {
-        s = s.slice(postfixMatch[0].length);
+      if (v.postfix !== '') {
+        const postfixRegexp = new RegExp(escapeStringInMatch(v.postfix));
+        const postfixMatch = match.finalStr.match(postfixRegexp);
+        if (!postfixMatch) {
+          return match
+        } else {
+          match.finalStr = match.finalStr.slice(postfixMatch[0].length);
+          delete match.curPart;
+          match.matchedPartsCount++;
+        }
       }
     }
   }
-  return substs;
+  return match;
 }
 
 

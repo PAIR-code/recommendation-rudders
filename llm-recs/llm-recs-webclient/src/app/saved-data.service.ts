@@ -35,6 +35,21 @@ export interface DataItem {
   embeddings: ItemEmbeddings;
 }
 
+export function emptyItem(): DataItem {
+  const id = `${new Date().valueOf()}`;
+  const dataItem: DataItem = {
+    id,
+    date: new Date().toISOString(),
+    text: '',
+    entityTitle: '',
+    entityDetails: '',
+    sentiment: '',
+    embeddings: { '': [] },
+  };
+  return dataItem;
+}
+
+
 export const dummyItem: DataItem = {
   id: 'dummyItemId',
   date: 'dummyItemDate',
@@ -103,32 +118,22 @@ export class SavedDataService {
     this.data.set({ ...data });
   }
 
-  async addRaw(
-    entityTitle: string, text: string, entityDetails: string, sentiment: string, embeddings: ItemEmbeddings
-  ): Promise<DataItem> {
+  addDataItem(dataItem: DataItem): DataItem {
     const id = `${new Date().valueOf()}`;
     const data = { ... this.data() };
-    const dataItem: DataItem = {
-      id,
-      date: new Date().toISOString(),
-      text,
-      entityTitle,
-      entityDetails,
-      sentiment,
-      embeddings,
-    };
     data.items[id] = dataItem;
     this.data.set({ ...data });
     return dataItem;
   }
 
-  async add(text: string): Promise<EmbedError | DataItem> {
-    if (!text) {
+  async createItem(textToInterpret: string): Promise<DataItem | EmbedError> {
+    if (textToInterpret.trim() === '') {
       return { error: 'Cannot add empty text!' };
     }
-    const item = await this.itemInterpreterService.interpretItemText(text);
+    const { entityDetails, entityTitle, sentiment, text, keys } =
+      await this.itemInterpreterService.interpretItemText(textToInterpret);
     const embeddings = {} as ItemEmbeddings;
-    for (const key of item.keys) {
+    for (const key of keys) {
       if (key.trim() === '') {
         continue;
       }
@@ -138,7 +143,16 @@ export class SavedDataService {
       }
       embeddings[key] = embedResponse.embedding;
     }
-    const dataItem = this.addRaw(item.entityTitle, item.text, item.entityDetails, item.sentiment, embeddings);
+    const id = `${new Date().valueOf()}`;
+    const dataItem: DataItem = {
+      id,
+      date: new Date().toISOString(),
+      text,
+      entityTitle,
+      entityDetails,
+      sentiment,
+      embeddings,
+    };
     return dataItem;
   }
 

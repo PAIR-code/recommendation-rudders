@@ -23,7 +23,7 @@ See the test file (.spec) for more detailed examples.
 */
 
 import { flatten } from 'underscore';
-import { Template, escapeStr, template, nv, unEscapeStr } from './template';
+import { Template, escapeStr, template, nv, unEscapeStr, matchTemplate, TemplateMatch, escapeStringInMatch } from './template';
 import { NamedVar } from './variable';
 
 // For each example substitution, substitute it into the template, and join it
@@ -57,4 +57,29 @@ export class FewShotTemplate<Ns extends string> {
     return fewShotSubst(
       this.template, examples, this.joinStr);
   }
+}
+
+export function matchFewShotTemplate<Ns extends string>(
+  fewShotTempl: FewShotTemplate<Ns>, str: string
+): TemplateMatch<Ns>[] {
+  const matches: TemplateMatch<Ns>[] = [];
+  const parts = fewShotTempl.template.parts();
+  let match = matchTemplate(parts, str);
+  matches.push(match);
+  while (
+    match.matchedPartsCount === match.parts.variables.length &&
+    match.finalStr !== ''
+  ) {
+    let nextStr = match.finalStr
+    const sepMatch = match.finalStr.match(
+      `^${escapeStringInMatch(fewShotTempl.joinStr)}`);
+    if (sepMatch) {
+      nextStr = match.finalStr.slice(sepMatch[0].length);
+    } else {
+      return matches;
+    }
+    match = matchTemplate(parts, nextStr);
+    matches.push(match);
+  }
+  return matches;
 }

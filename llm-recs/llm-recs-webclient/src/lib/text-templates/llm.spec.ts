@@ -115,7 +115,6 @@ summary: ['${nv('summary')}']`;
 
     const substsList = await fillTemplate(
       fakeLLM, promptTempl.substs({ movie: 'The Godfather' }));
-    console.log('substsList: ', substsList);
     expect(substsList.length).toEqual(4);
     expect(substsList[0].substs!.summary).toEqual(`an operatic tale of a powerful family`);
     expect(substsList[1].substs!.summary).toEqual(`an operatic tragedy about a powerful Italian American crime family', 'a sprawling epic of violence and betrayal`);

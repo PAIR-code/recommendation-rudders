@@ -86,7 +86,7 @@ export async function fillTemplate<Ns extends string>(
     const match = matchTemplate(parts, completion, false);
     const interpretedResponse = { responseStr: completion } as InterpretedResponse<Ns>;
     if (match) {
-      interpretedResponse.substs = match;
+      interpretedResponse.substs = match.substs;
     }
     interpretedResponses.push(interpretedResponse)
   }
