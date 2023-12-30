@@ -24,6 +24,6 @@ export class LmApiService {
 
   constructor() {
     this.embedder = new SimpleEmbedder();
-    this.llm = new SimpleLlm();
+    this.llm = new SimpleLlm({ candidateCount: 1 });
   }
 }

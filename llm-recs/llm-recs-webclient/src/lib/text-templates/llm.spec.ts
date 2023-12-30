@@ -10,7 +10,7 @@
 Showing how the LLM class works...
 */
 
-import { LookupTableFakeLLM, PredictResponse, ScoreResponse, ScoredCompletion, fillTemplate } from "./llm";
+import { LookupTableFakeLLM, PredictResponse, ScoreResponse, ScoredCompletion, assertNoErrorResponse, fillTemplate, isErrorResponse } from "./llm";
 import { Palm2Response, preparePalm2Request } from "./llm_vertexapi_palm2";
 import { nv, template } from "./template";
 
@@ -115,6 +115,7 @@ summary: ['${nv('summary')}']`;
 
     const substsList = await fillTemplate(
       fakeLLM, promptTempl.substs({ movie: 'The Godfather' }));
+    assertNoErrorResponse(substsList);
     expect(substsList.length).toEqual(4);
     expect(substsList[0].substs!.summary).toEqual(`an operatic tale of a powerful family`);
     expect(substsList[1].substs!.summary).toEqual(`an operatic tragedy about a powerful Italian American crime family', 'a sprawling epic of violence and betrayal`);
@@ -145,6 +146,7 @@ rating (1 to 5 scale): ${nv('rating', { match: '[12345](\.\\d)?' })}
 synopsis: '${nv('synopsis')}'`;
 
     const responses = await fillTemplate(fakeLLM, t.substs({ movie }));
+    assertNoErrorResponse(responses);
     expect(responses[0].substs!.summaries).toEqual(` 80s cop drama with an amazing cast', 'stylish and suspenseful`);
     expect(responses[0].substs!.rating).toEqual(`4`);
     expect(responses[1].substs!.summaries).toEqual(` stylish and gritty gangster movie of the prohibition era', 'the classic good vs evil tale`);

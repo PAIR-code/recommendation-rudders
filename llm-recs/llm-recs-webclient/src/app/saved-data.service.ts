@@ -7,9 +7,9 @@
 ==============================================================================*/
 
 import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
-import { isEmbedError, EmbedError } from 'src/lib/text-embeddings/embedder';
 import { ItemInterpreterService } from './item-interpreter.service';
 import { LmApiService } from './lm-api.service';
+import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 export interface ItemEmbeddings { [key: string]: number[] };
 export interface DataItems { [id: string]: DataItem }
@@ -126,19 +126,26 @@ export class SavedDataService {
     return dataItem;
   }
 
-  async createItem(textToInterpret: string): Promise<DataItem | EmbedError> {
+  async createItem(textToInterpret: string): Promise<DataItem | ErrorResponse> {
     if (textToInterpret.trim() === '') {
       return { error: 'Cannot add empty text!' };
     }
-    const { entityDetails, entityTitle, sentiment, text, keys } =
+    const responseOrError =
       await this.itemInterpreterService.interpretItemText(textToInterpret);
+    if (isErrorResponse(responseOrError)) {
+      return responseOrError;
+    }
+    const {
+      entityDetails, entityTitle, sentiment, text, keys
+    } = responseOrError;
+
     const embeddings = {} as ItemEmbeddings;
     for (const key of keys) {
       if (key.trim() === '') {
         continue;
       }
       const embedResponse = await this.lmApiService.embedder.embed(key);
-      if (isEmbedError(embedResponse)) {
+      if (isErrorResponse(embedResponse)) {
         return embedResponse;
       }
       embeddings[key] = embedResponse.embedding;

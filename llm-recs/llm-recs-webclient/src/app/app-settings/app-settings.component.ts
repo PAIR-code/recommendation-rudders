@@ -10,11 +10,11 @@ import { Component, ElementRef, OnInit, ViewChild, effect } from '@angular/core'
 import { AppData, SavedDataService } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../lm-api.service';
-import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 import { GoogleSheetsService, isSheetsError } from '../google-sheets.service';
 import { GoogleAuthService } from '../google-auth.service';
 import { GoogleDriveAppdataService } from '../google-drive-appdata.service';
 import { ItemInterpreterService } from '../item-interpreter.service';
+import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 
 @Component({
@@ -131,7 +131,7 @@ export class AppSettingsComponent implements OnInit {
       for (const item of Object.values(uploadedData.items)) {
         if (Object.keys(item.embeddings).length === 0) {
           const embedResult = await this.lmApiService.embedder.embed(item.text);
-          if (isEmbedError(embedResult)) {
+          if (isErrorResponse(embedResult)) {
             if (!this.errorMessage) {
               this.errorMessage = embedResult.error;
             }
@@ -188,7 +188,7 @@ export class AppSettingsComponent implements OnInit {
       }
 
       const result = await this.dataService.createItem(s);
-      if (isEmbedError(result)) {
+      if (isErrorResponse(result)) {
         this.errorMessage = result.error;
         this.errorCount++;
         return;

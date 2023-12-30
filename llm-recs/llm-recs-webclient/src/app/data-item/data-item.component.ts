@@ -10,8 +10,7 @@ import { Component, computed, EventEmitter, Input, OnInit, Output, Signal, signa
 import { DataItem, SavedDataService, dummyItem } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../lm-api.service';
-import { isEmbedError } from 'src/lib/text-embeddings/embedder';
-
+import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 // class SignalModel<T> {
 //   public signalValue: WritableSignal<T>;
@@ -120,7 +119,7 @@ export class DataItemComponent {
         newEmbeddings[key] = dataItem.embeddings[key];
       } else {
         const embedResponse = await this.lmApi.embedder.embed(key);
-        if (isEmbedError(embedResponse)) {
+        if (isErrorResponse(embedResponse)) {
           this.waiting = false;
           this.saveError = embedResponse.error;
           return;
@@ -141,7 +140,7 @@ export class DataItemComponent {
     delete this.saveError;
 
     const newItem = await this.dataService.createItem(this.dataItem().text);
-    if (isEmbedError(newItem)) {
+    if (isErrorResponse(newItem)) {
       this.waiting = false;
       this.saveError = newItem.error;
       return;

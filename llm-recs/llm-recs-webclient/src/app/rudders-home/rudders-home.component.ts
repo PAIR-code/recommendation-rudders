@@ -10,9 +10,9 @@ import { Component, WritableSignal, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { DataItem, ItemEmbeddings, SavedDataService, emptyItem } from '../saved-data.service';
 import { LmApiService } from '../lm-api.service';
-import { isEmbedError } from 'src/lib/text-embeddings/embedder';
 import { SearchSpec } from '../data-viewer/data-viewer.component';
 import { ItemInterpreterService } from '../item-interpreter.service';
+import { isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 @Component({
   selector: 'app-rudders-home',
@@ -49,7 +49,7 @@ export class RuddersHomeComponent {
     const embedResult = await this.lmApiService.embedder.embed(
       this.itemTextControl.value!);
 
-    if (isEmbedError(embedResult)) {
+    if (isErrorResponse(embedResult)) {
       this.waiting = false;
       this.errorMessage = embedResult.error;
       return;
@@ -80,7 +80,7 @@ export class RuddersHomeComponent {
 
     this.waiting = true;
     const itemOrError = await this.dataService.createItem(text);
-    if (isEmbedError(itemOrError)) {
+    if (isErrorResponse(itemOrError)) {
       this.waiting = false;
       this.errorMessage = itemOrError.error;
       return;
