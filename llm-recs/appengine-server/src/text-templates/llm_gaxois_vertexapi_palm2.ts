@@ -143,21 +143,21 @@ function overideOptions(
 
 export class VertexPalm2LLM implements LLM<Palm2ApiOptions> {
   public name: string;
-  public defaultOptions: Palm2ApiOptions;
+  public ptions: Palm2ApiOptions;
 
   constructor(
     public projectId: string,
     public client: AuthClient,
     public initOptions?: Partial<Palm2ApiOptions>,
   ) {
-    this.defaultOptions = overideOptions(DEFAULT_OPTIONS, initOptions);
-    this.name = `VertexLLM:` + this.defaultOptions.modelId;
+    this.ptions = overideOptions(DEFAULT_OPTIONS, initOptions);
+    this.name = `VertexLLM:` + this.ptions.modelId;
   }
 
   async predict(
     query: string, options?: Palm2ApiOptions
   ): Promise<PredictResponse> {
-    const usedOptions = overideOptions(this.defaultOptions, options);
+    const usedOptions = overideOptions(this.ptions, options);
     const apiRequest: Palm2ApiRequest = {
       instances: [{ content: query }],
       parameters: usedOptions.requestParameters
@@ -167,8 +167,8 @@ export class VertexPalm2LLM implements LLM<Palm2ApiOptions> {
       this.projectId,
       this.client,
       apiRequest,
-      this.defaultOptions.modelId,
-      this.defaultOptions.apiEndpoint);
+      this.ptions.modelId,
+      this.ptions.apiEndpoint);
 
     // The API doesn't include the actual stop sequence that it found, so we
     // can never know the true stop seqeunce, so we just pick the first one,

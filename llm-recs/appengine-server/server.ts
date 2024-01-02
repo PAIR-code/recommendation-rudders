@@ -64,7 +64,7 @@ async function main() {
   app.post('/api/llm', async (req: Request, res: Response) => {
     console.log(`${new Date()}: /api/llm`);
     const request = (req.body as LlmRequest)
-    // Convert from Simple LlmRequest to VertexAI LLM request.
+    // Convert from LlmRequest to VertexAI LLM request.
     const inputRequestParameters = { ...request.params };
     delete inputRequestParameters.modelId;
     const requestParameters = inputRequestParameters as Palm2ApiParams;
