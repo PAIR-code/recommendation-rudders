@@ -24,8 +24,8 @@ interface ExperienceTemplEntry {
   characteristics: string;
 }
 
-const characteristicsTempl = new FewShotTemplate(template`"${nv('characteristic')}"`,
-  ',\n  ');
+export const characteristicsTempl = new FewShotTemplate(template`<characteristic-phrase>${nv('characteristic')}</characteristic-phrase>`,
+  '\n  ');
 
 const criteriaPoints: Experience[] = [
   {
@@ -61,12 +61,13 @@ const experienceTemplEntries: ExperienceTemplEntry[] = criteriaPoints.map(
     };
   })
 
-const itemExperienceTempl = template`Short experience description: "${nv('experience')}"
-About-Entity: ${nv('aboutEntity')} (${nv('aboutDetails')})
-Liked-Or-Disliked: ${nv('likedOrDisliked')}
-Key-Characteristics: [
+const itemExperienceTempl = template`<short-experience-description>${nv('experience')}</short-experience-description>
+<entity-name>${nv('aboutEntity')}</entity-name>
+<entity-detail>${nv('aboutDetails')}</entity-detail>
+<liked-or-disliked>${nv('likedOrDisliked')}</liked-or-disliked>
+<characteristics>
   ${nv('characteristics')}
-]`;
+</characteristics>`
 
 const itemExperiencesTempl = new FewShotTemplate(itemExperienceTempl, '\n\n');
 
@@ -80,7 +81,7 @@ ${itemExperienceTempl}`;
 // Example usage.
 const pastFewShotItemExperiences = itemExperiencesTempl.apply(experienceTemplEntries);
 
-export const llmInput = itemInterpreterTempl.substs({
+export const expInterpTempl = itemInterpreterTempl.substs({
   pastExperiences: pastFewShotItemExperiences.escaped,
   // experience: 'The Garden of Forking Paths: like it'
 });

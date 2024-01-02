@@ -10,8 +10,7 @@ import { Component, computed, EventEmitter, Input, OnInit, Output, Signal, signa
 import { DataItem, SavedDataService, dummyItem } from '../saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../lm-api.service';
-import { isEmbedError } from 'src/lib/text-embeddings/embedder';
-
+import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 // class SignalModel<T> {
 //   public signalValue: WritableSignal<T>;
@@ -36,7 +35,7 @@ import { isEmbedError } from 'src/lib/text-embeddings/embedder';
   styleUrls: ['./data-item.component.scss']
 })
 export class DataItemComponent {
-  public mode: 'view' | 'edit' = 'view';
+  public mode: 'view' | 'edit' | 'hidden' = 'view';
   public waiting: boolean = false;
   public saveError?: string;
   public dataItem = signal<DataItem>(dummyItem);
@@ -45,12 +44,20 @@ export class DataItemComponent {
   public initialDataItem!: DataItem;
 
   @Input()
+  set editMode(mode: 'view' | 'edit' | 'hidden') {
+    this.mode = mode;
+  }
+
+  @Input()
   set item(i: DataItem) {
     this.dataItem.set(i);
     this.initialDataItem = i;
     this.keys = Object.keys(i.embeddings);
   }
   @Input() rank!: number;
+
+  @Output()
+  savedOrCancelled = new EventEmitter<'saved' | 'cancelled'>();
 
   constructor(
     public dataService: SavedDataService,
@@ -85,12 +92,18 @@ export class DataItemComponent {
     this.keys.push('');
   }
 
-  editMode(): void {
-    this.mode = 'edit';
+  cancelEdit() {
+    this.savedOrCancelled.emit('cancelled');
+    this.waiting = false;
+    this.editMode = 'hidden';
   }
-  viewMode(): void {
-    this.mode = 'view';
-  }
+
+  // editMode(): void {
+  //   this.mode = 'edit';
+  // }
+  // viewMode(): void {
+  //   this.mode = 'view';
+  // }
 
   async save(): Promise<void> {
     this.waiting = true;
@@ -106,7 +119,7 @@ export class DataItemComponent {
         newEmbeddings[key] = dataItem.embeddings[key];
       } else {
         const embedResponse = await this.lmApi.embedder.embed(key);
-        if (isEmbedError(embedResponse)) {
+        if (isErrorResponse(embedResponse)) {
           this.waiting = false;
           this.saveError = embedResponse.error;
           return;
@@ -117,7 +130,23 @@ export class DataItemComponent {
     this.keys = Object.keys(newEmbeddings);
     dataItem.embeddings = newEmbeddings;
     this.dataService.saveItem(dataItem);
-    this.viewMode();
+    this.savedOrCancelled.emit('saved');
+    this.editMode = 'view';
+    this.waiting = false;
+  }
+
+  async interpretFromText() {
+    this.waiting = true;
+    delete this.saveError;
+
+    const newItem = await this.dataService.createItem(this.dataItem().text);
+    if (isErrorResponse(newItem)) {
+      this.waiting = false;
+      this.saveError = newItem.error;
+      return;
+    }
+    this.dataItem.set(newItem);
+    this.keys = Object.keys(newItem.embeddings);
     this.waiting = false;
   }
 
@@ -126,7 +155,7 @@ export class DataItemComponent {
   }
 
   deleteItem(): void {
-    this.dataService.deleteItem(this.item);
+    this.dataService.deleteItem(this.dataItem());
   }
 
   itemEmbeddingStr(item: DataItem): string {

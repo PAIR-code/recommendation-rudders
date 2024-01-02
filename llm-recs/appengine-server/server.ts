@@ -9,7 +9,7 @@
 import express, { Express, Request, Response } from 'express';
 import { GoogleAuth } from 'google-auth-library';
 import { VertexEmbedder } from './src/text-embeddings/embedder_gaxois_vertexapi';
-import { VertexPalm2LLM } from './src/text-templates/llm_gaxois_vertexapi_palm2';
+import { VertexPalm2LLM, Palm2ApiOptions, Palm2ApiParams } from './src/text-templates/llm_gaxois_vertexapi_palm2';
 import * as path from 'path';
 
 export const app: Express = express();
@@ -17,14 +17,23 @@ app.use(express.static('./static'));
 app.use(express.json());  // for POST requests
 app.use(express.urlencoded({ extended: true }));  // for PUT requests
 
-interface SimpleEmbedRequest {
-  text: string;
+export interface LlmOptions {
+  modelId?: string; // e.g. text-bison
+  candidateCount?: number, // e.g. 1 to 8 = number of completions
+  maxOutputTokens?: number, // e.g. 256, 1024
+  stopSequences?: string[], // e.g. ']
+  temperature?: number,  // e.g. 0.8 (0=deterministic, 0.7-0.9=normal, x>1=wild)
+  topP?: number,  // e.g. 0.8 (0-1, smaller = restricts crazyiness)
+  topK?: number  // e.g. 40 (0-numOfTokens, smaller = restricts crazyiness)
 }
 
-interface SimpleLLMRequest {
+export interface LlmRequest {
+  text: string
+  params?: LlmOptions
+}
+
+export interface SimpleEmbedRequest {
   text: string;
-  temperature: number;
-  modelId: string;
 }
 
 async function main() {
@@ -42,21 +51,10 @@ async function main() {
 
   const embedder = new VertexEmbedder(client, projectId);
 
-  app.get('/submit', (req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, '/views/form.html'));
-  });
-
-  app.post('/submit', (req: Request, res: Response) => {
-    console.log({
-      name: req.body.name,
-      message: req.body.message,
-    });
-    res.send('Thanks for your message!');
-  });
-
   app.post('/api/embed', async (req: Request, res: Response) => {
+    console.log(`${new Date()}: /api/embed`);
     const query = (req.body as SimpleEmbedRequest).text
-    if(query.trim() === '') {
+    if (query.trim() === '') {
       return res.send({ error: 'Empty string does not have an embedding.' });
     }
     const embedding = await embedder.embed(query);
@@ -64,20 +62,19 @@ async function main() {
   });
 
   app.post('/api/llm', async (req: Request, res: Response) => {
-    const request = (req.body as SimpleLLMRequest)
+    console.log(`${new Date()}: /api/llm`);
+    const request = (req.body as LlmRequest)
+    // Convert from LlmRequest to VertexAI LLM request.
+    const inputRequestParameters = { ...request.params };
+    delete inputRequestParameters.modelId;
+    const requestParameters = inputRequestParameters as Palm2ApiParams;
+
     // TODO: we now have duplicated definitions of default options, we might want to
     // remove one of them.
-    const options = {
-      modelId: request.modelId || 'text-bison',
+    const options: Palm2ApiOptions = {
+      modelId: (request.params && request.params.modelId) || 'text-bison',
       apiEndpoint: 'us-central1-aiplatform.googleapis.com',
-      requestParameters: {
-        temperature: request.temperature || 0.7,
-        topK: 40,
-        topP: 0.95,
-        candidateCount: 4,
-        maxOutputTokens: 256,
-        stopSequences: [],
-      }
+      requestParameters,
     };
     const llm = new VertexPalm2LLM(
       projectId,

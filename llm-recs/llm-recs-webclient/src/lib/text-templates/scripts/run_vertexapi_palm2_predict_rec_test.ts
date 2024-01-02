@@ -23,7 +23,7 @@ Assumes that you have run:
 */
 import { VertexPalm2LLM } from '../llm_vertexapi_palm2';
 import { FewShotTemplate } from '../fewshot_template';
-import { llmInput } from '../../recommender-prompts/item-interpreter';
+import { expInterpTempl } from '../../recommender-prompts/item-interpreter';
 
 
 import * as yargs from 'yargs';
@@ -45,7 +45,7 @@ async function run(args: Params): Promise<void> {
     args.project,
     args.accessToken,
   );
-  const templateToFill = llmInput.substs({ experience: args.experience });
+  const templateToFill = expInterpTempl.substs({ experience: args.experience });
   console.log('template: \n\n', templateToFill.escaped);
   console.log('\n\n');
   const responses = await fillTemplate(llm, templateToFill);

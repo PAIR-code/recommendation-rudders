@@ -6,13 +6,13 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Embedder, EmbedResponse as EmbedResponse } from "./embedder";
+import { Embedder, Embedding, EmbedError } from "./embedder";
 
 interface EmbedRequest {
   text: string
 }
 
-async function sendEmbedRequest(request: EmbedRequest): Promise<EmbedResponse> {
+async function sendEmbedRequest(request: EmbedRequest): Promise<Embedding | EmbedError> {
   // Default options are marked with *
   // try {
   const response = await fetch(`/api/embed`, {
@@ -33,7 +33,7 @@ async function sendEmbedRequest(request: EmbedRequest): Promise<EmbedResponse> {
     console.error(response.statusText);
     return { error: `fetch request failed (${response.status}): ${response.statusText}` };
   }
-  return (await response.json() as EmbedResponse);
+  return (await response.json() as Embedding | EmbedError);
   // } catch (e: unknown) {
   //   console.error(e);
   //   return { error: `fetch request failed: ${(e as Error).message}` };
@@ -47,7 +47,7 @@ export class SimpleEmbedder implements Embedder<{}> {
   }
   async embed(
     text: string, params?: {}
-  ): Promise<EmbedResponse> {
+  ): Promise<Embedding | EmbedError> {
     const apiResponse = await sendEmbedRequest({ text });
     return apiResponse
   }

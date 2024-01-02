@@ -10,11 +10,20 @@
 An class to wrap, and provide a common interface for LLM behaviour.
 */
 import { LLM, PredictResponse } from "./llm";
-import { Palm2ApiOptions, Palm2ApiParams } from "./llm_vertexapi_palm2";
 
-interface LlmRequest {
+export interface LlmOptions {
+  modelId?: string; // e.g. text-bison
+  candidateCount?: number, // e.g. 1 to 8 = number of completions
+  maxOutputTokens?: number, // e.g. 256, 1024
+  stopSequences?: string[], // e.g. ']
+  temperature?: number,  // e.g. 0.8 (0=deterministic, 0.7-0.9=normal, x>1=wild)
+  topP?: number,  // e.g. 0.8 (0-1, smaller = restricts crazyiness)
+  topK?: number  // e.g. 40 (0-numOfTokens, smaller = restricts crazyiness)
+}
+
+export interface LlmRequest {
   text: string
-  params?: Palm2ApiOptions
+  params?: LlmOptions
 }
 
 async function sendLlmRequest(request: LlmRequest): Promise<PredictResponse> {
@@ -35,15 +44,22 @@ async function sendLlmRequest(request: LlmRequest): Promise<PredictResponse> {
   return (await response.json() as PredictResponse); // parses JSON response into native JavaScript objects
 }
 
-export class SimpleLlm implements LLM<{}> {
+export class SimpleLlm implements LLM<LlmOptions> {
   public name: string;
-  constructor() {
+  public defaultOptions: LlmOptions = {};
+
+  constructor(initialOptions?: LlmOptions) {
     this.name = `SimpleLlm`
+    if (initialOptions) {
+      this.defaultOptions = initialOptions;
+    }
   }
-  async predict(
-    text: string, params?: Palm2ApiOptions
-  ): Promise<PredictResponse> {
-    const apiResponse = await sendLlmRequest({ text, params });
+  async predict(text: string, params?: LlmOptions): Promise<PredictResponse> {
+    const usedParams = { ...this.defaultOptions };
+    if (params) {
+      Object.assign(usedParams, params);
+    }
+    const apiResponse = await sendLlmRequest({ text, params: usedParams });
     return apiResponse
   }
 }

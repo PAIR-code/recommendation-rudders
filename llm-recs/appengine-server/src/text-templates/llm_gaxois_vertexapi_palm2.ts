@@ -14,6 +14,7 @@ See: https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/text
 
 import { AuthClient } from "google-auth-library";
 import { LLM, PredictResponse } from "./llm";
+import { isErrorResponse } from "../simple-errors/simple-errors";
 
 export interface Palm2ApiParams {
   candidateCount: number, // 1 to 8
@@ -64,27 +65,30 @@ export interface Palm2Error {
   }
 }
 
-function isErrorResponse(response: Palm2Response
-  ): response is Palm2Error {
-    if ((response as Palm2Error).error) {
-      return true;
-    }
-    return false;
-  }
+export const DEFAULT_PARAMS: Palm2ApiParams = {
+  temperature: 0.7,
+  topK: 40,
+  topP: 0.95,
+  candidateCount: 4,
+  maxOutputTokens: 256,
+  stopSequences: [],
+};
+
+export const DEFAULT_OPTIONS: Palm2ApiOptions = {
+  modelId: 'text-bison',
+  apiEndpoint: 'us-central1-aiplatform.googleapis.com',
+  requestParameters: DEFAULT_PARAMS,
+};
 
 export type Palm2Response = Palm2ValidResponse | Palm2Error;
 
-export function preparePalm2Request(text: string, options?: Palm2ApiParams): Palm2ApiRequest {
+export function preparePalm2Request(
+  text: string, params?: Partial<Palm2ApiParams>
+): Palm2ApiRequest {
   return {
     instances: [{ content: text }],
-    parameters: {
-      temperature: (options && options.temperature) || 0.7,
-      topK: (options && options.topK) || 40,
-      topP: (options && options.topP) || 0.95,
-      candidateCount: (options && options.candidateCount) || 4,
-      maxOutputTokens: (options && options.maxOutputTokens) || 256,
-      stopSequences: (options && options.stopSequences) || [],
-    }
+    parameters:
+      (params && Object.assign({ ...DEFAULT_PARAMS }, params)) || DEFAULT_PARAMS
   };
 }
 
@@ -117,64 +121,65 @@ export async function sendPalm2Request(
   );
 }
 
-interface Palm2ApiOptions {
+export interface Palm2ApiOptions {
   modelId: string,
   apiEndpoint: string,
   requestParameters: Palm2ApiParams
 }
 
+// TODO: consider using lodash merge...
+function overideOptions(
+  oldOptions: Palm2ApiOptions,
+  newOptions?: Partial<Palm2ApiOptions>,
+): Palm2ApiOptions {
+  const finalOptions: Palm2ApiOptions = (newOptions &&
+    Object.assign({ ...oldOptions }, newOptions)) || oldOptions;
+  if (newOptions && newOptions.requestParameters) {
+    finalOptions.requestParameters =
+      Object.assign({ ...oldOptions.requestParameters }, newOptions.requestParameters);
+  }
+  return finalOptions;
+}
+
 export class VertexPalm2LLM implements LLM<Palm2ApiOptions> {
   public name: string;
-  public options: Palm2ApiOptions;
+  public ptions: Palm2ApiOptions;
 
   constructor(
     public projectId: string,
     public client: AuthClient,
-    public params?: Palm2ApiOptions,
+    public initOptions?: Partial<Palm2ApiOptions>,
   ) {
-    const defaultOptions = {
-      modelId: 'text-bison',
-      apiEndpoint: 'us-central1-aiplatform.googleapis.com',
-      requestParameters: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        candidateCount: 4,
-        maxOutputTokens: 256,
-        stopSequences: [],
-      }
-    } as Palm2ApiOptions;
-    this.options = params ? params : defaultOptions;
-    this.name = `VertexLLM:` + this.options.modelId;
+    this.ptions = overideOptions(DEFAULT_OPTIONS, initOptions);
+    this.name = `VertexLLM:` + this.ptions.modelId;
   }
 
   async predict(
-    query: string, params?: Palm2ApiOptions
+    query: string, options?: Palm2ApiOptions
   ): Promise<PredictResponse> {
-
-    const apiParams = params ? params.requestParameters
-      : this.options.requestParameters;
+    const usedOptions = overideOptions(this.ptions, options);
     const apiRequest: Palm2ApiRequest = {
       instances: [{ content: query }],
-      parameters: apiParams
+      parameters: usedOptions.requestParameters
     }
 
     const apiResponse = await sendPalm2Request(
       this.projectId,
       this.client,
       apiRequest,
-      this.options.modelId,
-      this.options.apiEndpoint);
+      this.ptions.modelId,
+      this.ptions.apiEndpoint);
 
     // The API doesn't include the actual stop sequence that it found, so we
     // can never know the true stop seqeunce, so we just pick the first one,
     // and image it is that.
-    const imaginedPostfixStopSeq = apiParams.stopSequences.length > 0 ?
-      apiParams.stopSequences[0] : '';
+    const stopSequences = usedOptions.requestParameters.stopSequences;
+    const imaginedPostfixStopSeq = stopSequences.length > 0 ?
+      stopSequences[0] : '';
 
     if (isErrorResponse(apiResponse)) {
       throw new Error(`Error in api response:` +
-      ` ${JSON.stringify(apiResponse.error, null, 2)}`);
+        ` ${JSON.stringify(apiResponse.error, null, 2)}`);
     }
 
     if (!apiResponse.predictions) {

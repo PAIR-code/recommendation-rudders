@@ -10,12 +10,12 @@
 An class to wrap, and provide a common interface for LLM behaviour.
 */
 
+import { ErrorResponse, isErrorResponse } from "../simple-errors/simple-errors";
 import { Template, matchTemplate } from "./template";
 
 export interface PredictResponse {
   completions: string[];
 }
-
 
 export interface ScoreRequest {
   query: string;
@@ -30,11 +30,10 @@ export interface ScoreResponse {
   scoredCompletions: ScoredCompletion[];
 }
 
-
 export abstract class LLM<Params extends {}> {
   public abstract name: string;
 
-  abstract predict(prompt: string, params?: Params): Promise<PredictResponse>;
+  abstract predict(prompt: string, params?: Params): Promise<PredictResponse | ErrorResponse>;
   // abstract score(request: ScoreRequest): Promise<ScoreResponse>;
 }
 
@@ -74,11 +73,14 @@ export interface InterpretedResponse<Ns extends string> {
 
 export async function fillTemplate<Ns extends string>(
   llm: LLM<{}>, template: Template<Ns>
-): Promise<InterpretedResponse<Ns>[]> {
+): Promise<InterpretedResponse<Ns>[] | ErrorResponse> {
   const interpretedResponses = [] as InterpretedResponse<Ns>[];
   // const substsResponses: ({ [Key in Ns]: string } | null)[] = [];
   const parts = template.parts();
   const responses = await llm.predict(parts.prefix);
+  if (isErrorResponse(responses)) {
+    return responses;
+  }
   // console.log('parts.prefix: ', parts.prefix);
   for (const completion of responses.completions) {
     // console.log('parts', parts);
@@ -86,7 +88,7 @@ export async function fillTemplate<Ns extends string>(
     const match = matchTemplate(parts, completion, false);
     const interpretedResponse = { responseStr: completion } as InterpretedResponse<Ns>;
     if (match) {
-      interpretedResponse.substs = match;
+      interpretedResponse.substs = match.substs;
     }
     interpretedResponses.push(interpretedResponse)
   }

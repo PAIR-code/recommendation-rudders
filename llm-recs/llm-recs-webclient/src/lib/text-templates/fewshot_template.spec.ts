@@ -9,7 +9,7 @@
 import { flatten } from 'underscore';
 import { Template, escapeStr, template, nv, unEscapeStr, matchTemplate } from './template';
 import { NamedVar } from './variable';
-import { FewShotTemplate } from './fewshot_template';
+import { FewShotTemplate, matchFewShotTemplate } from './fewshot_template';
 
 // // ----------------------------------------------------------------------------
 // const movieSuggestionPrompt: Template<never> = template``;
@@ -172,7 +172,7 @@ Liked or Disliked: ${nv('likedOrDisliked')}, because:
     const parts = t.parts();
     const s1 = "The Garden of Forking Paths (short story by Jorge Luis Borges)\nLiked or Disliked: Liked, because:\n[\n  \"Intriguing\",\n  \"Philosophical\",\n  \"Thought-provoking\"\n]\n\nfoo foo\n]";
     const m1 = matchTemplate(parts, s1, false);
-    expect(m1).toEqual({
+    expect(m1.substs).toEqual({
       aboutEntity: 'The Garden of Forking Paths',
       aboutDetails: 'short story by Jorge Luis Borges',
       likedOrDisliked: 'Liked',
@@ -180,4 +180,22 @@ Liked or Disliked: ${nv('likedOrDisliked')}, because:
     });
   });
 
+  it('match fewshot template', () => {
+    const templ = new FewShotTemplate(template
+      `(${nv('id')}) ${nv('property')}: "${nv('value')}"`,
+      '\n');
+
+    const str = `(1) Concise: "not waffley"
+(2) No synposes: "do not give plot synopses"
+(3) Specific: "not vague (i.e. not 'an amazing movie.', 'a classic.')"`;
+
+    const m = matchFewShotTemplate(templ, str);
+    expect(m.length).toEqual(3);
+    expect(m[0].substs).toEqual({ id: '1', property: 'Concise', value: 'not waffley' });
+    expect(m[0].curPart).toEqual(undefined);
+    expect(m[1].substs).toEqual({ id: '2', property: 'No synposes', value: 'do not give plot synopses' });
+    expect(m[1].curPart).toEqual(undefined);
+    expect(m[2].substs).toEqual({ id: '3', property: 'Specific', value: 'not vague (i.e. not \'an amazing movie.\', \'a classic.\')' });
+    expect(m[2].curPart).toEqual(undefined);
+  });
 });

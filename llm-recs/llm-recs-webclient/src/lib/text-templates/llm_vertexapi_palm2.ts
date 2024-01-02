@@ -15,14 +15,15 @@ See: https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/text
 import { LLM, PredictResponse } from "./llm";
 
 export interface Palm2ApiParams {
-  candidateCount: number, // 1 to 8
-  maxOutputTokens: number, // 256, 1024
-  stopSequences: string[], // e.g. ']
-  temperature: number,  // e.g. 0.2 (0=deterministic, 1=wild, x>1=crazy)
-  topP: number,  // e.g. 0.8 (0-1, smaller = restricts crazyiness)
-  topK: number  // e.g. 40 (0-numOfTokens, smaller = restricts crazyiness)
+  candidateCount?: number, // 1 to 8
+  maxOutputTokens?: number, // 256, 1024
+  stopSequences?: string[], // e.g. ']
+  temperature?: number,  // e.g. 0.2 (0=deterministic, 1=wild, x>1=crazy)
+  topP?: number,  // e.g. 0.8 (0-1, smaller = restricts crazyiness)
+  topK?: number  // e.g. 40 (0-numOfTokens, smaller = restricts crazyiness)
 }
 
+// The underlying Google Cloud Vertex AI LLM API
 export interface Palm2ApiRequest {
   instances: { content: string }[]
   parameters: Palm2ApiParams
@@ -54,7 +55,9 @@ export interface Palm2Response {
   }
 }
 
-export function preparePalm2Request(text: string, options?: Palm2ApiParams): Palm2ApiRequest {
+export function preparePalm2Request(
+  text: string, options?: Palm2ApiParams
+): Palm2ApiRequest {
   return {
     instances: [{ content: text }],
     parameters: {
@@ -154,11 +157,17 @@ export class VertexPalm2LLM implements LLM<Palm2ApiOptions> {
       this.defaultOptions.modelId,
       this.defaultOptions.apiEndpoint);
 
+    // HACKING around an API bug. :(
+    //
     // The API doesn't include the actual stop sequence that it found, so we
     // can never know the true stop seqeunce, so we just pick the first one,
     // and image it is that.
-    const imaginedPostfixStopSeq = apiParams.stopSequences.length > 0 ?
-      apiParams.stopSequences[0] : '';
+    //
+    // A bug has been filed.
+    let imaginedPostfixStopSeq = '';
+    if (apiParams.stopSequences && apiParams.stopSequences.length > 0) {
+      imaginedPostfixStopSeq = apiParams.stopSequences[0];
+    }
 
     if (!apiResponse.predictions) {
       throw new Error(`No predictions resturned in api response:` +

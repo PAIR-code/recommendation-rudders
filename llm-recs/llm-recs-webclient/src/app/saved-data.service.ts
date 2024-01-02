@@ -7,9 +7,9 @@
 ==============================================================================*/
 
 import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
-import { isEmbedError, EmbedError } from 'src/lib/text-embeddings/embedder';
 import { ItemInterpreterService } from './item-interpreter.service';
 import { LmApiService } from './lm-api.service';
+import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 export interface ItemEmbeddings { [key: string]: number[] };
 export interface DataItems { [id: string]: DataItem }
@@ -34,6 +34,21 @@ export interface DataItem {
   sentiment: string;
   embeddings: ItemEmbeddings;
 }
+
+export function emptyItem(): DataItem {
+  const id = `${new Date().valueOf()}`;
+  const dataItem: DataItem = {
+    id,
+    date: new Date().toISOString(),
+    text: '',
+    entityTitle: '',
+    entityDetails: '',
+    sentiment: '',
+    embeddings: { '': [] },
+  };
+  return dataItem;
+}
+
 
 export const dummyItem: DataItem = {
   id: 'dummyItemId',
@@ -103,11 +118,39 @@ export class SavedDataService {
     this.data.set({ ...data });
   }
 
-  async addRaw(
-    entityTitle: string, text: string, entityDetails: string, sentiment: string, embeddings: ItemEmbeddings
-  ): Promise<DataItem> {
+  addDataItem(dataItem: DataItem): DataItem {
     const id = `${new Date().valueOf()}`;
     const data = { ... this.data() };
+    data.items[id] = dataItem;
+    this.data.set({ ...data });
+    return dataItem;
+  }
+
+  async createItem(textToInterpret: string): Promise<DataItem | ErrorResponse> {
+    if (textToInterpret.trim() === '') {
+      return { error: 'Cannot add empty text!' };
+    }
+    const responseOrError =
+      await this.itemInterpreterService.interpretItemText(textToInterpret);
+    if (isErrorResponse(responseOrError)) {
+      return responseOrError;
+    }
+    const {
+      entityDetails, entityTitle, sentiment, text, keys
+    } = responseOrError;
+
+    const embeddings = {} as ItemEmbeddings;
+    for (const key of keys) {
+      if (key.trim() === '') {
+        continue;
+      }
+      const embedResponse = await this.lmApiService.embedder.embed(key);
+      if (isErrorResponse(embedResponse)) {
+        return embedResponse;
+      }
+      embeddings[key] = embedResponse.embedding;
+    }
+    const id = `${new Date().valueOf()}`;
     const dataItem: DataItem = {
       id,
       date: new Date().toISOString(),
@@ -117,28 +160,6 @@ export class SavedDataService {
       sentiment,
       embeddings,
     };
-    data.items[id] = dataItem;
-    this.data.set({ ...data });
-    return dataItem;
-  }
-
-  async add(text: string): Promise<EmbedError | DataItem> {
-    if (!text) {
-      return { error: 'Cannot add empty text!' };
-    }
-    const item = await this.itemInterpreterService.interpretItemText(text);
-    const embeddings = {} as ItemEmbeddings;
-    for (const key of item.keys) {
-      if (key.trim() === '') {
-        continue;
-      }
-      const embedResponse = await this.lmApiService.embedder.embed(key);
-      if (isEmbedError(embedResponse)) {
-        return embedResponse;
-      }
-      embeddings[key] = embedResponse.embedding;
-    }
-    const dataItem = this.addRaw(item.entityTitle, item.text, item.entityDetails, item.sentiment, embeddings);
     return dataItem;
   }
 

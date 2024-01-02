@@ -6,7 +6,8 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Embedder, EmbedResponse as EmbedResponse } from "./embedder";
+import { ErrorResponse, isErrorResponse } from "../simple-errors/simple-errors";
+import { Embedder, Embedding } from "./embedder";
 
 /*
 Google Cloud Vertex Embedding API
@@ -44,15 +45,6 @@ export interface VertexEmbedError {
   }
 }
 
-export type VertexEmbedResponse = VertexEmbedding | VertexEmbedError;
-
-function isErrorResponse(response: VertexEmbedResponse): response is VertexEmbedError {
-  if ((response as VertexEmbedError).error) {
-    return true;
-  }
-  return false;
-}
-
 export function prepareEmbedRequest(text: string, options?: EmbedRequestParams): EmbedRequest {
   return {
     instances: [{ content: text }],
@@ -84,7 +76,7 @@ export async function sendEmbedRequest(
   req: EmbedRequest,
   modelId = 'textembedding-gecko', // e.g. textembedding-gecko embedding model
   apiEndpoint = 'us-central1-aiplatform.googleapis.com',
-): Promise<VertexEmbedResponse> {
+): Promise<VertexEmbedding | VertexEmbedError> {
   return postDataToLLM(
     // TODO: it may be that the url part 'us-central1' has to match
     // apiEndpoint.
@@ -115,7 +107,7 @@ export class VertexEmbedder implements Embedder<EmbedApiOptions> {
 
   async embed(
     query: string, params?: EmbedApiOptions
-  ): Promise<EmbedResponse> {
+  ): Promise<Embedding | ErrorResponse> {
 
     const apiRequest: EmbedRequest = {
       instances: [{ content: query }],

@@ -1,4 +1,5 @@
-@if (!initialDataItem) {
+@if (mode == 'hidden') {
+} @else if (!initialDataItem) {
   <div>No item given to component</div>
 } @else if (mode == 'view') {
 <div class="item">
@@ -6,7 +7,7 @@
   <div class="item-and-characteristics">
     <div class="item-text-parts">
       <div class="item-text-parts-header">
-        <span class="item-title">{{this.dataItem().entityTitle}}</span>.
+        <span class="item-title">{{this.dataItem().entityTitle}}</span>
         <span class="item-details">(<span class="item-details-content">{{this.dataItem().entityDetails.trim()}}</span>)</span>
       </div>
       <div>
@@ -21,7 +22,7 @@
     </div>
   </div>
 
-  <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
+  <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode = 'edit'">
     <mat-icon>edit</mat-icon>
   </button>
   <!-- <div class="view-header">
@@ -32,41 +33,43 @@
     <span class="embedding">embed: {{itemEmbeddingStr(item)}}</span>
   </div> -->
 </div>
-
 } @else {
-  <div>
-  <form class="edit-form" (submit)="save()">
-    <mat-form-field class="full-width title-input">
-      <mat-label>Item Title</mat-label>
-      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityTitle" (ngModelChange)="setTitle($event)">
-    </mat-form-field>
+  <div class="edit-form">
+  <form (submit)="save()">
     <mat-form-field class="full-width text-input">
-      <mat-label>Item Details</mat-label>
-      <textarea matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityDetails" (ngModelChange)="setDetails($event)"></textarea>
-    </mat-form-field>
-    <mat-form-field class="full-width text-input">
-      <mat-label>Sentiment</mat-label>
-      <textarea matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().sentiment" (ngModelChange)="setSentiment($event)"></textarea>
-    </mat-form-field>
-    <mat-form-field class="full-width text-input">
-      <mat-label>Item Text</mat-label>
+      <mat-label>Experience Description</mat-label>
       <textarea matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().text" (ngModelChange)="setText($event)"></textarea>
     </mat-form-field>
+    <mat-form-field class="full-width title-input">
+      <mat-label>Title (name of movie, place, etc)</mat-label>
+      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityTitle" (ngModelChange)="setTitle($event)">
+    </mat-form-field>
+    <mat-form-field class="text-input">
+      <mat-label>Details (e.g. year, director, etc)</mat-label>
+      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityDetails" (ngModelChange)="setDetails($event)">
+    </mat-form-field>
+    <mat-form-field class="text-input">
+      <mat-label>Liked or Disliked?</mat-label>
+      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().sentiment" (ngModelChange)="setSentiment($event)">
+    </mat-form-field>
+    <div class="characteristics-input-list">
     @for (key of keys; track $index) {
-      <mat-form-field class="full-width key-input">
+      <mat-form-field class="key-input">
         <mat-label>Characteristic</mat-label>
         <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="key" (ngModelChange)="keys[$index] = $event">
       </mat-form-field>
     }
+    <button type="button" mat-icon-button aria-label="add key" (click)="addKey()">
+      <mat-icon>add</mat-icon>
+    </button>
+    </div>
     <mat-progress-bar *ngIf="waiting" [mode]="'indeterminate'"></mat-progress-bar>
     <div class='error' *ngIf="saveError">{{saveError}}</div>
 
     <div class="view-header">
-      <button type="button" mat-button aria-label="add key" (click)="addKey()">
-        <mat-icon>add</mat-icon> add key
-      </button>
+      <button (click)="cancelEdit()" type="submit" mat-flat-button aria-label="Cancel">Cancel</button>
       <button color="primary" type="submit" mat-flat-button aria-label="Edit">
-        save
+        Save
       </button>
   <!--
       <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode()">
@@ -85,7 +88,7 @@
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="deleteItem()">Delete</button>
         <button mat-menu-item (click)="revert()">Revert</button>
-        <button mat-menu-item (click)="viewMode()">Cancel</button>
+        <button mat-menu-item (click)="interpretFromText()">Interpret from text</button>
       </mat-menu>
     </div>
   </form>
