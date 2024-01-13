@@ -16,7 +16,6 @@ import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-err
 export interface InterpretedItem {
   entityTitle: string;
   text: string;
-  entityDetails: string;
   sentiment: string;
   keys: string[];
 }
@@ -54,12 +53,11 @@ export class ItemInterpreterService {
       throw new Error('no substs for initial response');
     }
     const title = substs.aboutEntity;
-    const entityDetails = substs.aboutEntity;
     const sentiment = substs.likedOrDisliked;
 
     const charMatches = matchFewShotTemplate(
       characteristicsTempl, substs.characteristics);
     const keys = charMatches.map(c => c.substs.characteristic);
-    return { entityTitle: title, text, entityDetails, sentiment, keys };
+    return { entityTitle: title, text, sentiment, keys };
   }
 }

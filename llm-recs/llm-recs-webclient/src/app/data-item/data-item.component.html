@@ -5,7 +5,6 @@
     <div class="item-text-parts">
       <div class="item-text-parts-header">
         <span class="item-title">{{this.dataItem().entityTitle}}</span>
-        <span class="item-details">(<span class="item-details-content">{{this.dataItem().entityDetails.trim()}}</span>)</span>
       </div>
       <div>
         <span class="item-text">{{this.dataItem().text}}</span>
@@ -40,10 +39,6 @@
     <mat-form-field class="full-width title-input">
       <mat-label>Title (name of movie, place, etc)</mat-label>
       <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityTitle" (ngModelChange)="setTitle($event)">
-    </mat-form-field>
-    <mat-form-field class="text-input">
-      <mat-label>Details (e.g. year, director, etc)</mat-label>
-      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityDetails" (ngModelChange)="setDetails($event)">
     </mat-form-field>
     <mat-form-field class="text-input">
       <mat-label>Liked or Disliked?</mat-label>
@@ -83,9 +78,9 @@
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu">
-        <button mat-menu-item (click)="deleteItem()">Delete</button>
-        <button mat-menu-item (click)="revert()">Revert</button>
-        <button mat-menu-item (click)="interpretFromText()">Interpret from text</button>
+        <button type="button" mat-menu-item (click)="deleteItem()">Delete</button>
+        <button type="button" mat-menu-item (click)="revert()">Revert</button>
+        <button type="button" mat-menu-item (click)="interpretFromText()">Interpret from text</button>
       </mat-menu>
     </div>
   </form>

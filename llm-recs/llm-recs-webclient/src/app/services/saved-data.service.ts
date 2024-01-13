@@ -45,7 +45,6 @@ export interface DataItem {
   date: string;
   text: string;
   entityTitle: string;
-  entityDetails: string;
   sentiment: string;
   embeddings: ItemEmbeddings;
 }
@@ -57,20 +56,17 @@ export function emptyItem(): DataItem {
     date: new Date().toISOString(),
     text: '',
     entityTitle: '',
-    entityDetails: '',
     sentiment: '',
     embeddings: { '': [] },
   };
   return dataItem;
 }
 
-
 export const dummyItem: DataItem = {
   id: 'dummyItemId',
   date: 'dummyItemDate',
   text: 'dummyItemText',
   entityTitle: 'dummyItemTitle',
-  entityDetails: 'dummyItemDetails',
   sentiment: 'dummySentiment',
   embeddings: { 'dummyItemTitle': [1, 2, 3] },
 }
@@ -260,8 +256,11 @@ export class SavedDataService {
     return dataItem;
   }
 
-  async createItem(textToInterpret: string): Promise<DataItem | ErrorResponse> {
-    if (textToInterpret.trim() === '') {
+  async reinterpretItem(dataItem: DataItem): Promise<DataItem | ErrorResponse> {
+    const newItemInterpretation: DataItem = {...dataItem};
+
+    const textToInterpret = dataItem.text.trim();
+    if (textToInterpret === '') {
       return { error: 'Cannot add empty text!' };
     }
     const responseOrError =
@@ -269,9 +268,7 @@ export class SavedDataService {
     if (isErrorResponse(responseOrError)) {
       return responseOrError;
     }
-    const {
-      entityDetails, entityTitle, sentiment, text, keys
-    } = responseOrError;
+    const { entityTitle, sentiment, text, keys } = responseOrError;
 
     const embeddings = {} as ItemEmbeddings;
     for (const key of keys) {
@@ -284,17 +281,19 @@ export class SavedDataService {
       }
       embeddings[key] = embedResponse.embedding;
     }
-    const id = `${new Date().valueOf()}`;
-    const dataItem: DataItem = {
-      id,
-      date: new Date().toISOString(),
-      text,
-      entityTitle,
-      entityDetails,
-      sentiment,
-      embeddings,
-    };
-    return dataItem;
+    
+    newItemInterpretation.embeddings = embeddings;
+    newItemInterpretation.entityTitle = entityTitle
+    newItemInterpretation.sentiment = sentiment;
+    return newItemInterpretation;
+  }
+
+  async createItem(textToInterpret: string): Promise<DataItem | ErrorResponse> {
+    const newItem = { ...dummyItem };
+    newItem.text = textToInterpret;
+    newItem.id = `${new Date().valueOf()}`;
+    newItem.date = new Date().toISOString();
+    return this.reinterpretItem(newItem);
   }
 
   itemIsOpen(item: DataItem): boolean {

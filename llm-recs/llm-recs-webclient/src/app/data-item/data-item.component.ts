@@ -74,12 +74,6 @@ export class DataItemComponent {
     this.dataItem.set(newItem);
   }
 
-  setDetails(s: string): void {
-    const newItem = { ...this.dataItem() };
-    newItem.entityDetails = s;
-    this.dataItem.set(newItem);
-  }
-
   setSentiment(s: string): void {
     const newItem = { ...this.dataItem() };
     newItem.sentiment = s;
@@ -141,7 +135,7 @@ export class DataItemComponent {
     this.waiting = true;
     delete this.saveError;
 
-    const newItem = await this.dataService.createItem(this.dataItem().text);
+    const newItem = await this.dataService.reinterpretItem(this.dataItem());
     if (isErrorResponse(newItem)) {
       this.waiting = false;
       this.saveError = newItem.error;

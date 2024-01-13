@@ -11,7 +11,6 @@ import { FewShotTemplate } from '../text-templates/fewshot_template';
 interface Experience {
   experience: string;
   aboutEntity: string,
-  aboutDetails: string,
   likedOrDisliked: string,
   characteristics: string[];
 }
@@ -19,19 +18,17 @@ interface Experience {
 interface ExperienceTemplEntry {
   experience: string;
   aboutEntity: string,
-  aboutDetails: string,
   likedOrDisliked: string,
   characteristics: string;
 }
 
-export const characteristicsTempl = new FewShotTemplate(template`<characteristic-phrase>${nv('characteristic')}</characteristic-phrase>`,
+export const characteristicsTempl = new FewShotTemplate(template`<like-or-dislike-phrase>${nv('characteristic')}</like-or-dislike-phrase>`,
   '\n  ');
 
 const criteriaPoints: Experience[] = [
   {
     experience: 'Parc des Buttes Chaumont: love it.',
     aboutEntity: 'Parc des Buttes Chaumont',
-    aboutDetails: 'park in Paris 20 arr.',
     likedOrDisliked: 'Liked',
     characteristics: [
       'Peaceful',
@@ -43,7 +40,6 @@ const criteriaPoints: Experience[] = [
   {
     experience: 'Spirited Away: breathtakingly beautiful.',
     aboutEntity: 'Spirited Away',
-    aboutDetails: 'movie by Hayao Miyazaki',
     likedOrDisliked: 'Liked',
     characteristics: ['Visually stunning', 'Great story', 'Heartwarming']
   },
@@ -52,22 +48,21 @@ const criteriaPoints: Experience[] = [
 
 const experienceTemplEntries: ExperienceTemplEntry[] = criteriaPoints.map(
   (item) => {
-    const { experience, aboutEntity, aboutDetails, likedOrDisliked } = item;
+    const { experience, aboutEntity, likedOrDisliked } = item;
     const characteristics = characteristicsTempl.apply(
       item.characteristics.map(s => { return { characteristic: s }; })
     ).escaped;
     return {
-      experience, aboutEntity, aboutDetails, likedOrDisliked, characteristics
+      experience, aboutEntity, likedOrDisliked, characteristics
     };
   })
 
 const itemExperienceTempl = template`<short-experience-description>${nv('experience')}</short-experience-description>
 <entity-name>${nv('aboutEntity')}</entity-name>
-<entity-detail>${nv('aboutDetails')}</entity-detail>
 <liked-or-disliked>${nv('likedOrDisliked')}</liked-or-disliked>
-<characteristics>
+<what-there-is-to-like-or-dislike-about-entity>
   ${nv('characteristics')}
-</characteristics>`
+</what-there-is-to-like-or-dislike-about-entity>`
 
 const itemExperiencesTempl = new FewShotTemplate(itemExperienceTempl, '\n\n');
 
@@ -77,7 +72,6 @@ ${nv('pastExperiences')}
 
 ${itemExperienceTempl}`;
 
-
 // Example usage.
 const pastFewShotItemExperiences = itemExperiencesTempl.apply(experienceTemplEntries);
 
@@ -85,4 +79,3 @@ export const expInterpTempl = itemInterpreterTempl.substs({
   pastExperiences: pastFewShotItemExperiences.escaped,
   // experience: 'The Garden of Forking Paths: like it'
 });
-
