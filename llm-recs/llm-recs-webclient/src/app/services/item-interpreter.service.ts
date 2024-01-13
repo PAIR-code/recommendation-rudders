@@ -8,7 +8,7 @@
 
 import { Injectable } from '@angular/core';
 import { LmApiService } from './lm-api.service';
-import { expInterpTempl, characteristicsTempl } from '../lib/recommender-prompts/item-interpreter';
+import { expInterpTempl, characteristicsTempl } from '../../lib/recommender-prompts/item-interpreter';
 import { fillTemplate } from 'src/lib/text-templates/llm';
 import { matchFewShotTemplate } from 'src/lib/text-templates/fewshot_template';
 import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';

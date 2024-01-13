@@ -1,7 +1,4 @@
-@if (mode == 'hidden') {
-} @else if (!initialDataItem) {
-  <div>No item given to component</div>
-} @else if (mode == 'view') {
+@if (!isOpen()) {
 <div class="item">
   <div class="bullet">&#8226;</div>
   <div class="item-and-characteristics">
@@ -22,7 +19,7 @@
     </div>
   </div>
 
-  <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode = 'edit'">
+  <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="openEditMode()">
     <mat-icon>edit</mat-icon>
   </button>
   <!-- <div class="view-header">
@@ -67,7 +64,7 @@
     <div class='error' *ngIf="saveError">{{saveError}}</div>
 
     <div class="view-header">
-      <button (click)="cancelEdit()" type="submit" mat-flat-button aria-label="Cancel">Cancel</button>
+      <button type="button" (click)="cancelEdit()" mat-flat-button aria-label="Cancel">Cancel</button>
       <button color="primary" type="submit" mat-flat-button aria-label="Edit">
         Save
       </button>
