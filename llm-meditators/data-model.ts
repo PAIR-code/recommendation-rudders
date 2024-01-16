@@ -1,54 +1,84 @@
-interface ItemRating {
-  item1: number;
-  // Index into items
-  item2: number;
-  confidence?: number;  // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
+export interface Item {
+  name: string; // displayed to the users, must be unique
+  imageUrl: string; // for the picture
 }
+
+interface ItemPair {
+  item1: Item;  // Item name
+  item2: Item;  // Item name
+}
+
+interface ItemRating extends ItemPair {
+  confidence: number;  // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
+}
+
+interface BasicExpStage {
+  kind: string;
+  name: string;
+}
+
+interface ExpStageRankItems extends BasicExpStage {
+  kind: 'rank-items';
+  itemsToRate: ItemPair[];
+  rankings: { [userId: string]: ItemRating[] };
+}
+
+interface ExpStageGroupRatingChat extends BasicExpStage {
+  kind: 'group-chat';
+  ratingsToDiscuss: ItemPair[];
+  messages: Message[];  
+}
+
+interface ExpStageLeaderVote extends BasicExpStage {
+  kind: 'leader-vote';
+  // Map from a user to their votes on other users.
+  votes: { [userId: string]: 
+    { [userId: string]: 'positive' | 'neutral' | 'negative' | 'not-rated' }
+  };
+  electedLeader: string;  // UserId
+}
+
+interface ExpStageSimpleSurvey extends BasicExpStage {
+  kind: 'survey';
+  question: string;
+  responses: { [userId: string]: {
+    score: number; //  10 point scale.
+    openFeedback: string;
+  }};
+}
+
+interface ExpStageSetProfile extends BasicExpStage {
+  kind: 'set-profile';
+  userProfiles: { [userId: string]: UserProfile };
+}
+
+interface ExpStageAcceptToS extends BasicExpStage {
+  kind: 'accept-tos';
+  userAcceptance: { [userId: string]: Date };
+}
+
+type ExpStage = ExpStageAcceptToS | ExpStageSetProfile | ExpStageRankItems | ExpStageGroupRatingChat | ExpStageLeaderVote | SimpleSurvey;
 
 // Admin editable, some parts of this are written to by certain 
 // user actions, by a trusted cloud function.
 export interface Experiment {
-  electedLeader: string;  // UserId
   maxNumberOfParticipants: number;
   participants: { [userId: string]: User }
-  items: Item[];
-  expertRatingsForInitialIndWork: ItemRating[];
-  ratingsToDiscuss: ItemRating[];  // confidence not used.
-  expertRatingsForFinalIndWork: ItemRating[];
-  groupChat: Message[];
+  stages: ExpStage[];
+}
+
+export interface UserProfile {
+  pronouns: string;
+  avatarUrl: string;
+  name: string;
 }
 
 export interface User {
   accessCode: string;  // likely stored in local browser cache/URL.
-  state: '0. acceptingTOS' 
-    | '1. profileSetup' 
-    | '2. initialRating' 
-    | '3. groupChat' 
-    | '4. finalRating' 
-    | '5. post-Chat-satisfaction' 
-    | '6. post-leader-reveal-satisfcation'
-    | '7. Complete';
+  state: string; // BasicExpStage.name 
   userId: string;
   // Their appearance.
-  pronouns: string;
-  avatarUrl: string;
-  name: string;
-  // Actions from the experiment.
-  initiallyWantsToLead: number; //  10 point scale.
-  // initialRatings = same items as expertRatingsForInitialIndWork
-  initialRatings: ItemRating[]; // pre discussion
-  votes: { [userId: string]: 'positive' | 'neutral' | 'negative' | 'not-rated' } ;
-  finalRatings: ItemRating[]; // post discussion
-  finalWantsToLead: number; //  10 point scale.
-  satisfactionWithDiscussion: number; //  10 point scale.
-  satisfactionAfterLeaderReveal: number; //  10 point scale.
-  satisfactionWithExperiment: number; //  10 point scale.
-  openFeedback: string;
-}
-
-export interface Item {
-  name: string; // displayed to the users
-  imageUrl: string; // for the picture
+  profile: UserProfile;
 }
 
 export interface UserMessage {
@@ -57,7 +87,7 @@ export interface UserMessage {
   userId: string;
 }
 
-export interface systemMessage {
+export interface SystemMessage {
   messageType: 'systemMessage-DiscussItem';
   timestamp: number;
   itemRatingToDiscuss: ItemRating;
@@ -68,4 +98,38 @@ export interface ModeratorMessage {
   timestamp: number;
 }
 
-export type Message = UserMessage | systemMessage | ModeratorMessage;
+export type Message = UserMessage | SystemMessage | ModeratorMessage;
+
+
+
+const acceptTos: ExpStageAcceptToS = {
+  kind: 'accept-tos',
+  name: '0. Agree to the experiment',
+  userAcceptance: {}
+}
+
+const setProfile: ExpStageSetProfile = { 
+  kind: 'set-profile',
+  name: '1. Set your profile',
+  userProfiles: {},
+}
+
+const initialExperimentSetup: Experiment = {
+  maxNumberOfParticipants: 5,
+  participants: {},
+  stages: [
+    acceptTos,
+    setProfile,
+  ],
+};
+
+// TODO: write up the rest of the experiment.
+
+// '0. acceptingTOS' 
+// | '1. profileSetup' 
+// | '2. initialRating' 
+// | '3. groupChat' 
+// | '4. finalRating' 
+// | '5. post-Chat-satisfaction' 
+// | '6. post-leader-reveal-satisfcation'
+// | '7. Complete';
