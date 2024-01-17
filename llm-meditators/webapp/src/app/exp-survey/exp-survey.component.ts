@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { SavedDataService } from '../saved-data.service';
 
 @Component({
   selector: 'app-exp-survey',
@@ -8,5 +9,11 @@ import { Component } from '@angular/core';
   styleUrl: './exp-survey.component.scss'
 })
 export class ExpSurveyComponent {
+
+  constructor(
+    private dataService: SavedDataService,
+  ) {
+    this.dataService.appName()
+  }
 
 }
