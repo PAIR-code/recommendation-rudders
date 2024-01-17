@@ -1,0 +1,36 @@
+<div class="main">
+  <form>
+    @if (itemToAdd !== null) {
+      <app-data-item [item]="itemToAdd" [editMode]="'edit'" (savedOrCancelled)="saveOrCancelAdd($event)"></app-data-item>
+    } @else {
+      <mat-form-field class="item-text-form">
+        <mat-label>Describe an Experience to add, search for, or recommend</mat-label>
+        <textarea matInput [formControl]="itemTextControl"></textarea>
+      </mat-form-field>
+
+      <div class="buttons-and-progress">
+        @if (waiting) {
+          <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        }
+        @if (errorMessage) {
+          <div class="error">
+            <div class="error-message">{{errorMessage}}</div>
+            <button mat-icon-button aria-label="dismiss error" (click)="dismissError()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+        <div class="buttons">
+          <button mat-icon-button aria-label="add" (click)="add()">
+            <mat-icon>add</mat-icon>
+          </button>
+          <button [disabled]="hasNoInput()" mat-icon-button aria-label="search" (click)="search()">
+            <mat-icon>search</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </form>
+  <div class="search-response-sep"></div>
+  <app-data-viewer [search]="searchSpec"></app-data-viewer>
+  </div>
