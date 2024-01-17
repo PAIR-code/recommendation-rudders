@@ -16,8 +16,6 @@ import { AppComponent } from './app.component';
 import { LlmApiConfigComponent } from './llm-api-config/llm-api-config.component';
 import { RuddersHomeComponent } from './rudders-home/rudders-home.component';
 import { PromptsConfigComponent } from './prompts-config/prompts-config.component';
-import { DataViewerComponent } from './data-viewer/data-viewer.component';
-import { DataItemComponent } from './data-item/data-item.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
@@ -45,8 +43,6 @@ import { GoogleSheetsService } from './google-sheets.service';
     LlmApiConfigComponent,
     RuddersHomeComponent,
     PromptsConfigComponent,
-    DataViewerComponent,
-    DataItemComponent,
     AppSettingsComponent,
     PageNotFoundComponent,
   ],

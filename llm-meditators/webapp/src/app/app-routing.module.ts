@@ -11,12 +11,13 @@ import { RouterModule, Routes } from '@angular/router';
 import { LlmApiConfigComponent } from './llm-api-config/llm-api-config.component';
 import { RuddersHomeComponent } from './rudders-home/rudders-home.component';
 import { PromptsConfigComponent } from './prompts-config/prompts-config.component';
-import { DataViewerComponent } from './data-viewer/data-viewer.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
 
 const routes: Routes = [
   { path: '', component: RuddersHomeComponent, pathMatch: 'full' },
+  { path: 'survey', component: ExpSurveyComponent, pathMatch: 'full' },
   { path: 'settings', component: AppSettingsComponent, pathMatch: 'full' },
   { path: '**', component: PageNotFoundComponent }
 ];

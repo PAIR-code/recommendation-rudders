@@ -85,14 +85,6 @@ export class AppSettingsComponent implements OnInit {
     this.appNameControl.setValue(this.dataService.appName());
   }
 
-  deleteEmbeddings() {
-    const data = this.dataService.data();
-    for (const item of Object.values(data.items)) {
-      item.embeddings = {};
-    }
-    this.dataService.data.set(data);
-  }
-
   async saveToGoogleDrive() {
     const json = JSON.stringify(this.dataService.data());
     const token = await this.authService.getToken(
@@ -118,98 +110,6 @@ export class AppSettingsComponent implements OnInit {
 
   downloadName() {
     return `${this.appNameControl.value}.json`
-  }
-
-  upload(file: Blob) {
-    this.waiting = true;
-    const reader = new FileReader();
-
-    reader.onload = async (progressEvent) => {
-      const uploadedData =
-        JSON.parse(progressEvent.target!.result as string) as AppData;
-
-      for (const item of Object.values(uploadedData.items)) {
-        if (Object.keys(item.embeddings).length === 0) {
-          const embedResult = await this.lmApiService.embedder.embed(item.text);
-          if (isErrorResponse(embedResult)) {
-            if (!this.errorMessage) {
-              this.errorMessage = embedResult.error;
-            }
-            console.error(embedResult.error);
-            this.errorCount += 1;
-          } else {
-            item.embeddings[item.text] = embedResult.embedding;
-          }
-        }
-      }
-
-      this.dataService.data.set(uploadedData);
-      this.waiting = false;
-    };
-    reader.readAsText(file);
-  }
-
-  async addEntriesFromSheetColumn() {
-    this.waiting = true;
-    delete this.errorMessage;
-    this.errorCount = 0;
-    const currentSheetStr = this.sheetsUrlOrIdControl.value || '';
-    const currentRangeStr = this.sheetsRangeControl.value || '';
-
-    const token = await this.authService.getToken(
-      'https://www.googleapis.com/auth/spreadsheets.readonly');
-    const data = await this.sheetsService.getSheetValues(
-      currentSheetStr, currentRangeStr, token);
-
-    // const info = await this.sheetsService.getSheetInfo(currentSheetStr, token);
-    if (isSheetsError(data)) {
-      this.errorMessage = data.error;
-      this.errorCount++;
-      this.waiting = false;
-      return;
-    }
-    console.log(data.values);
-
-    for (const row of data.values) {
-      if (row.length > 1) {
-        this.errorMessage = 'You entered a range with more than one column, but indexing of a sheet only works on a single column right now.';
-        this.errorCount++;
-        this.waiting = false;
-        return;
-      }
-      const itemTextSet = new Set<string>();
-      Object.values(this.dataService.data().items).forEach(i =>
-        itemTextSet.add(i.text));
-
-      const s = row[0];
-      // Skip empty items, or items that we already have.
-      if (s.match(/^\s*$/) || (itemTextSet.has(s))) {
-        break;
-      }
-
-      const result = await this.dataService.createItem(s);
-      if (isErrorResponse(result)) {
-        this.errorMessage = result.error;
-        this.errorCount++;
-        return;
-      }
-      this.dataService.addDataItem(result);
-    }
-    // if (data.sheets) {
-    //   info.sheets.forEach(sheet => {
-    //     console.log(sheet.properties?.title);
-    //     console.log(sheet.properties?.index);
-    //     console.log(sheet.properties?.sheetId);
-    //     console.log('data', sheet.data);
-    //     if () {
-    //       const info = await this.sheetsService.getSheetInfo(currentSheetStr, token);
-    //     }
-    //   });
-    // data.settings.sheetsColumnName
-    // info.sheets[0].data[0].rowData[0].values
-    // }
-
-    this.waiting = false;
   }
 
   sizeString() {

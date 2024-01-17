@@ -100,8 +100,6 @@ export interface ModeratorMessage {
 
 export type Message = UserMessage | SystemMessage | ModeratorMessage;
 
-
-
 const acceptTos: ExpStageAcceptToS = {
   kind: 'accept-tos',
   name: '0. Agree to the experiment',

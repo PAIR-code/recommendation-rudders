@@ -8,9 +8,8 @@
 
 import { Component, WritableSignal, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { DataItem, ItemEmbeddings, SavedDataService, emptyItem } from '../saved-data.service';
+import { SavedDataService, } from '../saved-data.service';
 import { LmApiService } from '../lm-api.service';
-import { SearchSpec } from '../data-viewer/data-viewer.component';
 import { ItemInterpreterService } from '../item-interpreter.service';
 import { isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
@@ -23,15 +22,12 @@ export class RuddersHomeComponent {
   public itemTextControl: FormControl<string | null>;
   public waiting: boolean = false;
   public errorMessage?: string;
-  public searchSpec: WritableSignal<SearchSpec | null>;
-  public itemToAdd: DataItem | null = null;
 
   constructor(
     private lmApiService: LmApiService,
     private itemInterpreterService: ItemInterpreterService,
     private dataService: SavedDataService
   ) {
-    this.searchSpec = signal(null);
     this.itemTextControl = new FormControl<string | null>('');
   }
 
@@ -54,11 +50,6 @@ export class RuddersHomeComponent {
       this.errorMessage = embedResult.error;
       return;
     }
-    this.searchSpec.set(
-      {
-        query: this.itemTextControl.value!,
-        embedding: embedResult.embedding
-      });
     this.waiting = false;
     // console.log(`searching for ${this.itemTextControl.value}.`);
   }
@@ -68,32 +59,9 @@ export class RuddersHomeComponent {
   }
 
   async add() {
-    const text = this.itemTextControl.value;
-    if (text === null) {
-      console.error('called when text was null');
-      return;
-    }
-    if (text.trim() === '') {
-      this.itemToAdd = emptyItem();
-      return;
-    }
-
-    this.waiting = true;
-    const itemOrError = await this.dataService.createItem(text);
-    if (isErrorResponse(itemOrError)) {
-      this.waiting = false;
-      this.errorMessage = itemOrError.error;
-      return;
-    }
-    this.itemToAdd = itemOrError;
-    this.waiting = false;
   }
 
   saveOrCancelAdd(event: 'saved' | 'cancelled') {
-    this.itemToAdd = null;
-    if (event === 'saved') {
-      this.itemTextControl.setValue('');
-    }
   }
 
 
