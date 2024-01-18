@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { Injectable, NgZone, Signal, WritableSignal, computed, signal } from '@angular/core';
-import * as jose from 'jose'
+import * as jose from 'jose';
 import { environment } from 'src/environments/environment';
 
 interface LoginJWT {
@@ -15,21 +15,21 @@ interface LoginJWT {
 }
 
 interface Credential {
-  aud: string, // Your server's client ID
-  email: string;  // The user's email address
-  email_verified: boolean;  // true, if Google has verified the email address
+  aud: string; // Your server's client ID
+  email: string; // The user's email address
+  email_verified: boolean; // true, if Google has verified the email address
   iat: number; // Unix timestamp of the assertion's creation time
   exp: number; // Unix timestamp of the assertion's expiration time
   family_name: string;
   given_name: string;
-  name: string;  // full name
+  name: string; // full name
   hd: string; // If present, the host domain of the user's GSuite email address
   iss: string; // The JWT's issuer
   jti: string;
   locale: string; // e.g. "en-GB"
   nbf: number;
-  picture: string;   // If present, a URL to user's profile picture
-  sub: string;  // The unique ID of the user's Google Account
+  picture: string; // If present, a URL to user's profile picture
+  sub: string; // The unique ID of the user's Google Account
 }
 
 // function base64ToBytes(base64str: string): Uint8Array {
@@ -38,7 +38,7 @@ interface Credential {
 // }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GoogleAuthService {
   public jwtCredential = signal<string | null>(null);
@@ -50,7 +50,9 @@ export class GoogleAuthService {
   constructor(private ngZone: NgZone) {
     this.credential = computed(() => {
       const jwt = this.jwtCredential();
-      if (!jwt) { return null; }
+      if (!jwt) {
+        return null;
+      }
       const decodedToken = jose.decodeJwt(jwt) as Credential;
       return decodedToken;
     });
@@ -61,31 +63,31 @@ export class GoogleAuthService {
     script.async = true;
     document.head.appendChild(script);
 
-    this.googleGciClientLoaded = (new Promise<void>(
-      (resolve, reject) => script.onload = () => { resolve(); }))
-      .then(() =>
-        google.accounts.id.initialize({
-          client_id: environment.oauthClientId,
-          callback: (loginState: LoginJWT) => {
-            this.ngZone.run(() => {
-              this.jwtCredential.set(loginState.credential);
-            });
-          },
-          auto_select: true,
-        })
-      );
+    this.googleGciClientLoaded = new Promise<void>(
+      (resolve, reject) =>
+        (script.onload = () => {
+          resolve();
+        }),
+    ).then(() =>
+      google.accounts.id.initialize({
+        client_id: environment.oauthClientId,
+        callback: (loginState: LoginJWT) => {
+          this.ngZone.run(() => {
+            this.jwtCredential.set(loginState.credential);
+          });
+        },
+        auto_select: true,
+      }),
+    );
   }
 
-  async getToken(scope: string
-  ): Promise<google.accounts.oauth2.TokenResponse | null> {
+  async getToken(scope: string): Promise<google.accounts.oauth2.TokenResponse | null> {
     let curToken = this.tokenResponse();
-    if (!curToken ||
-      !google.accounts.oauth2.hasGrantedAllScopes(curToken, scope)
-    ) {
-      curToken = await this.authorize(scope)
+    if (!curToken || !google.accounts.oauth2.hasGrantedAllScopes(curToken, scope)) {
+      curToken = await this.authorize(scope);
       this.tokenResponse.set(curToken);
     }
-    console.log(curToken.expires_in)
+    console.log(curToken.expires_in);
     return curToken;
   }
 
@@ -93,7 +95,8 @@ export class GoogleAuthService {
     return new Promise((resolve, reject) => {
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: environment.oauthClientId,
-        scope, callback: resolve,
+        scope,
+        callback: resolve,
       });
       tokenClient.requestAccessToken();
     });
@@ -147,15 +150,12 @@ export class GoogleAuthService {
 
   async renderLoginButton(element: HTMLElement) {
     await this.googleGciClientLoaded;
-    google.accounts.id.renderButton(
-      element,
-      {
-        type: "standard",
-        theme: "outline",
-        size: "medium",
-        width: 215,
-      }
-    );
+    google.accounts.id.renderButton(element, {
+      type: 'standard',
+      theme: 'outline',
+      size: 'medium',
+      width: 215,
+    });
   }
 
   async signout() {

@@ -36,24 +36,22 @@ export interface SheetsValues {
 }
 
 interface SheetInfoRequest {
-  spreadsheetId: string, // google sheets doc id.
-  access_token?: string,
-};
+  spreadsheetId: string; // google sheets doc id.
+  access_token?: string;
+}
 
 interface SheetDataRequest extends SheetInfoRequest {
-  range: string, // e.g. 'Class Data!A2:E',
-};
+  range: string; // e.g. 'Class Data!A2:E',
+}
 
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 
 export function isSheetsError<T>(request: T | ErrorObj): request is ErrorObj {
-  return ((request as ErrorObj).error !== undefined)
+  return (request as ErrorObj).error !== undefined;
 }
 
 // Uniform Error handling for a gapi.client.Request.
-async function tryGetReponse<T>(
-  f: () => gapi.client.Request<T>
-): Promise<T | ErrorObj> {
+async function tryGetReponse<T>(f: () => gapi.client.Request<T>): Promise<T | ErrorObj> {
   try {
     const response = await f();
     if (response.status !== 200) {
@@ -66,9 +64,11 @@ async function tryGetReponse<T>(
     console.warn(err);
     if (sheetResponseError.status === 404) {
       return { error: 'No such spreadsheet exists. Maybe the ID or URL is mistyped? (404)' };
-    }
-    else if (sheetResponseError.status === 403) {
-      return { error: 'You do not have permission to access this sheet. You need to login with an account that has access, or have the owner make it publicly viewable. (403)' };
+    } else if (sheetResponseError.status === 403) {
+      return {
+        error:
+          'You do not have permission to access this sheet. You need to login with an account that has access, or have the owner make it publicly viewable. (403)',
+      };
     }
     return { error: `Unknown error (${sheetResponseError.status}), sorry.` };
   }
@@ -77,10 +77,9 @@ async function tryGetReponse<T>(
 // Creating a request with an optional accessToken and sheetsID or URL.
 function prepareInfoRequest(
   steetIdOrUrl: string,
-  accessToken?: google.accounts.oauth2.TokenResponse | null
+  accessToken?: google.accounts.oauth2.TokenResponse | null,
 ): SheetInfoRequest | ErrorObj {
-  const match =
-    steetIdOrUrl.match(/^(https\:\/\/docs\.google\.com\/spreadsheets\/d\/)?([a-zA-Z0-9_\-]{5,})\/?/);
+  const match = steetIdOrUrl.match(/^(https\:\/\/docs\.google\.com\/spreadsheets\/d\/)?([a-zA-Z0-9_\-]{5,})\/?/);
   if (!match) {
     return { error: 'No sheet URL or ID entered.' };
   }
@@ -91,7 +90,7 @@ function prepareInfoRequest(
     spreadsheetId: sheetId,
   } as SheetInfoRequest;
   if (accessToken) {
-    request.access_token = accessToken.access_token
+    request.access_token = accessToken.access_token;
   }
   return request;
 }
@@ -101,7 +100,8 @@ function prepareInfoRequest(
 function prepareDataRequest(
   steetIdOrUrl: string,
   range: string,
-  accessToken?: google.accounts.oauth2.TokenResponse | null): SheetDataRequest | ErrorObj {
+  accessToken?: google.accounts.oauth2.TokenResponse | null,
+): SheetDataRequest | ErrorObj {
   const request = prepareInfoRequest(steetIdOrUrl, accessToken) as SheetDataRequest;
   if (isSheetsError(request)) {
     return request;
@@ -110,52 +110,51 @@ function prepareDataRequest(
   return request;
 }
 
-
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GoogleSheetsService {
   onceReady: Promise<void>;
 
   constructor() {
-    this.onceReady = new Promise(
-      (resolve, _reject) => {
-        gapi.load('client', async () => {
-          await gapi.client.init({
-            apiKey: environment.sheetsApiKey,
-            discoveryDocs: [DISCOVERY_DOC],
-          });
-          resolve();
+    this.onceReady = new Promise((resolve, _reject) => {
+      gapi.load('client', async () => {
+        await gapi.client.init({
+          apiKey: environment.sheetsApiKey,
+          discoveryDocs: [DISCOVERY_DOC],
         });
+        resolve();
       });
+    });
   }
 
-  async getSheetInfo(steetIdOrUrl: string,
-    accessToken?: google.accounts.oauth2.TokenResponse | null
+  async getSheetInfo(
+    steetIdOrUrl: string,
+    accessToken?: google.accounts.oauth2.TokenResponse | null,
   ): Promise<gapi.client.sheets.Spreadsheet | ErrorObj> {
     await this.onceReady;
     const request = prepareInfoRequest(steetIdOrUrl, accessToken);
     if (isSheetsError(request)) {
-      return request
+      return request;
     }
-    const spreadsheetResponse = await tryGetReponse(
-      () => gapi.client.sheets.spreadsheets.get(request));
+    const spreadsheetResponse = await tryGetReponse(() => gapi.client.sheets.spreadsheets.get(request));
     if (isSheetsError(spreadsheetResponse)) {
       return spreadsheetResponse;
     }
     return spreadsheetResponse;
   }
 
-  async getSheetValues(steetIdOrUrl: string, range: string,
-    accessToken?: google.accounts.oauth2.TokenResponse | null
+  async getSheetValues(
+    steetIdOrUrl: string,
+    range: string,
+    accessToken?: google.accounts.oauth2.TokenResponse | null,
   ): Promise<SheetsValues | ErrorObj> {
     await this.onceReady;
     const request = prepareDataRequest(steetIdOrUrl, range, accessToken);
     if (isSheetsError(request)) {
-      return request
+      return request;
     }
-    const spreadsheetResponse = await tryGetReponse(
-      () => gapi.client.sheets.spreadsheets.values.get(request));
+    const spreadsheetResponse = await tryGetReponse(() => gapi.client.sheets.spreadsheets.values.get(request));
     if (isSheetsError(spreadsheetResponse)) {
       return spreadsheetResponse;
     }
@@ -164,7 +163,4 @@ export class GoogleSheetsService {
     }
     return { values: spreadsheetResponse.values as string[][] };
   }
-
 }
-
-

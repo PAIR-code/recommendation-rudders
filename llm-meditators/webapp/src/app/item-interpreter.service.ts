@@ -22,26 +22,23 @@ export interface InterpretedItem {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ItemInterpreterService {
-
   constructor(
     // TODO: use this with a prompt to do smarter interpretation.
     private lmApiService: LmApiService,
     // public interpretationPrompt: Template<input, title, keys>
-  ) { }
+  ) {}
 
   async interpretItemText(text: string): Promise<InterpretedItem | ErrorResponse> {
-    const responses = await fillTemplate(
-      this.lmApiService.llm,
-      expInterpTempl.substs({ experience: text }));
+    const responses = await fillTemplate(this.lmApiService.llm, expInterpTempl.substs({ experience: text }));
 
     if (isErrorResponse(responses)) {
       return responses;
     }
 
-    const badlyFormedResponsesCount = responses.filter(r => !r.substs).length;
+    const badlyFormedResponsesCount = responses.filter((r) => !r.substs).length;
     console.log(`badlyFormedResponses count: ${badlyFormedResponsesCount}`);
     console.log(`responses: ${JSON.stringify(responses, null, 2)} `);
 
@@ -57,9 +54,8 @@ export class ItemInterpreterService {
     const entityDetails = substs.aboutEntity;
     const sentiment = substs.likedOrDisliked;
 
-    const charMatches = matchFewShotTemplate(
-      characteristicsTempl, substs.characteristics);
-    const keys = charMatches.map(c => c.substs.characteristic);
+    const charMatches = matchFewShotTemplate(characteristicsTempl, substs.characteristics);
+    const keys = charMatches.map((c) => c.substs.characteristic);
     return { entityTitle: title, text, entityDetails, sentiment, keys };
   }
 }

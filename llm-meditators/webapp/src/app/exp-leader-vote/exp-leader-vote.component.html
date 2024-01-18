@@ -1,0 +1,19 @@
+<div class="main">
+  @for (vote of votes; track vote.userId) {
+    <label [id]="vote.userId">{{ vote.userId }}:</label>
+    <mat-radio-group class="vote-radio-group" [value]="vote.vote" (change)="setVote($event, vote.userId)">
+      <mat-radio-button class="vote-radio-button" [value]="LeaderVote.POSITIVE">
+        {{ LeaderVote.POSITIVE }}
+      </mat-radio-button>
+      <mat-radio-button class="vote-radio-button" [value]="LeaderVote.NEUTRAL">
+        {{ LeaderVote.NEUTRAL }}
+      </mat-radio-button>
+      <mat-radio-button class="vote-radio-button" [value]="LeaderVote.NEGATIVE">
+        {{ LeaderVote.NEGATIVE }}
+      </mat-radio-button>
+
+      <button mat-button class="vote-clear-button" color="accent" (click)="resetVote(vote.userId)">Clear</button>
+    </mat-radio-group>
+    <br />
+  }
+</div>

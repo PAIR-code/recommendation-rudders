@@ -24,28 +24,30 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
-import { } from 'jasmine';
+import {} from 'jasmine';
 
 describe('AppComponent', () => {
-  beforeEach(() => TestBed.configureTestingModule({
-    imports: [
-      RouterTestingModule,
-      NoopAnimationsModule,
-      MatButtonModule,
-      MatSelectModule,
-      MatSidenavModule,
-      MatButtonToggleModule,
-      MatIconModule,
-      MatListModule,
-      FormsModule,
-      ReactiveFormsModule,
-      MatFormFieldModule,
-      MatInputModule,
-      MatMenuModule,
-      MatProgressBarModule,
-    ],
-    declarations: [AppComponent]
-  }));
+  beforeEach(() =>
+    TestBed.configureTestingModule({
+      imports: [
+        RouterTestingModule,
+        NoopAnimationsModule,
+        MatButtonModule,
+        MatSelectModule,
+        MatSidenavModule,
+        MatButtonToggleModule,
+        MatIconModule,
+        MatListModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatMenuModule,
+        MatProgressBarModule,
+      ],
+      declarations: [AppComponent],
+    }),
+  );
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);

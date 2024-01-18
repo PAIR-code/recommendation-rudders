@@ -15,7 +15,7 @@ import { VertexEmbedder } from 'src/lib/text-embeddings/embedder_vertexapi';
 // The value of having a service here is that the same LLM object can be used
 // throughout the app.
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class VertexApiService {
   public llm: VertexPalm2LLM;
@@ -30,7 +30,7 @@ export class VertexApiService {
   }
 
   set accessToken(token: string) {
-    console.log(`accessToken update ${token}.`)
+    console.log(`accessToken update ${token}.`);
     this.llm.accessToken = token;
     localStorage.setItem('accessToken', token);
   }
@@ -39,7 +39,7 @@ export class VertexApiService {
   }
 
   set projectId(project: string) {
-    console.log(`projectId update ${project}.`)
+    console.log(`projectId update ${project}.`);
     this.llm.projectId = project;
     localStorage.setItem('projectId', project);
   }
