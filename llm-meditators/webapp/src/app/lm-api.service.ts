@@ -16,7 +16,7 @@ import { SimpleLlm } from 'src/lib/text-templates/llm_api';
 // The value of having a service here is that the same LLM object can be used
 // throughout the app.
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LmApiService {
   public llm: SimpleLlm;

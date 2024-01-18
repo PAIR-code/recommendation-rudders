@@ -14,7 +14,7 @@ import { GoogleAuthService } from './google-auth.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
   public loc: 'home' | 'llm-config' | 'prompts' = 'home';
@@ -25,7 +25,7 @@ export class AppComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     public dataService: SavedDataService,
-    public authService: GoogleAuthService
+    public authService: GoogleAuthService,
   ) {
     effect(() => {
       // document.querySelector('title')!.textContent =
@@ -34,8 +34,7 @@ export class AppComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngAfterViewInit() {
     // TODO: enable this to login automatically when app starts.

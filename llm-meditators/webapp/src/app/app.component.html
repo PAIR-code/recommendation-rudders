@@ -1,13 +1,13 @@
 <div class="toolbar" role="banner">
   <button mat-icon-button (click)="sidenav.toggle()"><mat-icon>menu</mat-icon></button>
-  <span class="title">Rudders: {{dataService.appName()}}</span>
+  <span class="title">Rudders: {{ dataService.appName() }}</span>
   <div class="spacer"></div>
   <div *ngIf="!authService.credential()" #googleButton></div>
   <div *ngIf="authService.credential()">
-    <img class="profileImg" [src]="authService.credential()?.picture">
+    <img class="profileImg" [src]="authService.credential()?.picture" />
   </div>
   <a class="small-logo" aria-label="PAIR" href="https://pair.withgoogle.com/" title="Home">
-    <img src="/assets/pair-logo.svg">
+    <img src="/assets/pair-logo.svg" />
   </a>
 </div>
 
@@ -15,16 +15,31 @@
   <mat-sidenav-container>
     <mat-sidenav #sidenav mode="side" opened="true">
       <mat-nav-list class="menu-buttons">
-        <mat-list-item [activated]="router.url == '/'" matListItemTitle routerLink="/" routerLinkActive="active"
-          ariaCurrentWhenActive="page">
+        <mat-list-item
+          [activated]="router.url == '/'"
+          matListItemTitle
+          routerLink="/"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
           Home
         </mat-list-item>
-        <mat-list-item [activated]="router.url == '/survey'" matListItemTitle routerLink="/survey"
-          routerLinkActive="active" ariaCurrentWhenActive="page">
+        <mat-list-item
+          [activated]="router.url == '/survey'"
+          matListItemTitle
+          routerLink="/survey"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
           Survey
         </mat-list-item>
-        <mat-list-item [activated]="router.url == '/settings'" matListItemTitle routerLink="/settings"
-          routerLinkActive="active" ariaCurrentWhenActive="page">
+        <mat-list-item
+          [activated]="router.url == '/settings'"
+          matListItemTitle
+          routerLink="/settings"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
           Settings
         </mat-list-item>
         <!-- <mat-list-item [activated]="router.url == '/data'" matListItemTitle routerLink="/data" routerLinkActive="active" ariaCurrentWhenActive="page">

@@ -18,8 +18,7 @@ export interface GoogleSheetsStatus<T> {
   statusText?: string;
 }
 
-interface UploadResponse {
-}
+interface UploadResponse {}
 
 // export interface SheetsValues {
 //   values: string[][];
@@ -47,36 +46,33 @@ interface UploadResponse {
 //   resource: gapi.client.drive.File;
 // };
 
-
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GoogleDriveAppdataService {
   onceReady: Promise<void>;
 
   constructor() {
-    this.onceReady = new Promise(
-      (resolve, _reject) => {
-        gapi.load('client', async () => {
-          await gapi.client.init({
-            apiKey: environment.driveApiKey,
-            discoveryDocs: [DISCOVERY_DOC],
-          });
-          resolve();
+    this.onceReady = new Promise((resolve, _reject) => {
+      gapi.load('client', async () => {
+        await gapi.client.init({
+          apiKey: environment.driveApiKey,
+          discoveryDocs: [DISCOVERY_DOC],
         });
+        resolve();
       });
+    });
   }
-
 
   async saveData(
     jsonData: string,
     name: string,
     description: string,
-    accessToken?: google.accounts.oauth2.TokenResponse | null
+    accessToken?: google.accounts.oauth2.TokenResponse | null,
   ) {
     await this.onceReady;
 
@@ -89,7 +85,7 @@ export class GoogleDriveAppdataService {
     const metadata = {
       name,
       // description,
-      mimeType: contentDataMimeType
+      mimeType: contentDataMimeType,
     };
 
     const multipartRequestBody =
@@ -113,15 +109,15 @@ export class GoogleDriveAppdataService {
       method: 'POST',
       params: {
         // multipart = upload metadata and data in a single upload.
-        uploadType: 'multipart'
+        uploadType: 'multipart',
       },
       headers: {
         // The gapi.client request handles auth/credentials, cores, cache, etc.
         // 'Authorization': `Bearer ${accessToken?.access_token}`,
         'Content-Type': `multipart/related; boundary="${boundary}"`,
-        'Content-Length': `${multipartRequestBody.length}`
+        'Content-Length': `${multipartRequestBody.length}`,
       },
-      body: multipartRequestBody
+      body: multipartRequestBody,
     });
     // mode: 'cors', // no-cors, *cors, same-origin
     // credentials: 'same-origin', // include, *same-origin, omit
@@ -129,13 +125,13 @@ export class GoogleDriveAppdataService {
     // redirect: 'follow', // manual, *follow, error
     // referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin,
 
-    const response = await new Promise<gapi.client.Response<UploadResponse>>(
-      (resolve, _reject) => request.execute(resolve));
+    const response = await new Promise<gapi.client.Response<UploadResponse>>((resolve, _reject) =>
+      request.execute(resolve),
+    );
 
     console.log('status:', response.status);
     console.log('statusText:', response.statusText);
     console.log('result:', response.result);
-
   }
   /*
       const multipartRequestBody =
@@ -255,5 +251,4 @@ export class GoogleDriveAppdataService {
 
     }
   */
-
 }

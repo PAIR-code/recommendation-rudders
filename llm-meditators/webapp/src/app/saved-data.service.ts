@@ -11,19 +11,18 @@ import { ItemInterpreterService } from './item-interpreter.service';
 import { LmApiService } from './lm-api.service';
 import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
-
 export interface Item {
   name: string; // displayed to the users, must be unique
   imageUrl: string; // for the picture
 }
 
 interface ItemPair {
-  item1: Item;  // Item name
-  item2: Item;  // Item name
+  item1: Item; // Item name
+  item2: Item; // Item name
 }
 
 interface ItemRating extends ItemPair {
-  confidence: number;  // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
+  confidence: number; // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
 }
 
 interface BasicExpStage {
@@ -45,13 +44,12 @@ interface ExpStageGroupRatingChat extends BasicExpStage {
 
 interface ExpStageLeaderVote extends BasicExpStage {
   kind: 'leader-vote';
-  // Map from a user to their votes on other users. 
+  // Map from a user to their votes on other users.
   // Probably 5 users.
   votes: {
-    [userId: string]:
-    { [maybeLeaderUserId: string]: 'positive' | 'neutral' | 'negative' | 'not-rated' }
+    [userId: string]: { [maybeLeaderUserId: string]: 'positive' | 'neutral' | 'negative' | 'not-rated' };
   };
-  electedLeader: string;  // UserId
+  electedLeader: string; // UserId
 }
 
 interface ExpStageSimpleSurvey extends BasicExpStage {
@@ -61,7 +59,7 @@ interface ExpStageSimpleSurvey extends BasicExpStage {
     [userId: string]: {
       score: number; //  10 point scale.
       openFeedback: string;
-    }
+    };
   };
 }
 
@@ -75,14 +73,19 @@ interface ExpStageAcceptToS extends BasicExpStage {
   userAcceptance: { [userId: string]: Date };
 }
 
-type ExpStage = ExpStageAcceptToS | ExpStageSetProfile | ExpStageRankItems
-  | ExpStageGroupRatingChat | ExpStageLeaderVote | ExpStageSimpleSurvey;
+type ExpStage =
+  | ExpStageAcceptToS
+  | ExpStageSetProfile
+  | ExpStageRankItems
+  | ExpStageGroupRatingChat
+  | ExpStageLeaderVote
+  | ExpStageSimpleSurvey;
 
-// Admin editable, some parts of this are written to by certain 
+// Admin editable, some parts of this are written to by certain
 // user actions, by a trusted cloud function.
 export interface Experiment {
   maxNumberOfParticipants: number;
-  participants: { [userId: string]: User }
+  participants: { [userId: string]: User };
   stages: ExpStage[];
 }
 
@@ -93,8 +96,8 @@ export interface UserProfile {
 }
 
 export interface User {
-  accessCode: string;  // likely stored in local browser cache/URL.
-  state: string; // BasicExpStage.name 
+  accessCode: string; // likely stored in local browser cache/URL.
+  state: string; // BasicExpStage.name
   userId: string;
   // Their appearance.
   profile: UserProfile;
@@ -122,32 +125,29 @@ export type Message = UserMessage | SystemMessage | ModeratorMessage;
 const acceptTos: ExpStageAcceptToS = {
   kind: 'accept-tos',
   name: '0. Agree to the experiment',
-  userAcceptance: {}
-}
+  userAcceptance: {},
+};
 
 const setProfile: ExpStageSetProfile = {
   kind: 'set-profile',
   name: '1. Set your profile',
   userProfiles: {},
-}
+};
 
 const initialExperimentSetup: Experiment = {
   maxNumberOfParticipants: 5,
   participants: {},
-  stages: [
-    acceptTos,
-    setProfile,
-  ],
+  stages: [acceptTos, setProfile],
 };
 
 // TODO: write up the rest of the experiment.
 
-// '0. acceptingTOS' 
-// | '1. profileSetup' 
-// | '2. initialRating' 
-// | '3. groupChat' 
-// | '4. finalRating' 
-// | '5. post-Chat-satisfaction' 
+// '0. acceptingTOS'
+// | '1. profileSetup'
+// | '2. initialRating'
+// | '3. groupChat'
+// | '4. finalRating'
+// | '5. post-Chat-satisfaction'
 // | '6. post-leader-reveal-satisfcation'
 // | '7. Complete';
 
@@ -172,16 +172,13 @@ function initialAppData(): AppData {
     experiment: {
       maxNumberOfParticipants: 5,
       participants: {},
-      stages: [
-        acceptTos,
-        setProfile,
-      ],
+      stages: [acceptTos, setProfile],
     },
-  }
+  };
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SavedDataService {
   public data: WritableSignal<AppData>;
@@ -191,11 +188,10 @@ export class SavedDataService {
 
   constructor(
     private lmApiService: LmApiService,
-    private itemInterpreterService: ItemInterpreterService
+    private itemInterpreterService: ItemInterpreterService,
   ) {
     // The data.
-    this.data = signal(JSON.parse(
-      localStorage.getItem('data') || JSON.stringify(initialAppData())));
+    this.data = signal(JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())));
 
     // Convenience signal for the appName.
     this.appName = computed(() => this.data().settings.name);

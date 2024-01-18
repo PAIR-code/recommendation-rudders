@@ -8,7 +8,7 @@ $toolbar-height: 60px;
   height: $toolbar-height;
   display: flex;
   align-items: center;
-  background-color: rgba(0,0,0,.87);
+  background-color: rgba(0, 0, 0, 0.87);
   color: white;
   font-weight: 600;
   flex: 0 0 $toolbar-height;
@@ -96,5 +96,5 @@ $toolbar-height: 60px;
 // }
 
 .error {
-  color: #F00;
+  color: #f00;
 }

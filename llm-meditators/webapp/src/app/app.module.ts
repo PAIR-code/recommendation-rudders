@@ -63,13 +63,7 @@ import { GoogleSheetsService } from './google-sheets.service';
     MatMenuModule,
     MatProgressBarModule,
   ],
-  providers: [
-    VertexApiService,
-    SavedDataService,
-    LmApiService,
-    GoogleAuthService,
-    GoogleSheetsService,
-  ],
-  bootstrap: [AppComponent]
+  providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
