@@ -48,6 +48,12 @@ export enum LeaderVote {
   NEGATIVE = 'negative',
   NOT_RATED = 'not-rated',
 }
+
+export enum PronounPair {
+  SHE = 'She/Her',
+  THEY = 'They/Them',
+  HE = 'He/Him',
+}
 interface ExpStageLeaderVote extends BasicExpStage {
   kind: 'leader-vote';
   // Map from a user to their votes on other users.
