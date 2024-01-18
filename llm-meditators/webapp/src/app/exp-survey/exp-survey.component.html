@@ -3,6 +3,11 @@
   <div>
     Question: {{stageData().question}}
   </div>
+  <!-- create a slider -->
+  <mat-slider min="0" max="10" step="1" showTickMarks 
+    discrete>
+    <input matSliderThumb (valueChange)="updateSliderValue($event)">
+  </mat-slider>
   <form class="settings-form">
     <mat-form-field class="full-width">
       <mat-label>Answer</mat-label>
