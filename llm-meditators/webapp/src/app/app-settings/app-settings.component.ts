@@ -14,7 +14,7 @@ import { GoogleSheetsService, isSheetsError } from '../google-sheets.service';
 import { GoogleAuthService } from '../google-auth.service';
 import { GoogleDriveAppdataService } from '../google-drive-appdata.service';
 import { ItemInterpreterService } from '../item-interpreter.service';
-import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
+import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 
 @Component({

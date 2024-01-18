@@ -11,7 +11,7 @@ import { LmApiService } from './lm-api.service';
 import { expInterpTempl, characteristicsTempl } from '../lib/recommender-prompts/item-interpreter';
 import { fillTemplate } from 'src/lib/text-templates/llm';
 import { matchFewShotTemplate } from 'src/lib/text-templates/fewshot_template';
-import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
+import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 export interface InterpretedItem {
   entityTitle: string;
@@ -31,7 +31,7 @@ export class ItemInterpreterService {
     // public interpretationPrompt: Template<input, title, keys>
   ) {}
 
-  async interpretItemText(text: string): Promise<InterpretedItem | ErrorResponse> {
+  async interpretItemText(text: string): Promise<InterpretedItem | SimpleError> {
     const responses = await fillTemplate(this.lmApiService.llm, expInterpTempl.substs({ experience: text }));
 
     if (isErrorResponse(responses)) {

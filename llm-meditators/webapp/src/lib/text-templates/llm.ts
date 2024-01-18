@@ -10,7 +10,7 @@
 An class to wrap, and provide a common interface for LLM behaviour.
 */
 
-import { ErrorResponse, isErrorResponse } from "../simple-errors/simple-errors";
+import { SimpleError, isErrorResponse } from "../simple-errors/simple-errors";
 import { Template, matchTemplate } from "./template";
 
 export interface PredictResponse {
@@ -33,7 +33,7 @@ export interface ScoreResponse {
 export abstract class LLM<Params extends {}> {
   public abstract name: string;
 
-  abstract predict(prompt: string, params?: Params): Promise<PredictResponse | ErrorResponse>;
+  abstract predict(prompt: string, params?: Params): Promise<PredictResponse | SimpleError>;
   // abstract score(request: ScoreRequest): Promise<ScoreResponse>;
 }
 
@@ -73,7 +73,7 @@ export interface InterpretedResponse<Ns extends string> {
 
 export async function fillTemplate<Ns extends string>(
   llm: LLM<{}>, template: Template<Ns>
-): Promise<InterpretedResponse<Ns>[] | ErrorResponse> {
+): Promise<InterpretedResponse<Ns>[] | SimpleError> {
   const interpretedResponses = [] as InterpretedResponse<Ns>[];
   // const substsResponses: ({ [Key in Ns]: string } | null)[] = [];
   const parts = template.parts();
