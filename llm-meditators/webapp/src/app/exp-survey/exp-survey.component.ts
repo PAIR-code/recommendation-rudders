@@ -41,6 +41,8 @@ export class ExpSurveyComponent {
   constructor(
     private dataService: SavedDataService,
   ) {
+    this.dataService.data().experiment.currentStage = '4. Post-chat survey';
+
     this.error = computed(() => {
       if(!this.dataService.data().experiment.currentStage) {
         return `currentStage is undefined`;
@@ -55,6 +57,7 @@ export class ExpSurveyComponent {
     // Assumption: this is only ever constructed when 
     // `this.dataService.data().experiment.currentStage` references a 
     // ExpStageSimpleSurvey.
+
     this.stageData = computed(() => {
       console.log(this.error())
       console.log(this.dataService.nameStageMap())
@@ -78,11 +81,6 @@ export class ExpSurveyComponent {
         this.dataService.updateExpStage(curStageData); };
         console.log(this.stageData());
     });
-
-
-    // this.formatLabel.valueChanges.forEach(n => {
-      
-    // });
   }
 
   updateSliderValue(updatedValue: number) {
