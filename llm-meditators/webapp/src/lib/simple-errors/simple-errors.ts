@@ -1,13 +1,20 @@
+/*==============================================================================
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
 
-export interface AbstractErrorResponse {
+export interface AbstractSimpleResponse {
   error: unknown;
 }
 
-export interface ErrorResponse {
+export interface SimpleError {
   error: string;
 }
 
-export function isErrorResponse<T, E extends AbstractErrorResponse>(
+export function isErrorResponse<T, E extends AbstractSimpleResponse>(
   response: T | E
 ): response is E {
   if ((response as E).error) {
@@ -16,7 +23,7 @@ export function isErrorResponse<T, E extends AbstractErrorResponse>(
   return false;
 }
 
-export function assertNoErrorResponse<T, E extends AbstractErrorResponse>(
+export function assertNoErrorResponse<T, E extends AbstractSimpleResponse>(
   response: T | E
 ): asserts response is T {
   if ((response as E).error) {

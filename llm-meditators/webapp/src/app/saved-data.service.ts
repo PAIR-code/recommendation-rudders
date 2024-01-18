@@ -9,34 +9,35 @@
 import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { ItemInterpreterService } from './item-interpreter.service';
 import { LmApiService } from './lm-api.service';
-import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
+import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
+import { map } from 'underscore';
 
 export interface Item {
   name: string; // displayed to the users, must be unique
   imageUrl: string; // for the picture
 }
 
-interface ItemPair {
+export interface ItemPair {
   item1: Item; // Item name
   item2: Item; // Item name
 }
 
-interface ItemRating extends ItemPair {
+export interface ItemRating extends ItemPair {
   confidence: number; // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
 }
 
-interface BasicExpStage {
+export interface BasicExpStage {
   kind: string;
   name: string;
 }
 
-interface ExpStageRankItems extends BasicExpStage {
+export interface ExpStageRankItems extends BasicExpStage {
   kind: 'rank-items';
   itemsToRate: ItemPair[];
   rankings: { [userId: string]: ItemRating[] };
 }
 
-interface ExpStageGroupRatingChat extends BasicExpStage {
+export interface ExpStageGroupRatingChat extends BasicExpStage {
   kind: 'group-chat';
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
@@ -54,38 +55,53 @@ export enum PronounPair {
   THEY = 'They/Them',
   HE = 'He/Him',
 }
-interface ExpStageLeaderVote extends BasicExpStage {
+export interface ExpStageLeaderVote extends BasicExpStage {
   kind: 'leader-vote';
   // Map from a user to their votes on other users.
   // Probably 5 users.
-  votes: {
-    [userId: string]: { [maybeLeaderUserId: string]: LeaderVote };
-  }[];
+  
+  // Backend data model
+  // votes: {
+  //   [userId: string]: { [maybeLeaderUserId: string]: LeaderVote };
+  // }[];
+  
+  // Individual user model
+  votes: { [otherUserId: string]: LeaderVote };
+
   electedLeader: string; // UserId
 }
 
-interface ExpStageSimpleSurvey extends BasicExpStage {
+export interface ExpStageSimpleSurvey extends BasicExpStage {
   kind: 'survey';
   question: string;
-  responses: {
-    [userId: string]: {
-      score: number; //  10 point scale.
-      openFeedback: string;
-    };
-  };
+  response: {
+    score?: number; //  10 point scale.
+    openFeedback: string;
+  }
+  // Backend:
+  // responses: {
+  //   [userId: string]: {
+  //     score: number; //  10 point scale.
+  //     openFeedback: string;
+  //   };
+  // };
 }
 
-interface ExpStageSetProfile extends BasicExpStage {
+export interface ExpStageSetProfile extends BasicExpStage {
   kind: 'set-profile';
-  userProfiles: { [userId: string]: UserProfile };
+  // Backend data...
+  // userProfiles: { [userId: string]: UserProfile };
+  userProfile: UserProfile
 }
 
-interface ExpStageAcceptToS extends BasicExpStage {
+export interface ExpStageAcceptToS extends BasicExpStage {
   kind: 'accept-tos';
-  userAcceptance: { [userId: string]: Date };
+  // Backend data...
+  // userAcceptance: { [userId: string]: Date };
+  userAcceptance?: Date;
 }
 
-type ExpStage =
+export type ExpStage =
   | ExpStageAcceptToS
   | ExpStageSetProfile
   | ExpStageRankItems
@@ -99,6 +115,7 @@ export interface Experiment {
   maxNumberOfParticipants: number;
   participants: { [userId: string]: User };
   stages: ExpStage[];
+  currentStage: string;
 }
 
 export interface UserProfile {
@@ -137,20 +154,37 @@ export type Message = UserMessage | SystemMessage | ModeratorMessage;
 const acceptTos: ExpStageAcceptToS = {
   kind: 'accept-tos',
   name: '0. Agree to the experiment',
-  userAcceptance: {},
+  // userAcceptance: Date,
 };
 
 const setProfile: ExpStageSetProfile = {
   kind: 'set-profile',
   name: '1. Set your profile',
-  userProfiles: {},
+  userProfile: {
+    pronouns: '',
+    avatarUrl: '',
+    name: ''
+  }
+  // userProfiles: {},
+};
+
+const simpleSurvey: ExpStageSimpleSurvey = {
+  kind: 'survey',
+  name: '4. Post-chat survey',
+  question: 'How was the chat?',
+  response: {
+    // score: 
+    openFeedback: '',
+  },
 };
 
 const initialExperimentSetup: Experiment = {
   maxNumberOfParticipants: 5,
   participants: {},
-  stages: [acceptTos, setProfile],
+  stages: [acceptTos, setProfile, simpleSurvey],
+  currentStage: '0. Agree to the experiment',
 };
+
 
 // TODO: write up the rest of the experiment.
 
@@ -181,14 +215,11 @@ function initialAppData(): AppData {
       sheetsId: '',
       sheetsRange: '', // e.g.
     },
-    experiment: {
-      maxNumberOfParticipants: 5,
-      participants: {},
-      stages: [acceptTos, setProfile],
-    },
+    experiment: initialExperimentSetup
   };
 }
 
+// --------------------------------------------
 @Injectable({
   providedIn: 'root',
 })
@@ -197,6 +228,7 @@ export class SavedDataService {
   public appName: Signal<string>;
   public dataSize: Signal<number>;
   public dataJson: Signal<string>;
+  public nameStageMap: Signal<{ [stageName: string]: ExpStage }>;
 
   constructor(
     private lmApiService: LmApiService,
@@ -204,11 +236,19 @@ export class SavedDataService {
   ) {
     // The data.
     this.data = signal(JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())));
+    this.nameStageMap = computed(() => {
+      const map: { [stageName: string]: ExpStage } = {};
+      this.data().experiment.stages.forEach(stage => 
+        map[stage.name] = stage 
+      );
+      return map;
+    });
 
     // Convenience signal for the appName.
     this.appName = computed(() => this.data().settings.name);
     this.dataJson = computed(() => JSON.stringify(this.data()));
     this.dataSize = computed(() => this.dataJson().length);
+
     // Save whenever data changes.
     effect(() => {
       localStorage.setItem('data', this.dataJson());
@@ -221,6 +261,18 @@ export class SavedDataService {
       data.settings[settingKey] = settingValue;
       this.data.set({ ...data });
     }
+  }
+
+  setCurrentExpStageName(expStageName: string) {
+    const data = this.data();
+    data.experiment.currentStage = expStageName;
+    this.data.set({ ...data });
+  }
+
+  updateExpStage(newExpStage: ExpStage) {
+    const data = this.data();
+    Object.assign(this.nameStageMap()[newExpStage.name], newExpStage);
+    this.data.set({ ...data });
   }
 
   reset() {

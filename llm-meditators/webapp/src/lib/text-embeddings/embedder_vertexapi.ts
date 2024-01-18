@@ -6,7 +6,7 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { ErrorResponse, isErrorResponse } from "../simple-errors/simple-errors";
+import { SimpleError, isErrorResponse } from "../simple-errors/simple-errors";
 import { Embedder, Embedding } from "./embedder";
 
 /*
@@ -107,7 +107,7 @@ export class VertexEmbedder implements Embedder<EmbedApiOptions> {
 
   async embed(
     query: string, params?: EmbedApiOptions
-  ): Promise<Embedding | ErrorResponse> {
+  ): Promise<Embedding | SimpleError> {
 
     const apiRequest: EmbedRequest = {
       instances: [{ content: query }],
