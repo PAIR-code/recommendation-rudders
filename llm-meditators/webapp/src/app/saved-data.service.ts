@@ -42,13 +42,19 @@ interface ExpStageGroupRatingChat extends BasicExpStage {
   messages: Message[];
 }
 
+export enum LeaderVote {
+  POSITIVE = 'positive',
+  NEUTRAL = 'neutral',
+  NEGATIVE = 'negative',
+  NOT_RATED = 'not-rated',
+}
 interface ExpStageLeaderVote extends BasicExpStage {
   kind: 'leader-vote';
   // Map from a user to their votes on other users.
   // Probably 5 users.
   votes: {
-    [userId: string]: { [maybeLeaderUserId: string]: 'positive' | 'neutral' | 'negative' | 'not-rated' };
-  };
+    [userId: string]: { [maybeLeaderUserId: string]: LeaderVote };
+  }[];
   electedLeader: string; // UserId
 }
 

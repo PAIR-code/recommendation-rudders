@@ -25,6 +25,15 @@
           Home
         </mat-list-item>
         <mat-list-item
+          [activated]="router.url == '/leader-vote'"
+          matListItemTitle
+          routerLink="/leader-vote"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
+          Leader Vote
+        </mat-list-item>
+        <mat-list-item
           [activated]="router.url == '/survey'"
           matListItemTitle
           routerLink="/survey"
