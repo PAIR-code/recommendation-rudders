@@ -15,6 +15,7 @@
   <mat-sidenav-container>
     <mat-sidenav #sidenav mode="side" opened="true">
       <mat-nav-list class="menu-buttons">
+        <!-- @for (stage of dataService.data().experiments; track by stage.name) {} -->
         <mat-list-item
           [activated]="router.url === '/'"
           matListItemTitle

@@ -95,7 +95,13 @@ const simpleSurvey: ExpStageSurvey = {
 
 const initialExperimentSetup: Experiment = {
   numberOfParticipants: 5,
-  participants: {},
+  participants: {
+    userid1: initUserData(),
+    userid2: initUserData(),
+    userid3: initUserData(),
+    userid4: initUserData(),
+    userid5: initUserData(),
+  },
   stages: [acceptTos, setProfile, simpleSurvey],
 };
 // Example data to bootstrap us...
