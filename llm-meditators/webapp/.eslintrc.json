@@ -1,6 +1,7 @@
 {
   "root": true,
   "ignorePatterns": ["projects/**/*"],
+  "plugins": ["only-warn"],
   "overrides": [
     {
       "files": ["*.ts"],

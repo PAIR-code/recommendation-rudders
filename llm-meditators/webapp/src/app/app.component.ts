@@ -6,10 +6,11 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { AfterViewInit, Component, ElementRef, ViewChild, effect } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Signal, ViewChild, computed, effect } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { SavedDataService } from './services/saved-data.service';
 import { GoogleAuthService } from './services/google-auth.service';
+import { ExpStageKind } from './data-model';
 
 @Component({
   selector: 'app-root',
@@ -17,9 +18,9 @@ import { GoogleAuthService } from './services/google-auth.service';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements AfterViewInit {
-  public loc: 'home' | 'llm-config' | 'prompts' = 'home';
-
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
+  public stageKind: Signal<ExpStageKind>;
+  public stageName: Signal<string>;
 
   constructor(
     private route: ActivatedRoute,
@@ -27,6 +28,9 @@ export class AppComponent implements AfterViewInit {
     public dataService: SavedDataService,
     public authService: GoogleAuthService,
   ) {
+    this.stageKind = computed(() => this.dataService.user().currentStage.kind);
+    this.stageName = computed(() => this.dataService.user().currentStage.name);
+
     effect(() => {
       // document.querySelector('title')!.textContent =
       //   this.dataService.appName();

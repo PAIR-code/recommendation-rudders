@@ -133,6 +133,8 @@ export type ExpStage =
   | ExpStageItemRating
   | ExpStageEnd;
 
+export type ExpStageKind = ExpStage['kind'];
+
 // Note: it should be that:
 //   type ShouldBeTrue = ExpStage extends GenericExpStage<ExpDataKinds> ? true : false;
 
