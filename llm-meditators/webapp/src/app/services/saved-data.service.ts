@@ -215,31 +215,36 @@ export class SavedDataService {
   }
 
   nextStep() {
-    const user = this.user();
+    // We update data, and specifically the user in it.
+    const data = { ...this.data() };
+    const user = { ...data.user };
+    data.user = user;
+
     // Once we get to end, we do nothing.
     if (user.currentStage.kind === END_STAGE.kind) {
       console.warn('nextStep called at the end stage... this should not be possible.');
       return;
     }
 
-    console.log('stages: ', this.data().experiment.stages);
+    console.log('stages: ', data.experiment.stages);
     console.log('completed stages: ', user.completedStages.length);
-    const stages = this.data().experiment.stages;
+    const stages = data.experiment.stages;
     // We have ">" because we always add a dummy start state, so user.completedStages can be 1 bigger
     // than experiment.stages.
     user.completedStages.push(user.currentStage);
     if (user.completedStages.length > stages.length) {
       user.currentStage = END_STAGE;
     } else {
-      const nextStage = this.data().experiment.stages[user.completedStages.length - 1];
+      const nextStage = data.experiment.stages[user.completedStages.length - 1];
       user.currentStage = { ...nextStage };
     }
+
     console.log('new stage: ', user.currentStage);
     const curSession = this.session();
     const newSession = Object.assign({ ...curSession }, { stage: user.currentStage.name } as Partial<AppSession>);
     this.session.set(newSession);
     console.log(curSession, newSession);
-    this.data.set({ ...this.data() });
+    this.data.set(data);
   }
 
   setSetting(settingKey: keyof AppSettings, settingValue: string) {
