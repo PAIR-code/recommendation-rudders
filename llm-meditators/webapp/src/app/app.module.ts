@@ -34,6 +34,7 @@ import { SavedDataService } from './services/saved-data.service';
 import { LmApiService } from './services/lm-api.service';
 import { GoogleAuthService } from './services/google-auth.service';
 import { GoogleSheetsService } from './services/google-sheets.service';
+import { CodemirrorConfigEditorModule } from './codemirror-config-editor/codemirror-config-editor.module';
 
 @NgModule({
   declarations: [
@@ -58,6 +59,7 @@ import { GoogleSheetsService } from './services/google-sheets.service';
     MatInputModule,
     MatMenuModule,
     MatProgressBarModule,
+    CodemirrorConfigEditorModule,
   ],
   providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
   bootstrap: [AppComponent],
