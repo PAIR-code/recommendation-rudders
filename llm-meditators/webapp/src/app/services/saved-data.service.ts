@@ -89,7 +89,7 @@ function initUserData(): User {
   };
 }
 
-function initialAppData(): AppData {
+export function initialAppData(): AppData {
   return {
     settings: {
       name: 'LLM-Mediators Experiment',
@@ -136,6 +136,14 @@ export class SavedDataService {
     effect(() => {
       localStorage.setItem('data', this.dataJson());
     });
+  }
+
+  nextStep() {
+    const user = this.user();
+    const nextStage = this.data().experiment.stages[user.completedStages.length];
+    user.completedStages.push(user.currentStage);
+    user.currentStage = {...nextStage}
+    this.data.set({ ...this.data() });
   }
 
   setSetting(settingKey: keyof AppSettings, settingValue: string) {

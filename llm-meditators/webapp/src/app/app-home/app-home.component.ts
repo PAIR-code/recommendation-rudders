@@ -62,6 +62,10 @@ export class AppHomeComponent {
   saveOrCancelAdd(event: 'saved' | 'cancelled') {
   }
 
+  nextStep() {
+    this.dataService.nextStep();
+  }
+
   hasNoInput() {
     return !this.itemTextControl.value
       || this.itemTextControl.value.length === 0;
