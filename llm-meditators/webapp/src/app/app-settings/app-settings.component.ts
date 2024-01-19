@@ -7,13 +7,14 @@
 ==============================================================================*/
 
 import { Component, ElementRef, OnInit, ViewChild, effect } from '@angular/core';
-import { AppData, SavedDataService } from '../services/saved-data.service';
+import { AppData, SavedDataService, initialAppData } from '../services/saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../services/lm-api.service';
 import { GoogleSheetsService, isSheetsError } from '../services/google-sheets.service';
 import { GoogleAuthService } from '../services/google-auth.service';
 import { GoogleDriveAppdataService } from '../services/google-drive-appdata.service';
 import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
+import { ConfigUpdate } from '../codemirror-config-editor/codemirror-config-editor.component';
 
 
 @Component({
@@ -24,8 +25,8 @@ import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-error
 export class AppSettingsComponent implements OnInit {
   public appNameControl: FormControl<string | null>;
 
-  public sheetsUrlOrIdControl: FormControl<string | null>;
-  public sheetsRangeControl: FormControl<string | null>;
+  public defaultDataStr: string = JSON.stringify(initialAppData(), null, 2);
+  public currentDataStr: string = this.defaultDataStr;
 
   public downloadUrl?: string;
   public waiting: boolean = false;
@@ -41,18 +42,10 @@ export class AppSettingsComponent implements OnInit {
     private driveService: GoogleDriveAppdataService,
     private authService: GoogleAuthService,
   ) {
-    this.sheetsUrlOrIdControl = new FormControl<string>('');
-    this.sheetsRangeControl = new FormControl<string>('');
     this.appNameControl = new FormControl<string | null>(
       this.dataService.appName());
     this.appNameControl.valueChanges.forEach(n => {
       if (n) { this.dataService.setSetting('name', n); };
-    });
-    this.sheetsUrlOrIdControl.valueChanges.forEach(n => {
-      if (n) { this.dataService.setSetting('sheetsId', n); };
-    });
-    this.sheetsRangeControl.valueChanges.forEach(n => {
-      if (n) { this.dataService.setSetting('sheetsRange', n); };
     });
 
     // When app data changes, update the fields in this UI.
@@ -61,16 +54,6 @@ export class AppSettingsComponent implements OnInit {
       if (this.appNameControl.value !== null
         && this.appNameControl.value !== newName) {
         this.appNameControl.setValue(newName, { emitEvent: false });
-      }
-      const sheetsUrl = this.dataService.data().settings.sheetsId;
-      if (this.sheetsUrlOrIdControl.value !== null
-        && this.sheetsUrlOrIdControl.value !== sheetsUrl) {
-        this.sheetsUrlOrIdControl.setValue(sheetsUrl, { emitEvent: false });
-      }
-      const sheetsRange = this.dataService.data().settings.sheetsRange;
-      if (this.sheetsRangeControl.value !== null
-        && this.sheetsRangeControl.value !== sheetsUrl) {
-        this.sheetsRangeControl.setValue(sheetsRange, { emitEvent: false });
       }
     });
   }
@@ -108,6 +91,23 @@ export class AppSettingsComponent implements OnInit {
 
   downloadName() {
     return `${this.appNameControl.value}.json`
+  }
+
+  configUpdated(update: ConfigUpdate<unknown>) {
+    // When configUpdate has a new object, we assume it to be correct.
+    //
+    // TODO: provide some runtime value type checking. Right now all that is
+    // needed is valid JSON/JSON5, but if you provide valid JSON missing needed
+    // values (e.g. encoderConfig is null), it should complain here, but
+    // currently does not.
+    const configUpdate = update as ConfigUpdate<AppData>;
+
+    if (configUpdate.error || !configUpdate.obj || !configUpdate.json) {
+      console.log(`configUpdated with no update: ${configUpdate}`);
+      return;
+    }
+
+    this.dataService.data.set(configUpdate.obj);
   }
 
   sizeString() {

@@ -30,16 +30,11 @@
       {{errorMessage}}
     </div>
     }
-    <div>
-      <mat-form-field>
-        <mat-label>Sheets ID or URL</mat-label>
-        <input matInput placeholder="Sheets ID or URL" [formControl]="sheetsUrlOrIdControl">
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Range (e.g. 'sheet-name!C2:C')</mat-label>
-        <input matInput placeholder="Range" [formControl]="sheetsRangeControl">
-      </mat-form-field>
-    </div>
-
   </form>
+
+  <div class="code-full-screen">
+    <app-codemirror-config-editor (update)="configUpdated($event)" whatIsBeingEditedName="Configuration"
+      [closable]="false" [defaultConfig]="defaultDataStr" [config]="currentDataStr"></app-codemirror-config-editor>
+  </div>
+  
 </div>
