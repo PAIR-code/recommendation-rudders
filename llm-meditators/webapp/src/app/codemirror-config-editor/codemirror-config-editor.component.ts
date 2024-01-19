@@ -41,11 +41,14 @@ export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit
   @Output() update = new EventEmitter<ConfigUpdate<any>>();
   @Input()
   set config(value: string) {
-    // if (this.codeMirror) {
-    //   this.setCodeMirrorValue(value);
+    if (this.codeMirror) {
+      this.setCodeMirrorValue(value);
+    } else {
+      this.lastValidConfig = value;
+    }
     // } else {
     // this.tmpConfigString = value;
-    this.lastValidConfig = value;
+    // this.lastValidConfig = value;
     // }
   }
 
@@ -92,14 +95,15 @@ export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit
       this.lastValidConfig = s;
       return;
     }
-
-    this.codeMirror.state.update({
+    console.log('setCodeMirrorValue--> calling state update');
+    const transaction = this.codeMirror.state.update({
       changes: {
         from: 0,
         to: this.codeMirror.state.doc.length,
         insert: s
       }
     });
+    this.codeMirror.dispatch(transaction);
   }
 
   ngOnInit() {
