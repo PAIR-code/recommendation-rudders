@@ -5,16 +5,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SimpleError, isErrorResponse as isSimpleError } from 'src/lib/simple-errors/simple-errors';
 import {MatSliderModule, MatSlider} from '@angular/material/slider';
-import { ExpStageSurvey } from '../data-model';
+import { ExpStageSurvey, Survey } from '../data-model';
 
-const dummySurveyData: ExpStageSurvey = {
-  kind: 'survey',
-  name: 'error name',
-  config: {
+const dummySurveyData: Survey = {
     question: 'error: this should never happen',
     score: null,
     openFeedback: '',
-  },
 };
 
 @Component({
@@ -32,23 +28,21 @@ const dummySurveyData: ExpStageSurvey = {
 })
 export class ExpSurveyComponent {
   public responseControl: FormControl<string | null>;
-  public stageData: Signal<ExpStageSurvey>;
+  public stageData: Signal<Survey>;
   public error: Signal<string | null>;
   
   constructor(
     private dataService: SavedDataService,
   ) {
-    this.dataService.data().user.currentStage = ;
-
     this.error = computed(() => {
-      if(!this.dataService.data().experiment.currentStage) {
+      const currentStage = this.dataService.user().currentStage;
+      if(!currentStage) {
         return `currentStage is undefined`;
+      };
+      if(currentStage.kind !== 'survey') {
+        return `currentStage is kind is not right: ${JSON.stringify(currentStage, null, 2)}`;
       }
-      if(this.dataService.nameStageMap()[
-        this.dataService.data().experiment.currentStage]) {
-        return null;
-      }
-      return `this.dataService.data().experiment.currentStage is not in the map`;
+      return null;
     });
 
     // Assumption: this is only ever constructed when 
@@ -56,25 +50,17 @@ export class ExpSurveyComponent {
     // ExpStageSimpleSurvey.
 
     this.stageData = computed(() => {
-      console.log(this.error())
-      console.log(this.dataService.nameStageMap())
-      console.log(this.dataService.data().experiment.currentStage);
-
-      const stageData = this.dataService.nameStageMap()[
-        this.dataService.data().experiment.currentStage]
-      if (!stageData) {
+      if(this.dataService.data().user.currentStage.kind !== 'survey') {
         return dummySurveyData;
       }
-      return stageData as ExpStageSimpleSurvey;
+      return this.dataService.data().user.currentStage.config as Survey;
     });
 
     this.responseControl = new FormControl<string>('');
     this.responseControl.valueChanges.forEach(n => {
       if (n) {
         const curStageData = this.stageData();
-        curStageData.response =  {
-          openFeedback: n
-        }
+        curStageData.openFeedback = n;
         this.dataService.updateExpStage(curStageData); };
         console.log(this.stageData());
     });
@@ -82,9 +68,7 @@ export class ExpSurveyComponent {
 
   updateSliderValue(updatedValue: number) {
     const curStageData = this.stageData();
-    console.log('curStageData: ', curStageData);
-    curStageData.response.score = updatedValue
+    curStageData.score = updatedValue
     this.dataService.updateExpStage(curStageData);
-    console.log('updateSliderValue: ', this.stageData());
   }
 }

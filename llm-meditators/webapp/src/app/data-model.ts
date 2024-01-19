@@ -131,7 +131,7 @@ export type ExpStage =
   | ExpStageEnd;
 
 // Note: it should be that:
-type ShouldBeTrue = ExpStage extends GenericExpStage<ExpDataKinds> ? true : false;
+//   type ShouldBeTrue = ExpStage extends GenericExpStage<ExpDataKinds> ? true : false;
 
 // -------------------------------------------------------------------------------------
 // Admin editable, some parts of this are written to by certain

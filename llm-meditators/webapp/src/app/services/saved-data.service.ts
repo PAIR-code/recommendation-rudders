@@ -10,7 +10,7 @@ import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@a
 import { LmApiService } from './lm-api.service';
 import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 import { map } from 'underscore';
-import { Experiment, ExpStage, ExpStageTosAcceptance, ExpStageUserProfile, ExpStageSurvey, User, START_STAGE } from '../data-model';
+import { Experiment, ExpStage, ExpStageTosAcceptance, ExpStageUserProfile, ExpStageSurvey, User, START_STAGE, ExpDataKinds } from '../data-model';
 
 // -------------------------------------------------------------------------------------
 
@@ -107,6 +107,7 @@ function initialAppData(): AppData {
 })
 export class SavedDataService {
   public data: WritableSignal<AppData>;
+  public user: Signal<User>;
   public appName: Signal<string>;
   public dataSize: Signal<number>;
   public dataJson: Signal<string>;
@@ -129,6 +130,7 @@ export class SavedDataService {
     this.appName = computed(() => this.data().settings.name);
     this.dataJson = computed(() => JSON.stringify(this.data()));
     this.dataSize = computed(() => this.dataJson().length);
+    this.user = computed(() => this.data().user);
 
     // Save whenever data changes.
     effect(() => {
@@ -150,9 +152,9 @@ export class SavedDataService {
     this.data.set({ ...data });
   }
 
-  updateExpStage(newExpStage: ExpStage) {
+  updateExpStage(newExpStage: ExpDataKinds) {
     const data = this.data();
-    Object.assign(this.nameStageMap()[newExpStage.name], newExpStage);
+    Object.assign(this.user().currentStage.config, newExpStage);
     this.data.set({ ...data });
   }
 

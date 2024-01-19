@@ -13,7 +13,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppComponent } from './app.component';
-import { RuddersHomeComponent } from './rudders-home/rudders-home.component';
+import { AppHomeComponent } from './app-home/app-home.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
@@ -38,7 +38,7 @@ import { GoogleSheetsService } from './services/google-sheets.service';
 @NgModule({
   declarations: [
     AppComponent,
-    RuddersHomeComponent,
+    AppHomeComponent,
     AppSettingsComponent,
     PageNotFoundComponent,
   ],

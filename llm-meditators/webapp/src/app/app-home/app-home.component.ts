@@ -13,11 +13,11 @@ import { LmApiService } from '../services/lm-api.service';
 import { isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 @Component({
-  selector: 'app-rudders-home',
-  templateUrl: './rudders-home.component.html',
-  styleUrls: ['./rudders-home.component.scss']
+  selector: 'app-home',
+  templateUrl: './app-home.component.html',
+  styleUrls: ['./app-home.component.scss']
 })
-export class RuddersHomeComponent {
+export class AppHomeComponent {
   public itemTextControl: FormControl<string | null>;
   public waiting: boolean = false;
   public errorMessage?: string;
@@ -61,7 +61,6 @@ export class RuddersHomeComponent {
 
   saveOrCancelAdd(event: 'saved' | 'cancelled') {
   }
-
 
   hasNoInput() {
     return !this.itemTextControl.value
