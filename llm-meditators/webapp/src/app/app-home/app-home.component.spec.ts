@@ -19,19 +19,17 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
-import { RuddersHomeComponent } from './rudders-home.component';
-import { DataViewerComponent } from '../data-viewer/data-viewer.component';
+import { AppHomeComponent } from './app-home.component';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('RuddersHomeComponent', () => {
-  let component: RuddersHomeComponent;
-  let fixture: ComponentFixture<RuddersHomeComponent>;
+  let component: AppHomeComponent;
+  let fixture: ComponentFixture<AppHomeComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       declarations: [
-        RuddersHomeComponent,
-        DataViewerComponent,
+        AppHomeComponent,
       ],
       imports: [
         NoopAnimationsModule,
@@ -48,7 +46,7 @@ describe('RuddersHomeComponent', () => {
         MatProgressBarModule,
       ],
     });
-    fixture = TestBed.createComponent(RuddersHomeComponent);
+    fixture = TestBed.createComponent(AppHomeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

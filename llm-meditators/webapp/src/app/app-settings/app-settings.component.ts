@@ -13,7 +13,6 @@ import { LmApiService } from '../services/lm-api.service';
 import { GoogleSheetsService, isSheetsError } from '../services/google-sheets.service';
 import { GoogleAuthService } from '../services/google-auth.service';
 import { GoogleDriveAppdataService } from '../services/google-drive-appdata.service';
-import { ItemInterpreterService } from '../services/item-interpreter.service';
 import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 
@@ -41,7 +40,6 @@ export class AppSettingsComponent implements OnInit {
     private sheetsService: GoogleSheetsService,
     private driveService: GoogleDriveAppdataService,
     private authService: GoogleAuthService,
-    private itemInterpreterService: ItemInterpreterService
   ) {
     this.sheetsUrlOrIdControl = new FormControl<string>('');
     this.sheetsRangeControl = new FormControl<string>('');

@@ -8,16 +8,14 @@
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { LlmApiConfigComponent } from './llm-api-config/llm-api-config.component';
-import { RuddersHomeComponent } from './rudders-home/rudders-home.component';
-import { PromptsConfigComponent } from './prompts-config/prompts-config.component';
+import { AppHomeComponent as AppHomeComponent } from './app-home/app-home.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
 import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.component';
 
 const routes: Routes = [
-  { path: '', component: RuddersHomeComponent, pathMatch: 'full' },
+  { path: '', component: AppHomeComponent, pathMatch: 'full' },
   { path: 'survey', component: ExpSurveyComponent, pathMatch: 'full' },
   { path: 'leader-vote', component: ExpLeaderVoteComponent, pathMatch: 'full' },
   { path: 'settings', component: AppSettingsComponent, pathMatch: 'full' },
