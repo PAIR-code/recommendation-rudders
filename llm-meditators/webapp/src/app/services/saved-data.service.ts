@@ -10,7 +10,7 @@ import { computed, effect, Injectable, Signal, signal, untracked, WritableSignal
 import { LmApiService } from './lm-api.service';
 import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 import { map } from 'underscore';
-import { Experiment, ExpStage, ExpStageTosAcceptance, ExpStageUserProfile, ExpStageSurvey, User, START_STAGE, ExpDataKinds } from '../data-model';
+import { Experiment, ExpStage, ExpStageTosAcceptance, ExpStageUserProfile, ExpStageSurvey, User, START_STAGE, ExpDataKinds, END_STAGE } from '../data-model';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
 
@@ -19,14 +19,14 @@ import * as _ from 'underscore';
 //  Session management: stored in the URL
 // -------------------------------------------------------------------------------------
 export interface AppSession {
-  exampleSessionItem: string;
+  stage: string;
 }
 export interface AppSessionParamState {
   session: Partial<AppSession>;
   errors: string[];
 }
 const DEFAULT_SESSION: AppSession = {
-  exampleSessionItem: '',
+  stage: '',
 };
 
 function parseSessionParam(str: string | null): AppSessionParamState {
@@ -211,9 +211,29 @@ export class SavedDataService {
 
   nextStep() {
     const user = this.user();
-    const nextStage = this.data().experiment.stages[user.completedStages.length];
+    // Once we get to end, we do nothing.
+    if(user.currentStage.kind === END_STAGE.kind) {
+      console.warn('nextStep called at the end stage... this should not be possible.');
+      return;
+    }
+
+    console.log('stages: ', this.data().experiment.stages);
+    console.log('completed stages: ', user.completedStages.length);
+    const stages = this.data().experiment.stages;
+    // We have ">" because we always add a dummy start state, so user.completedStages can be 1 bigger 
+    // than experiment.stages.
     user.completedStages.push(user.currentStage);
-    user.currentStage = {...nextStage}
+    if (user.completedStages.length > stages.length) {
+      user.currentStage = END_STAGE;
+    } else {
+      const nextStage = this.data().experiment.stages[user.completedStages.length - 1];
+      user.currentStage = {...nextStage}
+    }    
+    console.log('new stage: ', user.currentStage);
+    const curSession = this.session();
+    const newSession = Object.assign({... curSession}, ({ stage: user.currentStage.name } as Partial<AppSession>));
+    this.session.set(newSession);
+    console.log(curSession, newSession)
     this.data.set({ ...this.data() });
   }
 
