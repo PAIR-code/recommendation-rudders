@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
-import { AppData, SavedDataService, LeaderVote } from '../saved-data.service';
+import { AppData, SavedDataService, LeaderVote } from '../services/saved-data.service';
 
 @Component({
   selector: 'app-exp-leader-vote',

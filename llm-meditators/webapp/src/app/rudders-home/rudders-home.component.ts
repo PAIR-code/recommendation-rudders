@@ -8,9 +8,9 @@
 
 import { Component, WritableSignal, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { SavedDataService, } from '../saved-data.service';
-import { LmApiService } from '../lm-api.service';
-import { ItemInterpreterService } from '../item-interpreter.service';
+import { SavedDataService, } from '../services/saved-data.service';
+import { LmApiService } from '../services/lm-api.service';
+import { ItemInterpreterService } from '../services/item-interpreter.service';
 import { isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 @Component({

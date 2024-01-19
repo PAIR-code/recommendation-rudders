@@ -31,11 +31,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
-import { VertexApiService } from './vertex-api.service';
-import { SavedDataService } from './saved-data.service';
-import { LmApiService } from './lm-api.service';
-import { GoogleAuthService } from './google-auth.service';
-import { GoogleSheetsService } from './google-sheets.service';
+import { VertexApiService } from './services/vertex-api.service';
+import { SavedDataService } from './services/saved-data.service';
+import { LmApiService } from './services/lm-api.service';
+import { GoogleAuthService } from './services/google-auth.service';
+import { GoogleSheetsService } from './services/google-sheets.service';
 
 @NgModule({
   declarations: [
