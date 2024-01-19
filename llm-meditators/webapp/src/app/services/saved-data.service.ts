@@ -82,7 +82,7 @@ const simpleSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '4. Post-chat survey',
   config: {
-    question: 'How was the chat?',
+    question: 'Rate the chat dicussion on a 1-10 scale. \n 1/10 corresponds to you did not enjoy the discussion at all and 10/10 corresponds to a perfect experience. \n Also indicate your overall feeling about the experience. ',
     score: null,
     openFeedback: '',
   },

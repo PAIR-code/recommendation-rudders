@@ -1,7 +1,9 @@
 @if (error() == null) {
 <div class="main">
   <div>
-    Question: {{stageData().question}}
+    <p style="white-space: pre-wrap">
+      {{stageData().question}}
+    </p>
   </div>
   <!-- create a slider -->
   <mat-slider min="0" max="10" step="1" showTickMarks 
