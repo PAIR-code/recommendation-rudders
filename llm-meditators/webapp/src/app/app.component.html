@@ -1,6 +1,6 @@
 <div class="toolbar" role="banner">
   <button mat-icon-button (click)="sidenav.toggle()"><mat-icon>menu</mat-icon></button>
-  <span class="title">Rudders: {{ dataService.appName() }}</span>
+  <span class="title">LLM-Mediators Experiment: {{ dataService.appName() }}</span>
   <div class="spacer"></div>
   <div *ngIf="!authService.credential()" #googleButton></div>
   <div *ngIf="authService.credential()">
@@ -49,7 +49,7 @@
           routerLinkActive="active"
           ariaCurrentWhenActive="page"
         >
-          Settings
+         <div class="icon-menu-item"><mat-icon>settings</mat-icon>Settings</div>
         </mat-list-item>
         <!-- <mat-list-item [activated]="router.url == '/data'" matListItemTitle routerLink="/data" routerLinkActive="active" ariaCurrentWhenActive="page">
           Data

@@ -26,7 +26,7 @@ export class AppSettingsComponent implements OnInit {
   public appNameControl: FormControl<string | null>;
 
   public defaultDataStr: string = JSON.stringify(initialAppData(), null, 2);
-  public currentDataStr: string = this.defaultDataStr;
+  public currentDataStr: string = this.defaultDataStr.slice();
 
   public downloadUrl?: string;
   public waiting: boolean = false;
@@ -56,6 +56,10 @@ export class AppSettingsComponent implements OnInit {
         this.appNameControl.setValue(newName, { emitEvent: false });
       }
     });
+
+    effect(() => {
+      this.currentDataStr = JSON.stringify(this.dataService.data(), null, 2);
+    });
   }
 
   ngOnInit(): void {
@@ -64,6 +68,7 @@ export class AppSettingsComponent implements OnInit {
   reset() {
     this.dataService.reset();
     this.appNameControl.setValue(this.dataService.appName());
+    this.currentDataStr = JSON.stringify(this.dataService.data(), null, 2);
   }
 
   async saveToGoogleDrive() {
@@ -108,6 +113,7 @@ export class AppSettingsComponent implements OnInit {
     }
 
     this.dataService.data.set(configUpdate.obj);
+    this.currentDataStr = configUpdate.json;
   }
 
   sizeString() {

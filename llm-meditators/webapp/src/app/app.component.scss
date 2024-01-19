@@ -64,6 +64,21 @@ $toolbar-height: 60px;
   // min-height: 600px;
 }
 
+.icon-menu-item {
+  display: flex;
+  // flex-wrap: wrap;
+  // flex-direction: column;
+  justify-content: flex-start;
+  align-content: center;
+
+  // align-items: flex-start;
+  // max-width: 600px;
+  // min-height: 600px;
+  mat-icon {
+    margin-right: 5px;
+  }
+}
+
 .profileImg {
   width: 32px;
   height: 32px;
