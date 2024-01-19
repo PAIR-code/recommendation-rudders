@@ -8,7 +8,7 @@
 
 import { Component } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { VertexApiService } from '../vertex-api.service';
+import { VertexApiService } from '../services/vertex-api.service';
 
 @Component({
   selector: 'app-llm-api-config',

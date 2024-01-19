@@ -32,11 +32,11 @@ export function fewShotSubst<N extends string, M extends N, N2s extends string>(
   templ: Template<N>,
   examples: { [Key in M]: string | NamedVar<N2s> }[],
   joinStr: string
-): Template<Exclude<M, N> | N2s> {
+): Template<Exclude<N, M> | N2s> {
   const vars = flatten(examples.map(e =>
     Object.values<string | NamedVar<N2s>>(e).filter(
       r => typeof r !== 'string'))) as NamedVar<N2s>[];
-  return new Template(
+  return new Template<Exclude<N, M> | N2s>(
     examples.map(e => templ.substs(e).escaped).join(joinStr), vars);
 }
 
@@ -45,15 +45,15 @@ export class FewShotTemplate<Ns extends string> {
   constructor(public template: Template<Ns>,
     public joinStr: string) { };
 
-  apply<Ms extends Ns>(
+  apply<Ms extends Ns, VarNs extends never>(
     examples: { [Key in Ms]: string }[]
-  ): Template<Exclude<Ms, Ns>>;
+  ): Template<Exclude<Ns, Ms> | VarNs>;
   apply<Ms extends Ns, VarNs extends string>(
     examples: { [Key in Ms]: string | NamedVar<VarNs> }[]
-  ): Template<Exclude<Ms, Ns> | VarNs>;
+  ): Template<Exclude<Ns, Ms> | VarNs>;
   apply<Ms extends Ns, VarNs extends string>(
     examples: { [Key in Ms]: string | NamedVar<VarNs> }[]
-  ): Template<Exclude<Ms, Ns> | VarNs> {
+  ): Template<Exclude<Ns, Ms> | VarNs> {
     return fewShotSubst(
       this.template, examples, this.joinStr);
   }
@@ -83,3 +83,15 @@ export function matchFewShotTemplate<Ns extends string>(
   }
   return matches;
 }
+
+
+function apply2<Ns extends string, Ms extends Ns>(
+  a: Set<Ns>,
+  bmap: { [Key in Ms]: string }[]
+): Set<Exclude<Ns, Ms>> {
+  const a2 = new Set<Exclude<Ns, Ms>>(a as any);
+  Object.keys(bmap).forEach(n => a2.delete(n as any));
+  return a2;
+}
+
+const r2 = apply2(new Set(['a','b','c']), [{ a: 'a', b: 'b'}]);

@@ -10,6 +10,7 @@
 An class to wrap, and provide a common interface for LLM behaviour.
 */
 import { LLM, PredictResponse } from "./llm";
+import { ErrorResponse } from "../simple-errors/simple-errors";
 
 export interface LlmOptions {
   modelId?: string; // e.g. text-bison
@@ -26,7 +27,7 @@ export interface LlmRequest {
   params?: LlmOptions
 }
 
-async function sendLlmRequest(request: LlmRequest): Promise<PredictResponse> {
+async function sendLlmRequest(request: LlmRequest): Promise<PredictResponse|ErrorResponse> {
   // Default options are marked with *
   const response = await fetch(`/api/llm`, {
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
@@ -41,7 +42,21 @@ async function sendLlmRequest(request: LlmRequest): Promise<PredictResponse> {
     body: JSON.stringify(request), // body data type must match "Content-Type" header
   });
   console.log(response);
-  return (await response.json() as PredictResponse); // parses JSON response into native JavaScript objects
+  if (response.status !== 200) {
+    return {
+      error: `${response.status}: response.statusText`
+    };
+  }
+  let prediction: PredictResponse;
+  try {
+    prediction = (await response.json() as PredictResponse)
+  } catch (err) {
+    console.error('invalid json in response.body: ', response.body);
+    return {
+      error: `response is not valid JSON.`
+    };
+  }
+  return prediction; // parses JSON response into native JavaScript objects
 }
 
 export class SimpleLlm implements LLM<LlmOptions> {
@@ -54,7 +69,7 @@ export class SimpleLlm implements LLM<LlmOptions> {
       this.defaultOptions = initialOptions;
     }
   }
-  async predict(text: string, params?: LlmOptions): Promise<PredictResponse> {
+  async predict(text: string, params?: LlmOptions): Promise<PredictResponse | ErrorResponse> {
     const usedParams = { ...this.defaultOptions };
     if (params) {
       Object.assign(usedParams, params);

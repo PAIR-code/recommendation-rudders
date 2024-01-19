@@ -8,8 +8,8 @@
 
 import { Component, ElementRef, OnInit, ViewChild, effect } from '@angular/core';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
-import { SavedDataService } from './saved-data.service';
-import { GoogleAuthService } from './google-auth.service';
+import { SavedDataService } from './services/saved-data.service';
+import { GoogleAuthService } from './services/google-auth.service';
 
 @Component({
   selector: 'app-root',

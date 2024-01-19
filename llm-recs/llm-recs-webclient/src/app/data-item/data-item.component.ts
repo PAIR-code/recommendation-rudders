@@ -7,9 +7,9 @@
 ==============================================================================*/
 
 import { Component, computed, EventEmitter, Input, OnInit, Output, Signal, signal, WritableSignal } from '@angular/core';
-import { DataItem, SavedDataService, dummyItem } from '../saved-data.service';
+import { DataItem, SavedDataService, dummyItem } from '../services/saved-data.service';
 import { FormControl } from '@angular/forms';
-import { LmApiService } from '../lm-api.service';
+import { LmApiService } from '../services/lm-api.service';
 import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 // class SignalModel<T> {
@@ -35,18 +35,12 @@ import { ErrorResponse, isErrorResponse } from 'src/lib/simple-errors/simple-err
   styleUrls: ['./data-item.component.scss']
 })
 export class DataItemComponent {
-  public mode: 'view' | 'edit' | 'hidden' = 'view';
   public waiting: boolean = false;
   public saveError?: string;
   public dataItem = signal<DataItem>(dummyItem);
   public keys: string[] = [];
   // Set by the initialization call of the @Input()
   public initialDataItem!: DataItem;
-
-  @Input()
-  set editMode(mode: 'view' | 'edit' | 'hidden') {
-    this.mode = mode;
-  }
 
   @Input()
   set item(i: DataItem) {
@@ -64,6 +58,10 @@ export class DataItemComponent {
     public lmApi: LmApiService) {
   }
 
+  isOpen(): boolean {
+    return this.dataService.itemIsOpen(this.dataItem())
+  }
+
   setTitle(s: string): void {
     const newItem = { ...this.dataItem() };
     newItem.entityTitle = s;
@@ -73,12 +71,6 @@ export class DataItemComponent {
   setText(s: string): void {
     const newItem = { ...this.dataItem() };
     newItem.text = s;
-    this.dataItem.set(newItem);
-  }
-
-  setDetails(s: string): void {
-    const newItem = { ...this.dataItem() };
-    newItem.entityDetails = s;
     this.dataItem.set(newItem);
   }
 
@@ -92,10 +84,14 @@ export class DataItemComponent {
     this.keys.push('');
   }
 
+  openEditMode() {
+    this.dataService.openItem(this.dataItem().id);
+  }
+
   cancelEdit() {
     this.savedOrCancelled.emit('cancelled');
     this.waiting = false;
-    this.editMode = 'hidden';
+    this.dataService.closeItem(this.dataItem().id);
   }
 
   // editMode(): void {
@@ -131,7 +127,7 @@ export class DataItemComponent {
     dataItem.embeddings = newEmbeddings;
     this.dataService.saveItem(dataItem);
     this.savedOrCancelled.emit('saved');
-    this.editMode = 'view';
+    this.dataService.closeItem(this.dataItem().id);
     this.waiting = false;
   }
 
@@ -139,7 +135,7 @@ export class DataItemComponent {
     this.waiting = true;
     delete this.saveError;
 
-    const newItem = await this.dataService.createItem(this.dataItem().text);
+    const newItem = await this.dataService.reinterpretItem(this.dataItem());
     if (isErrorResponse(newItem)) {
       this.waiting = false;
       this.saveError = newItem.error;

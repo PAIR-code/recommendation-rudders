@@ -1,14 +1,10 @@
-@if (mode == 'hidden') {
-} @else if (!initialDataItem) {
-  <div>No item given to component</div>
-} @else if (mode == 'view') {
+@if (!isOpen()) {
 <div class="item">
   <div class="bullet">&#8226;</div>
   <div class="item-and-characteristics">
     <div class="item-text-parts">
       <div class="item-text-parts-header">
         <span class="item-title">{{this.dataItem().entityTitle}}</span>
-        <span class="item-details">(<span class="item-details-content">{{this.dataItem().entityDetails.trim()}}</span>)</span>
       </div>
       <div>
         <span class="item-text">{{this.dataItem().text}}</span>
@@ -22,7 +18,7 @@
     </div>
   </div>
 
-  <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="editMode = 'edit'">
+  <button class="small-icon-button hoverBtn" mat-icon-button aria-label="Edit" (click)="openEditMode()">
     <mat-icon>edit</mat-icon>
   </button>
   <!-- <div class="view-header">
@@ -45,10 +41,6 @@
       <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityTitle" (ngModelChange)="setTitle($event)">
     </mat-form-field>
     <mat-form-field class="text-input">
-      <mat-label>Details (e.g. year, director, etc)</mat-label>
-      <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().entityDetails" (ngModelChange)="setDetails($event)">
-    </mat-form-field>
-    <mat-form-field class="text-input">
       <mat-label>Liked or Disliked?</mat-label>
       <input matInput [ngModelOptions]="{standalone: true}" [ngModel]="this.dataItem().sentiment" (ngModelChange)="setSentiment($event)">
     </mat-form-field>
@@ -67,7 +59,7 @@
     <div class='error' *ngIf="saveError">{{saveError}}</div>
 
     <div class="view-header">
-      <button (click)="cancelEdit()" type="submit" mat-flat-button aria-label="Cancel">Cancel</button>
+      <button type="button" (click)="cancelEdit()" mat-flat-button aria-label="Cancel">Cancel</button>
       <button color="primary" type="submit" mat-flat-button aria-label="Edit">
         Save
       </button>
@@ -86,9 +78,9 @@
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu">
-        <button mat-menu-item (click)="deleteItem()">Delete</button>
-        <button mat-menu-item (click)="revert()">Revert</button>
-        <button mat-menu-item (click)="interpretFromText()">Interpret from text</button>
+        <button type="button" mat-menu-item (click)="deleteItem()">Delete</button>
+        <button type="button" mat-menu-item (click)="revert()">Revert</button>
+        <button type="button" mat-menu-item (click)="interpretFromText()">Interpret from text</button>
       </mat-menu>
     </div>
   </form>

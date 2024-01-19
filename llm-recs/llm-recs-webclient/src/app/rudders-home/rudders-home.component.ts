@@ -6,13 +6,15 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, WritableSignal, signal } from '@angular/core';
+import { Component, Signal, WritableSignal, effect, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { DataItem, ItemEmbeddings, SavedDataService, emptyItem } from '../saved-data.service';
-import { LmApiService } from '../lm-api.service';
+import { DataItem, ItemEmbeddings, SavedDataService, emptyItem } from '../services/saved-data.service';
+import { LmApiService } from '../services/lm-api.service';
 import { SearchSpec } from '../data-viewer/data-viewer.component';
-import { ItemInterpreterService } from '../item-interpreter.service';
+import { ItemInterpreterService } from '../services/item-interpreter.service';
 import { isErrorResponse } from 'src/lib/simple-errors/simple-errors';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-rudders-home',
@@ -28,39 +30,50 @@ export class RuddersHomeComponent {
 
   constructor(
     private lmApiService: LmApiService,
-    private itemInterpreterService: ItemInterpreterService,
     private dataService: SavedDataService
   ) {
     this.searchSpec = signal(null);
-    this.itemTextControl = new FormControl<string | null>('');
+    this.itemTextControl = new FormControl<string>('');
+    this.itemTextControl.valueChanges.forEach(n => {
+      if (n) { this.dataService.setItemText(n); };
+    });
+
+    effect(async () => {
+      delete this.errorMessage;
+      this.waiting = true;
+
+      const activeSearch = this.dataService.activeSearch();
+      if (activeSearch === '') {
+        this.searchSpec.set(null);
+        this.waiting = false;
+        delete this.errorMessage;
+        return;
+      }
+      // if (!this.itemTextControl.value) {
+      //   console.error('no value to search for; this should not be possible');
+      //   return;
+      // }
+      const embedResult = await this.lmApiService.embedder.embed(activeSearch);
+      if (isErrorResponse(embedResult)) {
+        this.waiting = false;
+        this.errorMessage = embedResult.error;
+        return;
+      }
+      this.searchSpec.set(
+        {
+          query: activeSearch,
+          embedding: embedResult.embedding
+        });
+      this.waiting = false;
+      // console.log(`searching for ${this.itemTextControl.value}.`);
+    }, {allowSignalWrites: true});
   }
 
-  async search() {
-    if (this.hasNoInput()) {
+  startSearch() {
+    if (!this.itemTextControl.value) {
       return;
     }
-
-    delete this.errorMessage;
-    this.waiting = true;
-    // if (!this.itemTextControl.value) {
-    //   console.error('no value to search for; this should not be possible');
-    //   return;
-    // }
-    const embedResult = await this.lmApiService.embedder.embed(
-      this.itemTextControl.value!);
-
-    if (isErrorResponse(embedResult)) {
-      this.waiting = false;
-      this.errorMessage = embedResult.error;
-      return;
-    }
-    this.searchSpec.set(
-      {
-        query: this.itemTextControl.value!,
-        embedding: embedResult.embedding
-      });
-    this.waiting = false;
-    // console.log(`searching for ${this.itemTextControl.value}.`);
+    this.dataService.setActiveSearch(this.itemTextControl.value);
   }
 
   dismissError() {
@@ -74,18 +87,21 @@ export class RuddersHomeComponent {
       return;
     }
     if (text.trim() === '') {
-      this.itemToAdd = emptyItem();
+      const item = this.dataService.addDataItem(emptyItem());
+      this.dataService.openItem(item.id);
+      this.waiting = false;
       return;
     }
-
+    
     this.waiting = true;
     const itemOrError = await this.dataService.createItem(text);
     if (isErrorResponse(itemOrError)) {
-      this.waiting = false;
       this.errorMessage = itemOrError.error;
+      this.waiting = false;
       return;
     }
-    this.itemToAdd = itemOrError;
+    const item = this.dataService.addDataItem(itemOrError);
+    this.dataService.openItem(item.id);
     this.waiting = false;
   }
 
@@ -96,10 +112,8 @@ export class RuddersHomeComponent {
     }
   }
 
-
-  hasNoInput() {
-    return !this.itemTextControl.value
-      || this.itemTextControl.value.length === 0;
+  itemTextIsEmpty(): boolean  {
+    return !this.itemTextControl.value || this.itemTextControl.value.length === 0;
   }
 
 }

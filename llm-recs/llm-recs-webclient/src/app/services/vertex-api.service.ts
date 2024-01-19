@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { Inject, Injectable } from '@angular/core';
-import { VertexPalm2LLM } from '../lib/text-templates/llm_vertexapi_palm2';
+import { VertexPalm2LLM } from '../../lib/text-templates/llm_vertexapi_palm2';
 import { VertexEmbedder } from 'src/lib/text-embeddings/embedder_vertexapi';
 
 // TODO: Unclear to me if this is needed or helpful...

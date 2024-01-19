@@ -7,7 +7,8 @@
 ==============================================================================*/
 
 import { Component, Input, OnInit, Signal, WritableSignal, computed } from '@angular/core';
-import { DataItem, SavedDataService } from '../saved-data.service';
+import { DataItem, SavedDataService } from '../services/saved-data.service';
+import { ActivatedRoute, Router } from '@angular/router';
 // import { EventEmitter, Input, OnInit, Output, effect } from '@angular/core';
 
 export interface SearchSpec {
@@ -40,7 +41,12 @@ export class DataViewerComponent implements OnInit {
 
   public itemRanks!: Signal<{ [itemId: string]: number }>;
 
-  constructor(private dataService: SavedDataService) {
+  constructor(
+    private dataService: SavedDataService,
+    private route: ActivatedRoute,
+    public router: Router,
+    // private router: 
+    ) {
   }
 
   ngOnInit() {
