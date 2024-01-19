@@ -6,8 +6,8 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, ElementRef, OnInit, ViewChild, effect } from '@angular/core';
-import { Router, ActivatedRoute, ParamMap } from '@angular/router';
+import { AfterViewInit, Component, ElementRef, ViewChild, effect } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { SavedDataService } from './services/saved-data.service';
 import { GoogleAuthService } from './services/google-auth.service';
 
@@ -16,7 +16,7 @@ import { GoogleAuthService } from './services/google-auth.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements AfterViewInit {
   public loc: 'home' | 'llm-config' | 'prompts' = 'home';
 
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
@@ -33,8 +33,6 @@ export class AppComponent implements OnInit {
       document.title = `Rudders: ${this.dataService.appName()}`;
     });
   }
-
-  ngOnInit() {}
 
   ngAfterViewInit() {
     // TODO: enable this to login automatically when app starts.

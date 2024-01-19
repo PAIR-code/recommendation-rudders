@@ -16,6 +16,7 @@ import { AppComponent } from './app.component';
 import { AppHomeComponent } from './app-home/app-home.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
@@ -35,14 +36,10 @@ import { LmApiService } from './services/lm-api.service';
 import { GoogleAuthService } from './services/google-auth.service';
 import { GoogleSheetsService } from './services/google-sheets.service';
 import { CodemirrorConfigEditorModule } from './codemirror-config-editor/codemirror-config-editor.module';
+import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    AppHomeComponent,
-    AppSettingsComponent,
-    PageNotFoundComponent,
-  ],
+  declarations: [AppComponent, AppHomeComponent, AppSettingsComponent, PageNotFoundComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -60,6 +57,8 @@ import { CodemirrorConfigEditorModule } from './codemirror-config-editor/codemir
     MatMenuModule,
     MatProgressBarModule,
     CodemirrorConfigEditorModule,
+    ExpSurveyComponent,
+    ExpLeaderVoteComponent,
   ],
   providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
   bootstrap: [AppComponent],

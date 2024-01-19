@@ -4,10 +4,10 @@
   <div class="spacer"></div>
   <div *ngIf="!authService.credential()" #googleButton></div>
   <div *ngIf="authService.credential()">
-    <img class="profileImg" [src]="authService.credential()?.picture" />
+    <img class="profileImg" [src]="authService.credential()?.picture" alt="profile picture" />
   </div>
   <a class="small-logo" aria-label="PAIR" href="https://pair.withgoogle.com/" title="Home">
-    <img src="/assets/pair-logo.svg" />
+    <img src="/assets/pair-logo.svg" alt="PAIR logo" />
   </a>
 </div>
 
@@ -16,7 +16,7 @@
     <mat-sidenav #sidenav mode="side" opened="true">
       <mat-nav-list class="menu-buttons">
         <mat-list-item
-          [activated]="router.url == '/'"
+          [activated]="router.url === '/'"
           matListItemTitle
           routerLink="/"
           routerLinkActive="active"
@@ -25,7 +25,7 @@
           Home
         </mat-list-item>
         <mat-list-item
-          [activated]="router.url == '/leader-vote'"
+          [activated]="router.url === '/leader-vote'"
           matListItemTitle
           routerLink="/leader-vote"
           routerLinkActive="active"
@@ -34,7 +34,7 @@
           Leader Vote
         </mat-list-item>
         <mat-list-item
-          [activated]="router.url == '/survey'"
+          [activated]="router.url === '/survey'"
           matListItemTitle
           routerLink="/survey"
           routerLinkActive="active"
@@ -43,13 +43,13 @@
           Survey
         </mat-list-item>
         <mat-list-item
-          [activated]="router.url == '/settings'"
+          [activated]="router.url === '/settings'"
           matListItemTitle
           routerLink="/settings"
           routerLinkActive="active"
           ariaCurrentWhenActive="page"
         >
-         <div class="icon-menu-item"><mat-icon>settings</mat-icon>Settings</div>
+          <div class="icon-menu-item"><mat-icon>settings</mat-icon>Settings</div>
         </mat-list-item>
         <!-- <mat-list-item [activated]="router.url == '/data'" matListItemTitle routerLink="/data" routerLinkActive="active" ariaCurrentWhenActive="page">
           Data

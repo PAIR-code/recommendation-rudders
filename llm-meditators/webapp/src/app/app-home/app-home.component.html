@@ -1,8 +1,22 @@
 <div class="main">
+  @if (this.dataService.user().currentStage.kind === 'start') {
+    Welcome to the study... here's some info about it...
+  }
 
-  <button mat-button (click)="nextStep()">
-    <!-- <mat-icon>redo</mat-icon> -->
-    <span>Start the experiment</span>
-  </button>
+  @if (this.dataService.user().currentStage.kind === 'survey') {
+    <app-exp-survey></app-exp-survey>
+  }
 
+  @if (this.dataService.user().currentStage.kind === 'leader-vote') {
+    <app-exp-leader-vote></app-exp-leader-vote>
+  }
+
+  @if (this.dataService.user().currentStage.kind !== 'end') {
+    <button mat-button (click)="nextStep()">
+      <!-- <mat-icon>redo</mat-icon> -->
+      <span>Next step</span>
+    </button>
+  } @else {
+    <div>All done!</div>
+  }
 </div>
