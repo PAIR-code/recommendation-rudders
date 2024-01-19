@@ -10,42 +10,44 @@ import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@a
 import { LmApiService } from './lm-api.service';
 import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 import { map } from 'underscore';
-import { Experiment, ExpStage, ExpStageAcceptToS, ExpStageSetProfile, ExpStageSimpleSurvey } from '../data-model';
+import { Experiment, ExpStage, ExpStageTosAcceptance, ExpStageUserProfile, ExpStageSurvey, User, START_STAGE } from '../data-model';
 
 // -------------------------------------------------------------------------------------
 
-const acceptTos: ExpStageAcceptToS = {
+const acceptTos: ExpStageTosAcceptance = {
   kind: 'accept-tos',
   name: '0. Agree to the experiment',
+  config: {
+    acceptedTimestamp: null
+  }
   // userAcceptance: Date,
 };
 
-const setProfile: ExpStageSetProfile = {
+const setProfile: ExpStageUserProfile = {
   kind: 'set-profile',
   name: '1. Set your profile',
-  userProfile: {
-    pronouns: '',
+  config: {
+    pronouns: null,
     avatarUrl: '',
     name: ''
   }
   // userProfiles: {},
 };
 
-const simpleSurvey: ExpStageSimpleSurvey = {
+const simpleSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '4. Post-chat survey',
-  question: 'How was the chat?',
-  response: {
-    // score: 
+  config: {
+    question: 'How was the chat?',
+    score: null,
     openFeedback: '',
   },
 };
 
 const initialExperimentSetup: Experiment = {
-  maxNumberOfParticipants: 5,
+  numberOfParticipants: 5,
   participants: {},
   stages: [acceptTos, setProfile, simpleSurvey],
-  currentStage: '0. Agree to the experiment',
 };
 // -------------------------------------------------------------------------------------
 
@@ -64,6 +66,7 @@ const initialExperimentSetup: Experiment = {
 export interface AppData {
   settings: AppSettings;
   experiment: Experiment;
+  user: User;
 }
 
 export interface AppSettings {
@@ -72,14 +75,29 @@ export interface AppSettings {
   sheetsRange: string;
 }
 
+function initUserData(): User {
+  return {
+    userId: '',
+    accessCode: '',
+    profile: {
+      name: '',
+      pronouns: null,
+      avatarUrl: '',
+    },
+    currentStage: START_STAGE as ExpStage,
+    completedStages: ([] as ExpStage[]),
+  };
+}
+
 function initialAppData(): AppData {
   return {
     settings: {
-      name: 'A Rudders App',
+      name: 'LLM-Mediators Experiment',
       sheetsId: '',
       sheetsRange: '', // e.g.
     },
-    experiment: initialExperimentSetup
+    experiment: initialExperimentSetup,
+    user: initUserData()
   };
 }
 
@@ -128,7 +146,7 @@ export class SavedDataService {
 
   setCurrentExpStageName(expStageName: string) {
     const data = this.data();
-    data.experiment.currentStage = expStageName;
+    data.user.currentStage = this.nameStageMap()[expStageName];
     this.data.set({ ...data });
   }
 

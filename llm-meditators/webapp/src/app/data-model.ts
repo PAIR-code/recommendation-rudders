@@ -1,139 +1,153 @@
 
+export interface GenericExpStage<T> {
+  kind: string;
+  name: string;
+  config: T;
+}
+
+// -------------------------------------------------------------------------------------
 export interface Item {
   name: string; // displayed to the users, must be unique
   imageUrl: string; // for the picture
 }
-
 export interface ItemPair {
   item1: Item; // Item name
   item2: Item; // Item name
 }
-
 export interface ItemRating extends ItemPair {
-  confidence: number; // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
+  confidence: number | null; // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
 }
-
-export interface BasicExpStage {
-  kind: string;
-  name: string;
-}
-
-export interface ExpStageRankItems extends BasicExpStage {
+export interface ExpStageItemRating extends GenericExpStage<ItemRating> {
   kind: 'rank-items';
-  itemsToRate: ItemPair[];
-  rankings: { [userId: string]: ItemRating[] };
 }
 
-export interface ExpStageGroupRatingChat extends BasicExpStage {
-  kind: 'group-chat';
+// -------------------------------------------------------------------------------------
+export interface UserMessage {
+  messageType: 'userMessage';
+  timestamp: number;
+  userId: string;
+}
+export interface SystemMessage {
+  messageType: 'systemMessage-DiscussItem';
+  timestamp: number;
+  itemRatingToDiscuss: ItemRating;
+}
+export interface ModeratorMessage {
+  messageType: 'moderatorMessage';
+  timestamp: number;
+}
+export type Message = UserMessage | SystemMessage | ModeratorMessage;
+export interface ChatAboutItems {
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
 }
+export interface ExpStageChatAboutItems extends GenericExpStage<ChatAboutItems> {
+  kind: 'group-chat';
+}
 
+// -------------------------------------------------------------------------------------
 export enum LeaderVote {
   POSITIVE = 'positive',
   NEUTRAL = 'neutral',
   NEGATIVE = 'negative',
   NOT_RATED = 'not-rated',
 }
-
-export enum PronounPair {
-  SHE = 'She/Her',
-  THEY = 'They/Them',
-  HE = 'He/Him',
-}
-export interface ExpStageLeaderVote extends BasicExpStage {
+export interface Votes { [otherUserId: string]: LeaderVote };
+export interface ExpStageVotes extends GenericExpStage<Votes> {
   kind: 'leader-vote';
-  // Map from a user to their votes on other users.
-  // Probably 5 users.
-  
-  // Backend data model
-  // votes: {
-  //   [userId: string]: { [maybeLeaderUserId: string]: LeaderVote };
-  // }[];
-  
-  // Individual user model
-  votes: { [otherUserId: string]: LeaderVote };
-
-  electedLeader: string; // UserId
 }
 
-export interface ExpStageSimpleSurvey extends BasicExpStage {
-  kind: 'survey';
-  question: string;
-  response: {
-    score?: number; //  10 point scale.
-    openFeedback: string;
-  }
-  // Backend:
-  // responses: {
-  //   [userId: string]: {
-  //     score: number; //  10 point scale.
-  //     openFeedback: string;
-  //   };
-  // };
-}
-
-export interface ExpStageSetProfile extends BasicExpStage {
-  kind: 'set-profile';
-  // Backend data...
-  // userProfiles: { [userId: string]: UserProfile };
-  userProfile: UserProfile
-}
-
-export interface ExpStageAcceptToS extends BasicExpStage {
-  kind: 'accept-tos';
-  // Backend data...
-  // userAcceptance: { [userId: string]: Date };
-  userAcceptance?: Date;
-}
-
-export type ExpStage =
-  | ExpStageAcceptToS
-  | ExpStageSetProfile
-  | ExpStageRankItems
-  | ExpStageGroupRatingChat
-  | ExpStageLeaderVote
-  | ExpStageSimpleSurvey;
-
-// Admin editable, some parts of this are written to by certain
-// user actions, by a trusted cloud function.
-export interface Experiment {
-  maxNumberOfParticipants: number;
-  participants: { [userId: string]: User };
-  stages: ExpStage[];
-  currentStage: string;
-}
-
+// -------------------------------------------------------------------------------------
+export type PronounPair = 'She/Her' | 'They/Them' | 'He/Him' | null;
 export interface UserProfile {
-  pronouns: string;
+  pronouns: PronounPair;
   avatarUrl: string;
   name: string;
 }
+export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
+  kind: 'set-profile';
+}
 
+// -------------------------------------------------------------------------------------
+export interface Survey {
+  question: string;
+  score: number | null; //  10 point scale.
+  openFeedback: string;
+}
+export interface ExpStageSurvey extends GenericExpStage<Survey> {
+  kind: 'survey';
+}
+
+// -------------------------------------------------------------------------------------
+// The unique start stage, before they have started.
+export interface ExpStageStart extends GenericExpStage<{}> {
+  name: 'start';
+  kind: 'start';
+}
+export const START_STAGE: ExpStageStart = {
+  name: 'start',
+  kind: 'start',
+  config: {}
+}
+
+// -------------------------------------------------------------------------------------
+// The unique end stage, once completed.
+export interface ExpStageEnd extends GenericExpStage<{}> {
+  name: 'end';
+  kind: 'end';
+}
+export const END_STAGE: ExpStageEnd = {
+  name: 'end',
+  kind: 'end',
+  config: {}
+}
+
+// -------------------------------------------------------------------------------------
+export interface TosAcceptance {
+  acceptedTimestamp: Date | null;
+}
+export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
+  kind: 'accept-tos';
+}
+
+// -------------------------------------------------------------------------------------
+export type ExpDataKinds =
+  | {}  // no data for start and end.
+  | TosAcceptance
+  | Survey
+  | UserProfile
+  | Votes
+  | ChatAboutItems
+  | ItemRating;
+
+export type ExpStage =
+  | ExpStageStart
+  | ExpStageTosAcceptance
+  | ExpStageSurvey
+  | ExpStageUserProfile
+  | ExpStageVotes
+  | ExpStageChatAboutItems
+  | ExpStageItemRating
+  | ExpStageEnd;
+
+// Note: it should be that:
+type ShouldBeTrue = ExpStage extends GenericExpStage<ExpDataKinds> ? true : false;
+
+// -------------------------------------------------------------------------------------
+// Admin editable, some parts of this are written to by certain
+// user actions, by a trusted cloud function.
+export interface Experiment {
+  numberOfParticipants: number;
+  participants: { [userId: string]: User };
+  stages: ExpStage[];
+}
+
+// -------------------------------------------------------------------------------------
 export interface User {
   accessCode: string; // likely stored in local browser cache/URL.
-  state: string; // BasicExpStage.name
   userId: string;
   // Their appearance.
   profile: UserProfile;
+  currentStage: ExpStage;
+  completedStages: ExpStage[];  // current stage is the very last one.
 }
-
-export interface UserMessage {
-  messageType: 'userMessage';
-  timestamp: number;
-  userId: string;
-}
-
-export interface SystemMessage {
-  messageType: 'systemMessage-DiscussItem';
-  timestamp: number;
-  itemRatingToDiscuss: ItemRating;
-}
-
-export interface ModeratorMessage {
-  messageType: 'moderatorMessage';
-  timestamp: number;
-}
-
-export type Message = UserMessage | SystemMessage | ModeratorMessage;

@@ -1,23 +1,20 @@
 import { Component, ElementRef, Signal, ViewChild, WritableSignal, computed, signal, OnInit } from '@angular/core';
-import { AppData, ExpStageSimpleSurvey, SavedDataService,  } from '../services/saved-data.service';
+import { AppData, SavedDataService,  } from '../services/saved-data.service';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SimpleError, isErrorResponse as isSimpleError } from 'src/lib/simple-errors/simple-errors';
 import {MatSliderModule, MatSlider} from '@angular/material/slider';
+import { ExpStageSurvey } from '../data-model';
 
-const dummySurveyData: ExpStageSimpleSurvey = {
+const dummySurveyData: ExpStageSurvey = {
   kind: 'survey',
   name: 'error name',
-  question: 'error: this should never happen',
-  response: {
-    // score: 
+  config: {
+    question: 'error: this should never happen',
+    score: null,
     openFeedback: '',
   },
-}
-
-interface SliderUpdateEvent extends Event {
-  value: number
 };
 
 @Component({
@@ -35,13 +32,13 @@ interface SliderUpdateEvent extends Event {
 })
 export class ExpSurveyComponent {
   public responseControl: FormControl<string | null>;
-  public stageData: Signal<ExpStageSimpleSurvey>;
+  public stageData: Signal<ExpStageSurvey>;
   public error: Signal<string | null>;
   
   constructor(
     private dataService: SavedDataService,
   ) {
-    this.dataService.data().experiment.currentStage = '4. Post-chat survey';
+    this.dataService.data().user.currentStage = ;
 
     this.error = computed(() => {
       if(!this.dataService.data().experiment.currentStage) {

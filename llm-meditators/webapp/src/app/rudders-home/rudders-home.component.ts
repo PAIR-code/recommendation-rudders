@@ -10,7 +10,6 @@ import { Component, WritableSignal, signal } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { SavedDataService, } from '../services/saved-data.service';
 import { LmApiService } from '../services/lm-api.service';
-import { ItemInterpreterService } from '../services/item-interpreter.service';
 import { isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 
 @Component({
@@ -25,7 +24,6 @@ export class RuddersHomeComponent {
 
   constructor(
     private lmApiService: LmApiService,
-    private itemInterpreterService: ItemInterpreterService,
     private dataService: SavedDataService
   ) {
     this.itemTextControl = new FormControl<string | null>('');
