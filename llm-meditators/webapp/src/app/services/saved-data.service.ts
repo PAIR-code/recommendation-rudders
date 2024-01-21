@@ -8,19 +8,22 @@
 
 import { computed, effect, Injectable, Signal, signal, untracked, WritableSignal } from '@angular/core';
 import { LmApiService } from './lm-api.service';
-import {
-  Experiment,
-  ExpStage,
-  ExpStageTosAcceptance,
-  ExpStageUserProfile,
-  ExpStageSurvey,
-  User,
-  START_STAGE,
-  ExpDataKinds,
-  END_STAGE,
-} from '../data-model';
+import { Experiment, ExpStage, User, ExpDataKinds, END_STAGE } from '../../lib/staged-exp/data-model';
+import { initialExperimentSetup, initUserData } from '../../lib/staged-exp/example-experiment';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
+
+export function initialAppData(): AppData {
+  return {
+    settings: {
+      name: 'LLM-Mediators Experiment',
+      sheetsId: '',
+      sheetsRange: '', // e.g.
+    },
+    experiment: initialExperimentSetup,
+    user: initUserData(),
+  };
+}
 
 // -------------------------------------------------------------------------------------
 //  Session management: stored in the URL
@@ -50,84 +53,6 @@ function parseSessionParam(str: string | null): AppSessionParamState {
 
 function prepareSessionParam(session: AppSession): string {
   return JSON.stringify(session);
-}
-
-// -------------------------------------------------------------------------------------
-//  Initial Data
-// -------------------------------------------------------------------------------------
-
-// TODO: write up the rest of the experiment.
-// '0. acceptingTOS'
-// | '1. profileSetup'
-// | '2. initialRating'
-// | '3. groupChat'
-// | '4. finalRating'
-// | '5. post-Chat-satisfaction'
-// | '6. post-leader-reveal-satisfcation'
-// | '7. Complete';
-const acceptTos: ExpStageTosAcceptance = {
-  kind: 'accept-tos',
-  name: '0. Agree to the experiment',
-  config: {
-    acceptedTimestamp: null,
-  },
-  // userAcceptance: Date,
-};
-const setProfile: ExpStageUserProfile = {
-  kind: 'set-profile',
-  name: '1. Set your profile',
-  config: {
-    pronouns: null,
-    avatarUrl: '',
-    name: '',
-  },
-  // userProfiles: {},
-};
-const simpleSurvey: ExpStageSurvey = {
-  kind: 'survey',
-  name: '4. Post-chat survey',
-  config: {
-    question: 'Rate the chat dicussion on a 1-10 scale. \n 1/10 corresponds to you did not enjoy the discussion at all and 10/10 corresponds to a perfect experience. \n Also indicate your overall feeling about the experience. ',
-    score: null,
-    openFeedback: '',
-  },
-};
-
-const initialExperimentSetup: Experiment = {
-  numberOfParticipants: 5,
-  participants: {
-    userid1: initUserData(),
-    userid2: initUserData(),
-    userid3: initUserData(),
-    userid4: initUserData(),
-    userid5: initUserData(),
-  },
-  stages: [acceptTos, setProfile, simpleSurvey],
-};
-// Example data to bootstrap us...
-function initUserData(): User {
-  return {
-    userId: '',
-    accessCode: '',
-    profile: {
-      name: '',
-      pronouns: null,
-      avatarUrl: '',
-    },
-    currentStage: START_STAGE as ExpStage,
-    completedStages: [] as ExpStage[],
-  };
-}
-export function initialAppData(): AppData {
-  return {
-    settings: {
-      name: 'LLM-Mediators Experiment',
-      sheetsId: '',
-      sheetsRange: '', // e.g.
-    },
-    experiment: initialExperimentSetup,
-    user: initUserData(),
-  };
 }
 
 // -------------------------------------------------------------------------------------

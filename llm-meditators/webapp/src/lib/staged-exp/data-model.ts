@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
+
 export interface GenericExpStage<T> {
   kind: string;
   name: string;
@@ -16,7 +24,10 @@ export interface ItemPair {
 export interface ItemRating extends ItemPair {
   confidence: number | null; // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
 }
-export interface ExpStageItemRating extends GenericExpStage<ItemRating> {
+export interface ItemRatings {
+  ratings: ItemRating[];
+}
+export interface ExpStageItemRating extends GenericExpStage<ItemRatings> {
   kind: 'rank-items';
 }
 

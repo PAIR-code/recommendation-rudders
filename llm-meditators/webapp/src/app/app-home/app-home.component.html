@@ -2,6 +2,12 @@
   <div>
     @if (this.dataService.user().currentStage.kind === 'start') {
       Welcome to the study... here's some info about it...
+    } @else if (this.dataService.user().currentStage.kind === 'set-profile') {
+      <app-exp-profile></app-exp-profile>
+    } @else if (this.dataService.user().currentStage.kind === 'group-chat') {
+      <app-exp-chat></app-exp-chat>
+    } @else if (this.dataService.user().currentStage.kind === 'rank-items') {
+      <app-exp-rating></app-exp-rating>
     } @else if (this.dataService.user().currentStage.kind === 'survey') {
       <app-exp-survey></app-exp-survey>
     } @else if (this.dataService.user().currentStage.kind === 'leader-vote') {

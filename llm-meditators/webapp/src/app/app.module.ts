@@ -37,6 +37,9 @@ import { GoogleAuthService } from './services/google-auth.service';
 import { GoogleSheetsService } from './services/google-sheets.service';
 import { CodemirrorConfigEditorModule } from './codemirror-config-editor/codemirror-config-editor.module';
 import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.component';
+import { ExpProfileComponent } from './exp-profile/exp-profile.component';
+import { ExpRatingComponent } from './exp-rating/exp-rating.component';
+import { ExpChatComponent } from './exp-chat/exp-chat.component';
 
 @NgModule({
   declarations: [AppComponent, AppHomeComponent, AppSettingsComponent, PageNotFoundComponent],
@@ -59,6 +62,9 @@ import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.compon
     CodemirrorConfigEditorModule,
     ExpSurveyComponent,
     ExpLeaderVoteComponent,
+    ExpProfileComponent,
+    ExpRatingComponent,
+    ExpChatComponent,
   ],
   providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
   bootstrap: [AppComponent],
