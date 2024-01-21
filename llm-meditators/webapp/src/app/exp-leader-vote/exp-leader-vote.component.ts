@@ -1,8 +1,16 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
+
 import { Component } from '@angular/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { SavedDataService } from '../services/saved-data.service';
-import { LeaderVote } from '../data-model';
+import { LeaderVote } from '../../lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-exp-leader-vote',

@@ -10,7 +10,7 @@ import { AfterViewInit, Component, ElementRef, Signal, ViewChild, computed, effe
 import { Router, ActivatedRoute } from '@angular/router';
 import { SavedDataService } from './services/saved-data.service';
 import { GoogleAuthService } from './services/google-auth.service';
-import { ExpStageKind } from './data-model';
+import { ExpStageKind } from '../lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-root',

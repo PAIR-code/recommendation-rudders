@@ -16,7 +16,8 @@
     <mat-sidenav #sidenav mode="side" opened="true">
       <mat-nav-list class="menu-buttons">
         <mat-list-item
-          [activated]="router.url === '/'"
+          [activated]="router.url === '/' && stageKind() === 'start'"
+          [disabled]="stageKind() !== 'start'"
           matListItemTitle
           routerLink="/"
           routerLinkActive="active"
@@ -29,6 +30,8 @@
             [disabled]="stageName() !== stage.name"
             [activated]="stageName() === stage.name"
             matListItemTitle
+            routerLink="/"
+            routerLinkActive="active"
             ariaCurrentWhenActive="page"
           >
             {{ stage.name }}
