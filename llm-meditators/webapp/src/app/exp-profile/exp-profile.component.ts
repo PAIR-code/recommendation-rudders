@@ -9,11 +9,14 @@
 import { Component, Signal, computed } from '@angular/core';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { SavedDataService } from '../services/saved-data.service';
 import { UserProfile } from '../../lib/staged-exp/data-model';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const dummyProfileData: UserProfile = {
-  pronouns: null,
+  pronouns: "They/Them",
   avatarUrl: '',
   name: 'John Doe',
 };
@@ -21,11 +24,12 @@ const dummyProfileData: UserProfile = {
 @Component({
   selector: 'app-exp-profile',
   standalone: true,
-  imports: [MatRadioModule, MatButtonModule],
+  imports: [MatRadioModule, MatButtonModule, MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule],
   templateUrl: './exp-profile.component.html',
   styleUrl: './exp-profile.component.scss',
 })
 export class ExpProfileComponent {
+  public responseControl: FormControl<string | null>;
   public stageData: Signal<UserProfile>;
   public error: Signal<string | null>;
 
@@ -51,6 +55,17 @@ export class ExpProfileComponent {
       }
       return this.dataService.data().user.currentStage.config as UserProfile;
     });
+
+    this.responseControl = new FormControl<string>('');
+    this.responseControl.valueChanges.forEach((n) => {
+      if (n) {
+        const curStageData = this.stageData();
+        curStageData.name = n;
+        this.dataService.updateExpStage(curStageData);
+      }
+      console.log(this.stageData());
+    });
+
   }
 
   updatePronouns(updatedValue: MatRadioChange){
