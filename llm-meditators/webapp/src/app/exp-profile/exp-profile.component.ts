@@ -12,7 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SavedDataService } from '../services/saved-data.service';
-import { UserProfile } from '../../lib/staged-exp/data-model';
+import { User, UserProfile } from '../../lib/staged-exp/data-model';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const dummyProfileData: UserProfile = {
@@ -61,7 +61,7 @@ export class ExpProfileComponent {
       if (n) {
         const curStageData = this.stageData();
         curStageData.name = n;
-        this.dataService.updateExpStage(curStageData);
+        this.updateStageAndUser(curStageData);
       }
       console.log(this.stageData());
     });
@@ -71,13 +71,18 @@ export class ExpProfileComponent {
   updatePronouns(updatedValue: MatRadioChange){
     const curStageData = this.stageData();
     curStageData.pronouns = updatedValue.value;
-    this.dataService.updateExpStage(curStageData);
+    this.updateStageAndUser(curStageData);
   }
 
   updateAvatarUrl(updatedValue: MatRadioChange){
     const curStageData = this.stageData();
     curStageData.avatarUrl = updatedValue.value;
+    this.updateStageAndUser(curStageData);
+  }
+
+  updateStageAndUser(curStageData: UserProfile){
     this.dataService.updateExpStage(curStageData);
+    this.dataService.updateUser(curStageData);
   }
 
 }
