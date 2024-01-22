@@ -1,24 +1,24 @@
 .main {
-    padding: 2rem 1rem;
-  }
-  
-  label {
-    font-weight: bold;
+  padding: 2rem 1rem;
+}
+
+label {
+  font-weight: bold;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.pronouns-radio-group {
+  display: flex;
+  align-items: center;
+
+  .pronouns-radio-button {
+    margin: 5px;
     -webkit-user-select: none;
     user-select: none;
   }
-  
-  .pronouns-radio-group {
-    display: flex;
-    align-items: center;
-  
-    .pronouns-radio-button {
-      margin: 5px;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-  }
+}
 
 mat-slider {
-    width: 300px;
+  width: 300px;
 }

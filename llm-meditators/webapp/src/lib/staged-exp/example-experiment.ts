@@ -53,7 +53,7 @@ const initialWantToLeadSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '3. intial leadership survey',
   config: {
-    question: `Rate the how much you would like to be the group leader. 
+    question: `Rate the how much you would like to be the group leader.
 1/10 corresponds = most definitely not 10/10 you will fight to be the leader.`,
     score: null,
     openFeedback: '',
@@ -81,7 +81,7 @@ const chatDiscussionSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '6. Post-chat survey',
   config: {
-    question: `Rate the chat dicussion on a 1-10 scale. 
+    question: `Rate the chat dicussion on a 1-10 scale.
 1/10 corresponds to you did not enjoy the discussion at all and 10/10 corresponds to a perfect experience.
 Also indicate your overall feeling about the experience.`,
     score: null,
@@ -92,7 +92,7 @@ const postChatWantToLeadSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '7. Post-discussion leadership survey',
   config: {
-    question: `Rate the how much you would like to be the group leader. 
+    question: `Rate the how much you would like to be the group leader.
 1/10 corresponds = most definitely not 10/10 you will fight to be the leader.`,
     score: null,
     openFeedback: '',
@@ -124,7 +124,7 @@ const finalSatisfactionSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '10. final satisfaction survey',
   config: {
-    question: `Rate how happy you were with the final outcome. 
+    question: `Rate how happy you were with the final outcome.
 1/10 corresponds = most definitely not 10/10 you will fight to be the leader.`,
     score: null,
     openFeedback: '',

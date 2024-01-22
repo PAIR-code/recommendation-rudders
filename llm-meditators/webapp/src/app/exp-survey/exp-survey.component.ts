@@ -70,5 +70,6 @@ export class ExpSurveyComponent {
     const curStageData = this.stageData();
     curStageData.score = updatedValue;
     this.dataService.updateExpStage(curStageData);
+    console.log(this.stageData());
   }
 }
