@@ -9,6 +9,8 @@
 import { Component, Signal, computed } from '@angular/core';
 import { SavedDataService } from '../services/saved-data.service';
 import { TosAcceptance } from '../../lib/staged-exp/data-model';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+
 
 const dummyTosData: TosAcceptance = {
   acceptedTimestamp: null,
@@ -17,7 +19,7 @@ const dummyTosData: TosAcceptance = {
 @Component({
   selector: 'app-exp-tos',
   standalone: true,
-  imports: [],
+  imports: [MatCheckboxModule],
   templateUrl: './exp-tos.component.html',
   styleUrl: './exp-tos.component.scss'
 })
@@ -33,7 +35,7 @@ export class ExpTosComponent {
       if(!currentStage) {
         return `currentStage is undefined`;
       };
-      if(currentStage.kind !== 'survey') {
+      if(currentStage.kind !== 'accept-tos') {
         return `currentStage is kind is not right: ${JSON.stringify(currentStage, null, 2)}`;
       }
       return null;
@@ -41,7 +43,7 @@ export class ExpTosComponent {
 
     // Assumption: this is only ever constructed when 
     // `this.dataService.data().experiment.currentStage` references a 
-    // ExpStageSimpleSurvey.
+    // ExpStageTosAcceptance.
 
     this.stageData = computed(() => {
       if(this.dataService.data().user.currentStage.kind !== 'accept-tos') {
@@ -50,4 +52,13 @@ export class ExpTosComponent {
       return this.dataService.data().user.currentStage.config as TosAcceptance;
     });
   }
+
+  updateCheckboxValue(updatedValue: Event) {
+    const currentStage = this.stageData();
+    var date = new Date(updatedValue.timeStamp);
+    console.log(date.toUTCString());
+    currentStage.acceptedTimestamp = date;
+    this.dataService.updateExpStage(currentStage);
+  }
 }
+
