@@ -43,6 +43,15 @@
           Survey
         </mat-list-item>
         <mat-list-item
+          [activated]="router.url == '/exp-tos'"
+          matListItemTitle
+          routerLink="/exp-tos"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
+          TOS
+        </mat-list-item>
+        <mat-list-item
           [activated]="router.url == '/settings'"
           matListItemTitle
           routerLink="/settings"

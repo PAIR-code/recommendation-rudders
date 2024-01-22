@@ -103,6 +103,10 @@ export const END_STAGE: ExpStageEnd = {
 }
 
 // -------------------------------------------------------------------------------------
+export interface Tos {  // Terms of Service
+  acceptedTimestamp: Date | null;
+}
+
 export interface TosAcceptance {
   acceptedTimestamp: Date | null;
 }
