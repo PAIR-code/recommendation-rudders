@@ -132,7 +132,7 @@ export type ExpDataKinds =
   | UserProfile
   | Votes
   | ChatAboutItems
-  | ItemRating;
+  | ItemRatings;
 
 export type ExpStage =
   | ExpStageStart
