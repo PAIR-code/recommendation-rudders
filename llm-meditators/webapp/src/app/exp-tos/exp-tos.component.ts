@@ -1,8 +1,16 @@
-import { Component, ElementRef, Signal, ViewChild, WritableSignal, computed, signal, OnInit } from '@angular/core';
-import { AppData, SavedDataService,  } from '../services/saved-data.service';
-import { ExpStageSurvey, Tos } from '../data-model';
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
 
-const dummyTosData: Tos = {
+import { Component, Signal, computed } from '@angular/core';
+import { SavedDataService } from '../services/saved-data.service';
+import { TosAcceptance } from '../../lib/staged-exp/data-model';
+
+const dummyTosData: TosAcceptance = {
   acceptedTimestamp: null,
 };
 
@@ -14,7 +22,7 @@ const dummyTosData: Tos = {
   styleUrl: './exp-tos.component.scss'
 })
 export class ExpTosComponent {
-  public stageData: Signal<Survey>;
+  public stageData: Signal<TosAcceptance>;
   public error: Signal<string | null>;
 
   constructor(
@@ -39,6 +47,7 @@ export class ExpTosComponent {
       if(this.dataService.data().user.currentStage.kind !== 'accept-tos') {
         return dummyTosData;
       }
-      return this.dataService.data().user.currentStage.config as Survey;
+      return this.dataService.data().user.currentStage.config as TosAcceptance;
     });
+  }
 }

@@ -40,33 +40,35 @@ import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.compon
 import { ExpProfileComponent } from './exp-profile/exp-profile.component';
 import { ExpRatingComponent } from './exp-rating/exp-rating.component';
 import { ExpChatComponent } from './exp-chat/exp-chat.component';
+import { ExpTosComponent } from "./exp-tos/exp-tos.component";
 
 @NgModule({
-  declarations: [AppComponent, AppHomeComponent, AppSettingsComponent, PageNotFoundComponent],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    BrowserAnimationsModule,
-    MatButtonModule,
-    MatSelectModule,
-    MatSidenavModule,
-    MatButtonToggleModule,
-    MatIconModule,
-    MatListModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatMenuModule,
-    MatProgressBarModule,
-    CodemirrorConfigEditorModule,
-    ExpSurveyComponent,
-    ExpLeaderVoteComponent,
-    ExpProfileComponent,
-    ExpRatingComponent,
-    ExpChatComponent,
-  ],
-  providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
-  bootstrap: [AppComponent],
+    declarations: [AppComponent, AppHomeComponent, AppSettingsComponent, PageNotFoundComponent],
+    providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
+    bootstrap: [AppComponent],
+    imports: [
+        BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
+        MatButtonModule,
+        MatSelectModule,
+        MatSidenavModule,
+        MatButtonToggleModule,
+        MatIconModule,
+        MatListModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatMenuModule,
+        MatProgressBarModule,
+        CodemirrorConfigEditorModule,
+        ExpSurveyComponent,
+        ExpLeaderVoteComponent,
+        ExpProfileComponent,
+        ExpRatingComponent,
+        ExpChatComponent,
+        ExpTosComponent
+    ]
 })
 export class AppModule {}
