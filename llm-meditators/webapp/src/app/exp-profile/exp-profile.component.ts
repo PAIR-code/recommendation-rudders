@@ -16,7 +16,7 @@ import { User, UserProfile } from '../../lib/staged-exp/data-model';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const dummyProfileData: UserProfile = {
-  pronouns: "They/Them",
+  pronouns: 'They/Them',
   avatarUrl: '/assets/avatars/they.png',
   name: 'John Doe',
 };
@@ -30,7 +30,7 @@ const dummyProfileData: UserProfile = {
 })
 export class ExpProfileComponent {
   public responseControl: FormControl<string | null>;
-  public stageData: Signal<UserProfile>;
+  public profile: UserProfile;
   public error: Signal<string | null>;
 
   constructor(private dataService: SavedDataService) {
@@ -49,40 +49,44 @@ export class ExpProfileComponent {
     // `this.dataService.data().experiment.currentStage` references a
     // ExpStageUserProfile.
 
-    this.stageData = computed(() => {
-      if (this.dataService.data().user.currentStage.kind !== 'set-profile') {
-        return dummyProfileData;
-      }
-      return this.dataService.data().user.currentStage.config as UserProfile;
-    });
+    if (this.dataService.data().user.currentStage.kind !== 'set-profile') {
+      this.profile = dummyProfileData;
+    } else {
+      this.profile = this.dataService.data().user.currentStage.config as UserProfile;
+    }
+
+    // this.stageData = computed(() => {
+    //   if (this.dataService.data().user.currentStage.kind !== 'set-profile') {
+    //     return dummyProfileData;
+    //   }
+    //   return this.dataService.data().user.currentStage.config as UserProfile;
+    // });
 
     this.responseControl = new FormControl<string>('');
     this.responseControl.valueChanges.forEach((n) => {
       if (n) {
-        const curStageData = this.stageData();
-        curStageData.name = n;
-        this.updateStageAndUser(curStageData);
+        this.profile.name = n;
+        this.updateStageAndUser(this.profile);
       }
-      console.log(this.stageData());
     });
-
   }
 
-  updatePronouns(updatedValue: MatRadioChange){
-    const curStageData = this.stageData();
-    curStageData.pronouns = updatedValue.value;
-    this.updateStageAndUser(curStageData);
+  isComplete(): boolean {
+    return this.profile.avatarUrl !== '' && this.profile.name !== '' && this.profile.pronouns !== '';
   }
 
-  updateAvatarUrl(updatedValue: MatRadioChange){
-    const curStageData = this.stageData();
-    curStageData.avatarUrl = updatedValue.value;
-    this.updateStageAndUser(curStageData);
+  updatePronouns(updatedValue: MatRadioChange) {
+    this.profile.pronouns = updatedValue.value;
+    this.updateStageAndUser({ ...this.profile });
   }
 
-  updateStageAndUser(curStageData: UserProfile){
+  updateAvatarUrl(updatedValue: MatRadioChange) {
+    this.profile.avatarUrl = updatedValue.value;
+    this.updateStageAndUser({ ...this.profile });
+  }
+
+  updateStageAndUser(curStageData: UserProfile) {
     this.dataService.updateExpStage(curStageData);
-    this.dataService.updateUser(curStageData);
+    this.dataService.setStageComplete(this.isComplete());
   }
-
 }

@@ -6,11 +6,11 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component } from '@angular/core';
+import { Component, Signal, computed } from '@angular/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { SavedDataService } from '../services/saved-data.service';
-import { LeaderVote } from '../../lib/staged-exp/data-model';
+import { ExpStageVotes, LeaderVote, User, Votes, fakeVote } from '../../lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-exp-leader-vote',
@@ -20,37 +20,65 @@ import { LeaderVote } from '../../lib/staged-exp/data-model';
   imports: [MatRadioModule, MatButtonModule],
 })
 export class ExpLeaderVoteComponent {
+  public curStage: Signal<ExpStageVotes>;
+  public otherParticipants: Signal<User[]>;
+
   readonly LeaderVote = LeaderVote;
-  public votes: { userId: string; vote: LeaderVote }[] = [
-    { userId: 'user-1', vote: LeaderVote.NOT_RATED },
-    { userId: 'user-2', vote: LeaderVote.NOT_RATED },
-    { userId: 'user-3', vote: LeaderVote.NOT_RATED },
-    { userId: 'user-4', vote: LeaderVote.NOT_RATED },
-    { userId: 'user-5', vote: LeaderVote.NOT_RATED },
-  ];
+  public votes: Votes;
 
   constructor(private dataService: SavedDataService) {
-    console.log(dataService);
+    this.curStage = computed(() => {
+      if (this.dataService.user().currentStage.kind !== 'group-chat') {
+        console.error(`Bad stage kind for group-chat component: ${this.dataService.user().currentStage.kind}`);
+        return fakeVote;
+      }
+      return this.dataService.user().currentStage as ExpStageVotes;
+    });
+
+    this.otherParticipants = computed(() => {
+      const thisUserId = this.dataService.user().userId;
+      const allUsers = Object.values(this.dataService.data().experiment.participants);
+      return allUsers.filter((u) => u.userId !== thisUserId);
+    });
+
+    // Make sure that votes has all other participants, and only them.
+    this.votes = this.curStage().config;
+    const otherParticipantsMap: { [userId: string]: User } = {};
+    for (const p of this.otherParticipants()) {
+      otherParticipantsMap[p.userId] = p;
+      if (!(p.userId in this.votes)) {
+        this.votes[p.userId] = LeaderVote.NOT_RATED;
+      }
+    }
+    Object.keys(this.votes).forEach((uid) => {
+      if (!(uid in otherParticipantsMap)) {
+        delete this.votes[uid];
+      }
+    });
+  }
+
+  // True when all other users have been voted on.
+  isComplete() {
+    let completed = true;
+    this.otherParticipants().forEach((u) => {
+      if (!(u.userId in this.votes) || this.votes[u.userId] === LeaderVote.NOT_RATED) {
+        completed = false;
+      }
+    });
+    return completed;
   }
 
   setVote(event: unknown, userId: string) {
     const { value } = event as { value: LeaderVote };
-    const voteIndex = this.votes.findIndex((v) => v.userId === userId);
-    if (voteIndex === -1) {
-      throw new Error(`User ${userId} not found in votes.`);
+    this.votes[userId] = value;
+    if (this.isComplete()) {
+      this.dataService.setStageComplete(true);
     }
-    this.votes[voteIndex].vote = value;
-    console.log(this.votes);
-    // TODO: set votes in dataService
+    this.dataService.updateExpStage(this.votes);
   }
 
   resetVote(userId: string) {
-    const voteIndex = this.votes.findIndex((v) => v.userId === userId);
-    if (voteIndex === -1) {
-      throw new Error(`User ${userId} not found in votes.`);
-    }
-    this.votes[voteIndex].vote = LeaderVote.NOT_RATED;
-    console.log(this.votes);
-    // TODO: set votes in dataService
+    this.votes[userId] = LeaderVote.NOT_RATED;
+    this.dataService.updateExpStage(this.votes);
   }
 }

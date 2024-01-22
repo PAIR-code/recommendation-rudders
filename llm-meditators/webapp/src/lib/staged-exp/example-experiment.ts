@@ -34,6 +34,7 @@ import * as items from './items';
 const acceptTos: ExpStageTosAcceptance = {
   kind: 'accept-tos',
   name: '1. Agree to the experiment',
+  complete: false,
   config: {
     acceptedTimestamp: null,
   },
@@ -42,6 +43,7 @@ const acceptTos: ExpStageTosAcceptance = {
 const initialWork: ExpStageItemRating = {
   kind: 'rank-items',
   name: '2. Initial work',
+  complete: false,
   config: {
     ratings: [
       { item1: items.compas, item2: items.blanket, confidence: null },
@@ -53,6 +55,7 @@ const initialWork: ExpStageItemRating = {
 const initialWantToLeadSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '3. intial leadership survey',
+  complete: false,
   config: {
     question: `Rate the how much you would like to be the group leader.
 1/10 corresponds = most definitely not 10/10 you will fight to be the leader.`,
@@ -63,8 +66,9 @@ const initialWantToLeadSurvey: ExpStageSurvey = {
 const setProfile: ExpStageUserProfile = {
   kind: 'set-profile',
   name: '4. Set your profile',
+  complete: false,
   config: {
-    pronouns: null,
+    pronouns: '',
     avatarUrl: '',
     name: '',
   },
@@ -73,6 +77,7 @@ const setProfile: ExpStageUserProfile = {
 const groupChat: ExpStageChatAboutItems = {
   kind: 'group-chat',
   name: '5. Group discussion',
+  complete: false,
   config: {
     ratingsToDiscuss: [],
     messages: [],
@@ -81,6 +86,7 @@ const groupChat: ExpStageChatAboutItems = {
 const chatDiscussionSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '6. Post-chat survey',
+  complete: false,
   config: {
     question: `Rate the chat dicussion on a 1-10 scale.
 1/10 corresponds to you did not enjoy the discussion at all and 10/10 corresponds to a perfect experience.
@@ -92,6 +98,7 @@ Also indicate your overall feeling about the experience.`,
 const postChatWantToLeadSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '7. Post-discussion leadership survey',
+  complete: false,
   config: {
     question: `Rate the how much you would like to be the group leader.
 1/10 corresponds = most definitely not 10/10 you will fight to be the leader.`,
@@ -102,17 +109,14 @@ const postChatWantToLeadSurvey: ExpStageSurvey = {
 const leaderVoting: ExpStageVotes = {
   kind: 'leader-vote',
   name: '8. Vote for the leader',
-  config: {
-    user1: LeaderVote.NOT_RATED,
-    user2: LeaderVote.NOT_RATED,
-    user3: LeaderVote.NOT_RATED,
-    user4: LeaderVote.NOT_RATED,
-  },
+  complete: false,
+  config: {},
   // userAcceptance: Date,
 };
 const postChatWork: ExpStageItemRating = {
   kind: 'rank-items',
   name: '9. Post-discussion work',
+  complete: false,
   config: {
     ratings: [
       { item1: items.compas, item2: items.blanket, confidence: null },
@@ -124,6 +128,7 @@ const postChatWork: ExpStageItemRating = {
 const finalSatisfactionSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '10. final satisfaction survey',
+  complete: false,
   config: {
     question: `Rate how happy you were with the final outcome.
 1/10 corresponds = most definitely not 10/10 you will fight to be the leader.`,
@@ -132,10 +137,36 @@ const finalSatisfactionSurvey: ExpStageSurvey = {
   },
 };
 
-export const initialExperimentSetup = (): Experiment => {
-  const experiment = {
-    numberOfParticipants: 5,
-    participants: {},
+// Example data to bootstrap us...
+export function initUserData(): User {
+  return {
+    userId: uuidv4(),
+    accessCode: '',
+    profile: {
+      name: '',
+      pronouns: '',
+      avatarUrl: '',
+    },
+    currentStage: START_STAGE as ExpStage,
+    completedStages: [] as ExpStage[],
+  };
+}
+
+function initParticipants(count: number): { [userId: string]: User } {
+  const participants: { [userId: string]: User } = {};
+  for (let i = 0; i < count; i++) {
+    const p = initUserData();
+    participants[p.userId] = p;
+  }
+  return participants;
+}
+
+export function initialExperimentSetup(count: number): Experiment {
+  const participants = initParticipants(count);
+
+  const experiment: Experiment = {
+    numberOfParticipants: Object.keys(participants).length,
+    participants,
     // currentUser: null,
     stages: [
       acceptTos,
@@ -149,29 +180,7 @@ export const initialExperimentSetup = (): Experiment => {
       postChatWork,
       finalSatisfactionSurvey,
     ],
-  } as Experiment;
-
-  for (let i = 0; i < 5; i++) {
-    const participant = initUserData();
-    experiment.participants[participant.userId] = participant;
-    if (i === 0) {
-      experiment.currentUser = participant;
-    }
-  }
+  };
 
   return experiment;
-};
-// Example data to bootstrap us...
-export function initUserData(): User {
-  return {
-    userId: uuidv4(),
-    accessCode: '',
-    profile: {
-      name: '',
-      pronouns: null,
-      avatarUrl: '',
-    },
-    currentStage: START_STAGE as ExpStage,
-    completedStages: [] as ExpStage[],
-  };
 }

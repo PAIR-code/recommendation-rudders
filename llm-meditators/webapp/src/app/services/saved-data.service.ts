@@ -14,15 +14,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
 
 export function initialAppData(): AppData {
-  const experiment = initialExperimentSetup();
+  const experiment = initialExperimentSetup(5);
   return {
     settings: {
-      name: 'LLM-Mediators Experiment',
+      name: 'LLM-Mediators',
       sheetsId: '',
       sheetsRange: '', // e.g.
     },
     experiment,
-    user: experiment.currentUser!,
+    user: Object.values(experiment.participants)[0],
   };
 }
 
@@ -86,6 +86,7 @@ export class SavedDataService {
   public nameStageMap: Signal<{ [stageName: string]: ExpStage }>;
   public session: WritableSignal<AppSession>;
   public errors: WritableSignal<string[]>;
+  public stageComplete: Signal<boolean>;
 
   constructor(
     private lmApiService: LmApiService,
@@ -105,6 +106,7 @@ export class SavedDataService {
     this.dataJson = computed(() => JSON.stringify(this.data()));
     this.dataSize = computed(() => this.dataJson().length);
     this.user = computed(() => this.data().user);
+    this.stageComplete = computed(() => this.data().user.currentStage.complete);
     this.session = signal(DEFAULT_SESSION, { equal: _.isEqual });
     this.errors = signal([]);
 
@@ -151,9 +153,6 @@ export class SavedDataService {
       console.warn('nextStep called at the end stage... this should not be possible.');
       return;
     }
-
-    console.log('stages: ', data.experiment.stages);
-    console.log('completed stages: ', user.completedStages.length);
     const stages = data.experiment.stages;
     // We have ">" because we always add a dummy start state, so user.completedStages can be 1 bigger
     // than experiment.stages.
@@ -164,8 +163,6 @@ export class SavedDataService {
       const nextStage = data.experiment.stages[user.completedStages.length - 1];
       user.currentStage = { ...nextStage };
     }
-
-    console.log('new stage: ', user.currentStage);
     const curSession = this.session();
     const newSession = Object.assign({ ...curSession }, { stage: user.currentStage.name } as Partial<AppSession>);
     this.session.set(newSession);
@@ -184,6 +181,12 @@ export class SavedDataService {
   setCurrentExpStageName(expStageName: string) {
     const data = this.data();
     data.user.currentStage = this.nameStageMap()[expStageName];
+    this.data.set({ ...data });
+  }
+
+  setStageComplete(complete: boolean) {
+    const data = this.data();
+    data.user.currentStage.complete = complete;
     this.data.set({ ...data });
   }
 
