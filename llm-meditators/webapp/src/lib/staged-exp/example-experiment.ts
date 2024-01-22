@@ -5,6 +5,7 @@
  * Use of this source code is governed by an Apache2 license that can be
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
+import { v4 as uuidv4 } from 'uuid';
 import {
   Experiment,
   ExpStage,
@@ -131,32 +132,39 @@ const finalSatisfactionSurvey: ExpStageSurvey = {
   },
 };
 
-export const initialExperimentSetup: Experiment = {
-  numberOfParticipants: 5,
-  participants: {
-    userid1: initUserData(),
-    userid2: initUserData(),
-    userid3: initUserData(),
-    userid4: initUserData(),
-    userid5: initUserData(),
-  },
-  stages: [
-    acceptTos,
-    initialWork,
-    initialWantToLeadSurvey,
-    setProfile,
-    groupChat,
-    chatDiscussionSurvey,
-    postChatWantToLeadSurvey,
-    leaderVoting,
-    postChatWork,
-    finalSatisfactionSurvey,
-  ],
+export const initialExperimentSetup = (): Experiment => {
+  const experiment = {
+    numberOfParticipants: 5,
+    participants: {},
+    // currentUser: null,
+    stages: [
+      acceptTos,
+      initialWork,
+      initialWantToLeadSurvey,
+      setProfile,
+      groupChat,
+      chatDiscussionSurvey,
+      postChatWantToLeadSurvey,
+      leaderVoting,
+      postChatWork,
+      finalSatisfactionSurvey,
+    ],
+  } as Experiment;
+
+  for (let i = 0; i < 5; i++) {
+    const participant = initUserData();
+    experiment.participants[participant.userId] = participant;
+    if (i === 0) {
+      experiment.currentUser = participant;
+    }
+  }
+
+  return experiment;
 };
 // Example data to bootstrap us...
 export function initUserData(): User {
   return {
-    userId: '',
+    userId: uuidv4(),
     accessCode: '',
     profile: {
       name: '',

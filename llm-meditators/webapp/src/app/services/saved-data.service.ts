@@ -14,14 +14,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
 
 export function initialAppData(): AppData {
+  const experiment = initialExperimentSetup();
   return {
     settings: {
       name: 'LLM-Mediators Experiment',
       sheetsId: '',
       sheetsRange: '', // e.g.
     },
-    experiment: initialExperimentSetup,
-    user: initUserData(),
+    experiment,
+    user: experiment.currentUser!,
   };
 }
 

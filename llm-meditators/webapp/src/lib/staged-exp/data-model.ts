@@ -155,6 +155,7 @@ export type ExpStageKind = ExpStage['kind'];
 export interface Experiment {
   numberOfParticipants: number;
   participants: { [userId: string]: User };
+  currentUser: User;
   stages: ExpStage[];
 }
 
