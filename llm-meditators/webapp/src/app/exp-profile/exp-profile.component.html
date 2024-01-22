@@ -12,6 +12,8 @@
     </mat-radio-group>
 
     <p>
+        <br>
+        <br>
         Please select your pseudo. This will be used to refer to you in the app.
     </p>
 
@@ -21,6 +23,21 @@
           <input matInput placeholder="Write your response" [formControl]="responseControl">
         </mat-form-field>
     </form>
+
+    <p>
+        <br>
+        <br>
+        Please select your avatar. This will be used to refer to you in the app.
+    </p>
+
+    <mat-radio-group class="avatar-radio-group" (change)="updateAvatarUrl($event)">
+        <mat-radio-button class="avatar-radio-button" value="/assets/avatars/she.png"><img src="/assets/avatars/she.png" alt="Avatar Female" width="72" height="77" /></mat-radio-button> 
+        <mat-radio-button class="avatar-radio-button" value="/assets/avatars/they.png"><img src="/assets/avatars/they.png" alt="Avatar Neutral" width="72" height="77" /></mat-radio-button>
+        <mat-radio-button class="avatar-radio-button" value="/assets/avatars/he.png"><img src="/assets/avatars/he.png" alt="Avatar Male" width="72" height="77" /></mat-radio-button>
+    </mat-radio-group>
+
+    
+
 
 </div>
 } @else {

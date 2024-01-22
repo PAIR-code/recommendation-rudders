@@ -17,7 +17,7 @@ import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const dummyProfileData: UserProfile = {
   pronouns: "They/Them",
-  avatarUrl: '',
+  avatarUrl: '/assets/avatars/they.png',
   name: 'John Doe',
 };
 
@@ -71,6 +71,12 @@ export class ExpProfileComponent {
   updatePronouns(updatedValue: MatRadioChange){
     const curStageData = this.stageData();
     curStageData.pronouns = updatedValue.value;
+    this.dataService.updateExpStage(curStageData);
+  }
+
+  updateAvatarUrl(updatedValue: MatRadioChange){
+    const curStageData = this.stageData();
+    curStageData.avatarUrl = updatedValue.value;
     this.dataService.updateExpStage(curStageData);
   }
 
