@@ -8,7 +8,7 @@
 
 import { computed, effect, Injectable, Signal, signal, untracked, WritableSignal } from '@angular/core';
 import { LmApiService } from './lm-api.service';
-import { Experiment, ExpStage, User, ExpDataKinds, END_STAGE } from '../../lib/staged-exp/data-model';
+import { Experiment, ExpStage, User, ExpDataKinds, END_STAGE, UserProfile } from '../../lib/staged-exp/data-model';
 import { initialExperimentSetup, initUserData } from '../../lib/staged-exp/example-experiment';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
@@ -189,6 +189,12 @@ export class SavedDataService {
   updateExpStage(newExpStage: ExpDataKinds) {
     const data = this.data();
     Object.assign(this.user().currentStage.config, newExpStage);
+    this.data.set({ ...data });
+  }
+
+  updateUser(newUserProfile: UserProfile) {
+    const data = this.data();
+    Object.assign(this.user().profile, newUserProfile);
     this.data.set({ ...data });
   }
 
