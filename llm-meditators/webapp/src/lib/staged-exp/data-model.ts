@@ -9,6 +9,7 @@
 export interface GenericExpStage<T> {
   kind: string;
   name: string;
+  complete: boolean;
   config: T;
 }
 
@@ -36,17 +37,20 @@ export interface UserMessage {
   messageType: 'userMessage';
   timestamp: number;
   userId: string;
+  text: string;
 }
-export interface SystemMessage {
-  messageType: 'systemMessage-DiscussItem';
+export interface DiscussItemsMessage {
+  messageType: 'discussItemsMessage';
   timestamp: number;
   itemRatingToDiscuss: ItemRating;
+  text: string;
 }
-export interface ModeratorMessage {
-  messageType: 'moderatorMessage';
+export interface MediatorMessage {
+  messageType: 'mediatorMessage';
   timestamp: number;
+  text: string;
 }
-export type Message = UserMessage | SystemMessage | ModeratorMessage;
+export type Message = UserMessage | DiscussItemsMessage | MediatorMessage;
 export interface ChatAboutItems {
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
@@ -54,6 +58,16 @@ export interface ChatAboutItems {
 export interface ExpStageChatAboutItems extends GenericExpStage<ChatAboutItems> {
   kind: 'group-chat';
 }
+
+export const fakeChat: ExpStageChatAboutItems = {
+  kind: 'group-chat',
+  name: 'dummy-chat',
+  complete: false,
+  config: {
+    ratingsToDiscuss: [],
+    messages: [],
+  },
+};
 
 // -------------------------------------------------------------------------------------
 export enum LeaderVote {
@@ -68,11 +82,16 @@ export interface Votes {
 export interface ExpStageVotes extends GenericExpStage<Votes> {
   kind: 'leader-vote';
 }
+export const fakeVote: ExpStageVotes = {
+  kind: 'leader-vote',
+  name: 'fake leader vote',
+  complete: false,
+  config: {},
+};
 
 // -------------------------------------------------------------------------------------
-export type PronounPair = 'She/Her' | 'They/Them' | 'He/Him' | null;
 export interface UserProfile {
-  pronouns: PronounPair;
+  pronouns: string;
   avatarUrl: string;
   name: string;
 }
@@ -101,6 +120,7 @@ export interface ExpStageStart extends GenericExpStage<EmptyObject> {
 export const START_STAGE: ExpStageStart = {
   name: 'start',
   kind: 'start',
+  complete: true,
   config: {},
 };
 
@@ -113,6 +133,7 @@ export interface ExpStageEnd extends GenericExpStage<EmptyObject> {
 export const END_STAGE: ExpStageEnd = {
   name: 'end',
   kind: 'end',
+  complete: false,
   config: {},
 };
 
@@ -146,6 +167,16 @@ export type ExpStage =
 
 export type ExpStageKind = ExpStage['kind'];
 
+// -------------------------------------------------------------------------------------
+export interface User {
+  accessCode: string; // likely stored in local browser cache/URL.
+  userId: string;
+  // Their appearance.
+  profile: UserProfile;
+  currentStage: ExpStage;
+  completedStages: ExpStage[]; // current stage is the very last one.
+}
+
 // Note: it should be that:
 //   type ShouldBeTrue = ExpStage extends GenericExpStage<ExpDataKinds> ? true : false;
 
@@ -155,16 +186,5 @@ export type ExpStageKind = ExpStage['kind'];
 export interface Experiment {
   numberOfParticipants: number;
   participants: { [userId: string]: User };
-  currentUser: User;
   stages: ExpStage[];
-}
-
-// -------------------------------------------------------------------------------------
-export interface User {
-  accessCode: string; // likely stored in local browser cache/URL.
-  userId: string;
-  // Their appearance.
-  profile: UserProfile;
-  currentStage: ExpStage;
-  completedStages: ExpStage[]; // current stage is the very last one.
 }
