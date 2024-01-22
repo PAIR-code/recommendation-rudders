@@ -8,12 +8,22 @@
 
 import { computed, effect, Injectable, Signal, signal, untracked, WritableSignal } from '@angular/core';
 import { LmApiService } from './lm-api.service';
-import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
-import { map } from 'underscore';
-import { Experiment, ExpStage, ExpStageTosAcceptance, ExpStageUserProfile, ExpStageSurvey, User, START_STAGE, ExpDataKinds, END_STAGE } from '../data-model';
+import { Experiment, ExpStage, User, ExpDataKinds, END_STAGE } from '../../lib/staged-exp/data-model';
+import { initialExperimentSetup, initUserData } from '../../lib/staged-exp/example-experiment';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
 
+export function initialAppData(): AppData {
+  return {
+    settings: {
+      name: 'LLM-Mediators Experiment',
+      sheetsId: '',
+      sheetsRange: '', // e.g.
+    },
+    experiment: initialExperimentSetup,
+    user: initUserData(),
+  };
+}
 
 // -------------------------------------------------------------------------------------
 //  Session management: stored in the URL
@@ -30,96 +40,20 @@ const DEFAULT_SESSION: AppSession = {
 };
 
 function parseSessionParam(str: string | null): AppSessionParamState {
-  if(!str) {
-    return { session: DEFAULT_SESSION, errors: [] }
+  if (!str) {
+    return { session: DEFAULT_SESSION, errors: [] };
   }
   try {
     const session = JSON.parse(str) as AppSession;
-    return { session, errors: [] }
+    return { session, errors: [] };
   } catch (err) {
-    return { session: DEFAULT_SESSION, 
-      errors: ['URL state param is not valid JSON'] }
+    return { session: DEFAULT_SESSION, errors: ['URL state param is not valid JSON'] };
   }
 }
 
 function prepareSessionParam(session: AppSession): string {
   return JSON.stringify(session);
 }
-
-
-// -------------------------------------------------------------------------------------
-//  Initial Data
-// -------------------------------------------------------------------------------------
-
-// TODO: write up the rest of the experiment.
-// '0. acceptingTOS'
-// | '1. profileSetup'
-// | '2. initialRating'
-// | '3. groupChat'
-// | '4. finalRating'
-// | '5. post-Chat-satisfaction'
-// | '6. post-leader-reveal-satisfcation'
-// | '7. Complete';
-const acceptTos: ExpStageTosAcceptance = {
-  kind: 'accept-tos',
-  name: '0. Agree to the experiment',
-  config: {
-    acceptedTimestamp: null
-  }
-  // userAcceptance: Date,
-};
-const setProfile: ExpStageUserProfile = {
-  kind: 'set-profile',
-  name: '1. Set your profile',
-  config: {
-    pronouns: null,
-    avatarUrl: '',
-    name: ''
-  }
-  // userProfiles: {},
-};
-const simpleSurvey: ExpStageSurvey = {
-  kind: 'survey',
-  name: '4. Post-chat survey',
-  config: {
-    question: 'Rate the chat dicussion on a 1-10 scale. \n 1/10 corresponds to you did not enjoy the discussion at all and 10/10 corresponds to a perfect experience. \n Also indicate your overall feeling about the experience. ',
-    score: null,
-    openFeedback: '',
-  },
-};
-
-const initialExperimentSetup: Experiment = {
-  numberOfParticipants: 5,
-  participants: {},
-  stages: [acceptTos, setProfile, simpleSurvey],
-};
-// Example data to bootstrap us... 
-function initUserData(): User {
-  return {
-    userId: '',
-    accessCode: '',
-    profile: {
-      name: '',
-      pronouns: null,
-      avatarUrl: '',
-    },
-    currentStage: START_STAGE as ExpStage,
-    completedStages: ([] as ExpStage[]),
-  };
-}
-export function initialAppData(): AppData {
-  return {
-    settings: {
-      name: 'LLM-Mediators Experiment',
-      sheetsId: '',
-      sheetsRange: '', // e.g.
-    },
-    experiment: initialExperimentSetup,
-    user: initUserData()
-  };
-}
-
-
 
 // -------------------------------------------------------------------------------------
 //  App Settings & Data (saved in local storage / firebase)
@@ -135,7 +69,6 @@ export interface AppData {
   experiment: Experiment;
   user: User;
 }
-
 
 // -------------------------------------------------------------------------------------
 //  The Service Class...
@@ -162,9 +95,7 @@ export class SavedDataService {
     this.data = signal(JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())));
     this.nameStageMap = computed(() => {
       const map: { [stageName: string]: ExpStage } = {};
-      this.data().experiment.stages.forEach(stage => 
-        map[stage.name] = stage 
-      );
+      this.data().experiment.stages.forEach((stage) => (map[stage.name] = stage));
       return map;
     });
 
@@ -176,15 +107,14 @@ export class SavedDataService {
     this.session = signal(DEFAULT_SESSION, { equal: _.isEqual });
     this.errors = signal([]);
 
-
     const params = signal<Partial<AppSession>>({});
-    this.route.queryParamMap.forEach(paramMap => {
+    this.route.queryParamMap.forEach((paramMap) => {
       // console.log('updating params state: ', paramMap.get('state'));
       const paramSessionState = parseSessionParam(paramMap.get('state'));
       params.set(paramSessionState.session);
-      this.errors.update(errors => errors.concat(paramSessionState.errors));
+      this.errors.update((errors) => errors.concat(paramSessionState.errors));
       const oldSession = untracked(this.session);
-      const newSession = Object.assign({...oldSession}, paramSessionState.session);
+      const newSession = Object.assign({ ...oldSession }, paramSessionState.session);
       if (!_.isEqual(newSession, oldSession)) {
         this.session.set(newSession);
       }
@@ -193,13 +123,13 @@ export class SavedDataService {
     effect(() => {
       const newSession = this.session();
       const oldParams = untracked(params);
-      const oldParamSession = Object.assign({...DEFAULT_SESSION}, oldParams);
+      const oldParamSession = Object.assign({ ...DEFAULT_SESSION }, oldParams);
       // console.log('might update search params', JSON.stringify({oldParamSession, newSession}));
       if (!_.isEqual(oldParamSession, newSession)) {
         this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: { state: prepareSessionParam(newSession) },
-          });
+          relativeTo: this.route,
+          queryParams: { state: prepareSessionParam(newSession) },
+        });
       }
     }, {});
 
@@ -210,31 +140,36 @@ export class SavedDataService {
   }
 
   nextStep() {
-    const user = this.user();
+    // We update data, and specifically the user in it.
+    const data = { ...this.data() };
+    const user = { ...data.user };
+    data.user = user;
+
     // Once we get to end, we do nothing.
-    if(user.currentStage.kind === END_STAGE.kind) {
+    if (user.currentStage.kind === END_STAGE.kind) {
       console.warn('nextStep called at the end stage... this should not be possible.');
       return;
     }
 
-    console.log('stages: ', this.data().experiment.stages);
+    console.log('stages: ', data.experiment.stages);
     console.log('completed stages: ', user.completedStages.length);
-    const stages = this.data().experiment.stages;
-    // We have ">" because we always add a dummy start state, so user.completedStages can be 1 bigger 
+    const stages = data.experiment.stages;
+    // We have ">" because we always add a dummy start state, so user.completedStages can be 1 bigger
     // than experiment.stages.
     user.completedStages.push(user.currentStage);
     if (user.completedStages.length > stages.length) {
       user.currentStage = END_STAGE;
     } else {
-      const nextStage = this.data().experiment.stages[user.completedStages.length - 1];
-      user.currentStage = {...nextStage}
-    }    
+      const nextStage = data.experiment.stages[user.completedStages.length - 1];
+      user.currentStage = { ...nextStage };
+    }
+
     console.log('new stage: ', user.currentStage);
     const curSession = this.session();
-    const newSession = Object.assign({... curSession}, ({ stage: user.currentStage.name } as Partial<AppSession>));
+    const newSession = Object.assign({ ...curSession }, { stage: user.currentStage.name } as Partial<AppSession>);
     this.session.set(newSession);
-    console.log(curSession, newSession)
-    this.data.set({ ...this.data() });
+    console.log(curSession, newSession);
+    this.data.set(data);
   }
 
   setSetting(settingKey: keyof AppSettings, settingValue: string) {

@@ -1,8 +1,30 @@
 <div class="main">
-
-  <button mat-button (click)="nextStep()">
-    <!-- <mat-icon>redo</mat-icon> -->
-    <span>Start the experiment</span>
-  </button>
-
+  <div>
+    @if (this.dataService.user().currentStage.kind === 'start') {
+      Welcome to the study... here's some info about it...
+    } @else if (this.dataService.user().currentStage.kind === 'set-profile') {
+      <app-exp-profile></app-exp-profile>
+    } @else if (this.dataService.user().currentStage.kind === 'group-chat') {
+      <app-exp-chat></app-exp-chat>
+    } @else if (this.dataService.user().currentStage.kind === 'rank-items') {
+      <app-exp-rating></app-exp-rating>
+    } @else if (this.dataService.user().currentStage.kind === 'survey') {
+      <app-exp-survey></app-exp-survey>
+    } @else if (this.dataService.user().currentStage.kind === 'leader-vote') {
+      <app-exp-leader-vote></app-exp-leader-vote>
+    } @else if (this.dataService.user().currentStage.kind === 'end') {
+      <div>All done!</div>
+    } @else {
+      <div>
+        Oh no! It looks like something went wrong, there is no component for
+        <span>{{ this.dataService.user().currentStage.kind }}</span>
+      </div>
+    }
+  </div>
+  @if (this.dataService.user().currentStage.kind !== 'end') {
+    <button mat-button (click)="nextStep()">
+      <!-- <mat-icon>redo</mat-icon> -->
+      <span>Next step</span>
+    </button>
+  }
 </div>

@@ -1,3 +1,10 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
 
 export interface GenericExpStage<T> {
   kind: string;
@@ -17,7 +24,10 @@ export interface ItemPair {
 export interface ItemRating extends ItemPair {
   confidence: number | null; // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
 }
-export interface ExpStageItemRating extends GenericExpStage<ItemRating> {
+export interface ItemRatings {
+  ratings: ItemRating[];
+}
+export interface ExpStageItemRating extends GenericExpStage<ItemRatings> {
   kind: 'rank-items';
 }
 
@@ -52,7 +62,9 @@ export enum LeaderVote {
   NEGATIVE = 'negative',
   NOT_RATED = 'not-rated',
 }
-export interface Votes { [otherUserId: string]: LeaderVote };
+export interface Votes {
+  [otherUserId: string]: LeaderVote;
+}
 export interface ExpStageVotes extends GenericExpStage<Votes> {
   kind: 'leader-vote';
 }
@@ -78,29 +90,31 @@ export interface ExpStageSurvey extends GenericExpStage<Survey> {
   kind: 'survey';
 }
 
+export type EmptyObject = Record<string, never>;
+
 // -------------------------------------------------------------------------------------
 // The unique start stage, before they have started.
-export interface ExpStageStart extends GenericExpStage<{}> {
+export interface ExpStageStart extends GenericExpStage<EmptyObject> {
   name: 'start';
   kind: 'start';
 }
 export const START_STAGE: ExpStageStart = {
   name: 'start',
   kind: 'start',
-  config: {}
-}
+  config: {},
+};
 
 // -------------------------------------------------------------------------------------
 // The unique end stage, once completed.
-export interface ExpStageEnd extends GenericExpStage<{}> {
+export interface ExpStageEnd extends GenericExpStage<EmptyObject> {
   name: 'end';
   kind: 'end';
 }
 export const END_STAGE: ExpStageEnd = {
   name: 'end',
   kind: 'end',
-  config: {}
-}
+  config: {},
+};
 
 // -------------------------------------------------------------------------------------
 export interface Tos {  // Terms of Service
@@ -116,7 +130,7 @@ export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
 
 // -------------------------------------------------------------------------------------
 export type ExpDataKinds =
-  | {}  // no data for start and end.
+  | EmptyObject // no data for start and end.
   | TosAcceptance
   | Survey
   | UserProfile
@@ -133,6 +147,8 @@ export type ExpStage =
   | ExpStageChatAboutItems
   | ExpStageItemRating
   | ExpStageEnd;
+
+export type ExpStageKind = ExpStage['kind'];
 
 // Note: it should be that:
 //   type ShouldBeTrue = ExpStage extends GenericExpStage<ExpDataKinds> ? true : false;
@@ -153,5 +169,5 @@ export interface User {
   // Their appearance.
   profile: UserProfile;
   currentStage: ExpStage;
-  completedStages: ExpStage[];  // current stage is the very last one.
+  completedStages: ExpStage[]; // current stage is the very last one.
 }

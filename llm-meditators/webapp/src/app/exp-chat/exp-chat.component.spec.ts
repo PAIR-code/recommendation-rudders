@@ -8,17 +8,18 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PageNotFoundComponent } from './page-not-found.component';
+import { ExpChatComponent } from './exp-chat.component';
 
-describe('PageNotFoundComponent', () => {
-  let component: PageNotFoundComponent;
-  let fixture: ComponentFixture<PageNotFoundComponent>;
+describe('ExpChatComponent', () => {
+  let component: ExpChatComponent;
+  let fixture: ComponentFixture<ExpChatComponent>;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [PageNotFoundComponent],
-    });
-    fixture = TestBed.createComponent(PageNotFoundComponent);
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ExpChatComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ExpChatComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

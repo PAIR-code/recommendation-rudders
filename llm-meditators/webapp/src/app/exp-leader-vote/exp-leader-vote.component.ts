@@ -1,8 +1,16 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
+
 import { Component } from '@angular/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
-import { AppData, SavedDataService } from '../services/saved-data.service';
-import { LeaderVote } from '../data-model';
+import { SavedDataService } from '../services/saved-data.service';
+import { LeaderVote } from '../../lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-exp-leader-vote',
@@ -25,12 +33,13 @@ export class ExpLeaderVoteComponent {
     console.log(dataService);
   }
 
-  setVote(event: any, userId: string) {
+  setVote(event: unknown, userId: string) {
+    const { value } = event as { value: LeaderVote };
     const voteIndex = this.votes.findIndex((v) => v.userId === userId);
     if (voteIndex === -1) {
       throw new Error(`User ${userId} not found in votes.`);
     }
-    this.votes[voteIndex].vote = event.value;
+    this.votes[voteIndex].vote = value;
     console.log(this.votes);
     // TODO: set votes in dataService
   }

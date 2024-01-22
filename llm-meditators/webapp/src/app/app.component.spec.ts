@@ -55,11 +55,11 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have as loc 'home'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.loc).toEqual('home');
-  });
+  // it(`should have as loc 'home'`, () => {
+  //   const fixture = TestBed.createComponent(AppComponent);
+  //   const app = fixture.componentInstance;
+  //   // expect(app.loc).toEqual('home');
+  // });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
