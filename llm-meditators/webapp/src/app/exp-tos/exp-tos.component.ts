@@ -9,7 +9,7 @@
 import { Component, Signal, computed } from '@angular/core';
 import { SavedDataService } from '../services/saved-data.service';
 import { TosAcceptance } from '../../lib/staged-exp/data-model';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 
 
 const dummyTosData: TosAcceptance = {
@@ -53,12 +53,15 @@ export class ExpTosComponent {
     });
   }
 
-  updateCheckboxValue(updatedValue: Event) {
+  updateCheckboxValue(updatedValue: MatCheckboxChange) {
     const currentStage = this.stageData();
-    var date = new Date(updatedValue.timeStamp);
-    console.log(date.toUTCString());
-    currentStage.acceptedTimestamp = date;
-    this.dataService.updateExpStage(currentStage);
+    var checked =updatedValue.checked;
+    if (checked) {
+      console.log("checked");
+      var date = new Date();
+      currentStage.acceptedTimestamp = date;
+      this.dataService.updateExpStage(currentStage);
+    }
   }
 }
 
