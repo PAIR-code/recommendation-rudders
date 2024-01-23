@@ -242,11 +242,11 @@ export class SavedDataService {
     });
   }
 
-  editExpStageData<T extends ExpDataKinds>(uid: string, f: (oldExpStage: T) => T | void) {
+  editExpStageData<T extends ExpDataKinds>(uid: string, stageName: string, f: (oldExpStage: T) => T | void) {
     this.editUser(uid, (user) => {
-      const maybeNewData = f(user.stageMap[user.currentStageName].config as T);
+      const maybeNewData = f(user.stageMap[stageName].config as T);
       if (maybeNewData) {
-        user.stageMap[user.currentStageName].config = maybeNewData;
+        user.stageMap[stageName].config = maybeNewData;
       }
     });
   }
@@ -265,7 +265,8 @@ export class SavedDataService {
       if (stage.kind !== 'group-chat') {
         throw new Error(`Cant send a message to stage ${stage.name}, it is of kind ${stage.kind}.`);
       }
-      this.editExpStageData<ChatAboutItems>(u.userId, (config) => {
+      this.editExpStageData<ChatAboutItems>(u.userId, stageName, (config) => {
+        console.log(u.userId, config);
         config.messages.push({
           userId: user.userId,
           messageType: 'userMessage',
