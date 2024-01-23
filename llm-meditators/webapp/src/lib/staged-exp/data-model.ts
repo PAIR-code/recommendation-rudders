@@ -102,8 +102,11 @@ export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
 // -------------------------------------------------------------------------------------
 export interface Survey {
   question: string;
+  lowerBound: string;
+  upperBound: string;
   score: number | null; //  10 point scale.
   openFeedback: string;
+  freeForm: boolean;
 }
 export interface ExpStageSurvey extends GenericExpStage<Survey> {
   kind: 'survey';
