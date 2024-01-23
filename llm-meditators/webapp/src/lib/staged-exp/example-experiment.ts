@@ -205,15 +205,6 @@ export function initUserData(stages: ExpStage[]): UserData {
   };
 }
 
-function initParticipants(count: number, stages: ExpStage[]): { [userId: string]: UserData } {
-  const participants: { [userId: string]: UserData } = {};
-  for (let i = 0; i < count; i++) {
-    const p = initUserData(stages);
-    participants[p.userId] = p;
-  }
-  return participants;
-}
-
 function makeStages() {
   return [
     acceptTosAndSetProfile(),
@@ -230,8 +221,17 @@ function makeStages() {
   ];
 }
 
+function initParticipants(count: number): { [userId: string]: UserData } {
+  const participants: { [userId: string]: UserData } = {};
+  for (let i = 0; i < count; i++) {
+    const p = initUserData(makeStages());
+    participants[p.userId] = p;
+  }
+  return participants;
+}
+
 export function initialExperimentSetup(count: number): Experiment {
-  const participants = initParticipants(count, makeStages());
+  const participants = initParticipants(count);
 
   const experiment: Experiment = {
     numberOfParticipants: Object.keys(participants).length,

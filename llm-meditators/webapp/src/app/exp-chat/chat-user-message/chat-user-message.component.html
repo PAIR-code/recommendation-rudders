@@ -1,2 +1,3 @@
-<div>{{ message.timestamp }}</div>
-<div>{{ message.text }}</div>
+<app-chat-user-profile [profile]="profile()"></app-chat-user-profile>
+<div>{{ userMessage().timestamp }}</div>
+<div>{{ userMessage().text }}</div>

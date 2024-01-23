@@ -40,6 +40,13 @@ export interface UserMessage {
   userId: string;
   text: string;
 }
+export const FAKE_EMPTY_USERID = '';
+export const fakeEmptyMessage: UserMessage = {
+  messageType: 'userMessage',
+  timestamp: 0,
+  userId: FAKE_EMPTY_USERID,
+  text: 'fakeMessage',
+};
 export interface DiscussItemsMessage {
   messageType: 'discussItemsMessage';
   timestamp: number;
@@ -102,6 +109,11 @@ export const STAGE_KIND_PROFILE = 'set-profile';
 export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
   kind: typeof STAGE_KIND_PROFILE;
 }
+export const fakeEmptyProfile: UserProfile = {
+  pronouns: 'fake pronouns',
+  avatarUrl: 'fake avatar url',
+  name: 'fake name',
+};
 
 // -------------------------------------------------------------------------------------
 export interface TosAndUserProfile {
