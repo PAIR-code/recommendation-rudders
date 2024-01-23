@@ -9,6 +9,7 @@
 import { Component } from '@angular/core';
 import { SavedDataService } from '../services/saved-data.service';
 import { LmApiService } from '../services/lm-api.service';
+import { RANKED_ITEMS_STAGE_KIND } from 'src/lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-home',
@@ -18,6 +19,7 @@ import { LmApiService } from '../services/lm-api.service';
 export class AppHomeComponent {
   public waiting: boolean = false;
   public errorMessage?: string;
+  readonly RANKED_ITEMS_STAGE_KIND = RANKED_ITEMS_STAGE_KIND;
 
   constructor(
     private lmApiService: LmApiService,

@@ -28,8 +28,9 @@ export interface ItemRating extends ItemPair {
 export interface ItemRatings {
   ratings: ItemRating[];
 }
+export const RANKED_ITEMS_STAGE_KIND = 'rank-items';
 export interface ExpStageItemRating extends GenericExpStage<ItemRatings> {
-  kind: 'rank-items';
+  kind: typeof RANKED_ITEMS_STAGE_KIND;
 }
 
 // -------------------------------------------------------------------------------------
@@ -171,13 +172,15 @@ export type ExpStage =
 export type ExpStageKind = ExpStage['kind'];
 
 // -------------------------------------------------------------------------------------
-export interface User {
-  accessCode: string; // likely stored in local browser cache/URL.
+export interface UserData {
+  accessCode: string;
   userId: string;
   // Their appearance.
   profile: UserProfile;
-  currentStage: ExpStage;
-  completedStages: ExpStage[]; // current stage is the very last one.
+  stageMap: { [stageName: string]: ExpStage };
+  completedStageNames: string[]; // current stage is the very last one.
+  currentStageName: string;
+  futureStageNames: string[];
 }
 
 // Note: it should be that:
@@ -188,6 +191,5 @@ export interface User {
 // user actions, by a trusted cloud function.
 export interface Experiment {
   numberOfParticipants: number;
-  participants: { [userId: string]: User };
-  stages: ExpStage[];
+  participants: { [userId: string]: UserData };
 }

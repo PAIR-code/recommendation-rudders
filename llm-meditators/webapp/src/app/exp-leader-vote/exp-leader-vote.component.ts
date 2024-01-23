@@ -10,7 +10,7 @@ import { Component, Signal, computed } from '@angular/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { SavedDataService } from '../services/saved-data.service';
-import { ExpStageVotes, LeaderVote, User, Votes, fakeVote } from '../../lib/staged-exp/data-model';
+import { ExpStageVotes, LeaderVote, UserData, UserProfile, Votes, fakeVote } from '../../lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-exp-leader-vote',
@@ -21,18 +21,18 @@ import { ExpStageVotes, LeaderVote, User, Votes, fakeVote } from '../../lib/stag
 })
 export class ExpLeaderVoteComponent {
   public curStage: Signal<ExpStageVotes>;
-  public otherParticipants: Signal<User[]>;
+  public otherParticipants: Signal<UserData[]>;
 
   readonly LeaderVote = LeaderVote;
   public votes: Votes;
 
   constructor(private dataService: SavedDataService) {
     this.curStage = computed(() => {
-      if (this.dataService.user().currentStage.kind !== 'group-chat') {
-        console.error(`Bad stage kind for group-chat component: ${this.dataService.user().currentStage.kind}`);
-        return fakeVote;
+      const curStage = this.dataService.currentStage();
+      if (curStage.kind !== 'leader-vote') {
+        throw new Error(`Bad stage kind for group-chat component: ${curStage.kind}`);
       }
-      return this.dataService.user().currentStage as ExpStageVotes;
+      return curStage;
     });
 
     this.otherParticipants = computed(() => {
@@ -43,7 +43,7 @@ export class ExpLeaderVoteComponent {
 
     // Make sure that votes has all other participants, and only them.
     this.votes = this.curStage().config;
-    const otherParticipantsMap: { [userId: string]: User } = {};
+    const otherParticipantsMap: { [userId: string]: UserData } = {};
     for (const p of this.otherParticipants()) {
       otherParticipantsMap[p.userId] = p;
       if (!(p.userId in this.votes)) {
@@ -70,15 +70,15 @@ export class ExpLeaderVoteComponent {
 
   setVote(event: unknown, userId: string) {
     const { value } = event as { value: LeaderVote };
-    this.votes[userId] = value;
     if (this.isComplete()) {
       this.dataService.setStageComplete(true);
     }
-    this.dataService.updateExpStage(this.votes);
+    this.votes[userId] = value;
+    this.dataService.editCurrentExpStageData<Votes>(() => this.votes);
   }
 
   resetVote(userId: string) {
     this.votes[userId] = LeaderVote.NOT_RATED;
-    this.dataService.updateExpStage(this.votes);
+    this.dataService.editCurrentExpStageData<Votes>(() => this.votes);
   }
 }

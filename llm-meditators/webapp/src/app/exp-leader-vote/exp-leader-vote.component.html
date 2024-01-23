@@ -1,6 +1,6 @@
 <div class="main">
   @for (user of this.otherParticipants(); track user.userId) {
-    <label [id]="user.userId">{{ user.userId }}:</label>
+    <label [id]="user.userId">{{ user.profile.name }} ({{ user.profile.pronouns }}):</label>
     <mat-radio-group class="vote-radio-group" [value]="votes[user.userId]" (change)="setVote($event, user.userId)">
       <mat-radio-button class="vote-radio-button" [value]="LeaderVote.POSITIVE">
         {{ LeaderVote.POSITIVE }}

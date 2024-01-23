@@ -8,7 +8,16 @@
 
 import { computed, effect, Injectable, Signal, signal, untracked, WritableSignal } from '@angular/core';
 import { LmApiService } from './lm-api.service';
-import { Experiment, ExpStage, User, ExpDataKinds, END_STAGE, UserProfile } from '../../lib/staged-exp/data-model';
+import {
+  Experiment,
+  ExpStage,
+  UserData,
+  ExpDataKinds,
+  END_STAGE,
+  UserProfile,
+  ExpStageChatAboutItems,
+  ChatAboutItems,
+} from '../../lib/staged-exp/data-model';
 import { initialExperimentSetup, initUserData } from '../../lib/staged-exp/example-experiment';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
@@ -22,7 +31,7 @@ export function initialAppData(): AppData {
       sheetsRange: '', // e.g.
     },
     experiment,
-    user: Object.values(experiment.participants)[0],
+    currentUserId: Object.values(experiment.participants)[0].userId,
   };
 }
 
@@ -68,7 +77,7 @@ export interface AppSettings {
 export interface AppData {
   settings: AppSettings;
   experiment: Experiment;
-  user: User;
+  currentUserId: string;
 }
 
 // -------------------------------------------------------------------------------------
@@ -79,14 +88,23 @@ export interface AppData {
 })
 export class SavedDataService {
   public data: WritableSignal<AppData>;
-  public user: Signal<User>;
+
+  // About the app itself.
   public appName: Signal<string>;
   public dataSize: Signal<number>;
   public dataJson: Signal<string>;
-  public nameStageMap: Signal<{ [stageName: string]: ExpStage }>;
-  public session: WritableSignal<AppSession>;
-  public errors: WritableSignal<string[]>;
+
+  // Specific to the current user.
+  public user: Signal<UserData>;
   public stageComplete: Signal<boolean>;
+  public nameStageMap: Signal<{ [stageName: string]: ExpStage }>;
+  public currentStage: Signal<ExpStage>;
+
+  // the current URL params...
+  public session: WritableSignal<AppSession>;
+
+  // Any errors.
+  public errors: WritableSignal<string[]>;
 
   constructor(
     private lmApiService: LmApiService,
@@ -95,19 +113,27 @@ export class SavedDataService {
   ) {
     // The data.
     this.data = signal(JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())));
-    this.nameStageMap = computed(() => {
-      const map: { [stageName: string]: ExpStage } = {};
-      this.data().experiment.stages.forEach((stage) => (map[stage.name] = stage));
-      return map;
+
+    // The current URL params data.
+    this.session = signal(DEFAULT_SESSION, { equal: _.isEqual });
+
+    // Current user related data...
+    this.user = computed(() => {
+      const data = this.data();
+      return data.experiment.participants[data.currentUserId];
     });
+    this.nameStageMap = computed(() => {
+      return this.user().stageMap;
+    });
+    this.currentStage = computed(() => {
+      return this.user().stageMap[this.user().currentStageName];
+    });
+    this.stageComplete = computed(() => this.currentStage().complete);
 
     // Convenience signal for the appName.
     this.appName = computed(() => this.data().settings.name);
     this.dataJson = computed(() => JSON.stringify(this.data()));
     this.dataSize = computed(() => this.dataJson().length);
-    this.user = computed(() => this.data().user);
-    this.stageComplete = computed(() => this.data().user.currentStage.complete);
-    this.session = signal(DEFAULT_SESSION, { equal: _.isEqual });
     this.errors = signal([]);
 
     const params = signal<Partial<AppSession>>({});
@@ -142,32 +168,28 @@ export class SavedDataService {
     });
   }
 
-  nextStep() {
-    // We update data, and specifically the user in it.
-    const data = { ...this.data() };
-    const user = { ...data.user };
-    data.user = user;
-
-    // Once we get to end, we do nothing.
-    if (user.currentStage.kind === END_STAGE.kind) {
-      console.warn('nextStep called at the end stage... this should not be possible.');
-      return;
-    }
-    const stages = data.experiment.stages;
-    // We have ">" because we always add a dummy start state, so user.completedStages can be 1 bigger
-    // than experiment.stages.
-    user.completedStages.push(user.currentStage);
-    if (user.completedStages.length > stages.length) {
-      user.currentStage = END_STAGE;
-    } else {
-      const nextStage = data.experiment.stages[user.completedStages.length - 1];
-      user.currentStage = { ...nextStage };
-    }
+  editSession(f: (session: AppSession) => AppSession | void): void {
     const curSession = this.session();
-    const newSession = Object.assign({ ...curSession }, { stage: user.currentStage.name } as Partial<AppSession>);
+    let newSession = { ...curSession };
+    const maybeFreshSession = f(newSession);
+    if (maybeFreshSession) {
+      newSession = { ...maybeFreshSession };
+    }
     this.session.set(newSession);
-    console.log(curSession, newSession);
-    this.data.set(data);
+  }
+
+  nextStep() {
+    this.editCurrentUser((u) => {
+      const nextStageName = u.futureStageNames.shift();
+      if (!nextStageName) {
+        return;
+      }
+      u.completedStageNames.push(u.currentStageName);
+      u.currentStageName = nextStageName;
+      this.editSession((session) => {
+        session.stage = u.currentStageName;
+      });
+    });
   }
 
   setSetting(settingKey: keyof AppSettings, settingValue: string) {
@@ -178,27 +200,82 @@ export class SavedDataService {
     }
   }
 
-  setCurrentExpStageName(expStageName: string) {
+  editCurrentUser(f: (user: UserData) => UserData | void) {
+    this.editUser(this.data().currentUserId, f);
+  }
+
+  editUser(uid: string, f: (user: UserData) => UserData | void) {
     const data = this.data();
-    data.user.currentStage = this.nameStageMap()[expStageName];
+    if (!(uid in data.experiment.participants)) {
+      throw new Error(`Cannot edit user ${uid}, they do not exist`);
+    }
+    // We have to force update the user object also, because change tracking for
+    // the user Signal is based on reference.
+    let user: UserData = { ...data.experiment.participants[uid] };
+    const maybeNewUser = f(user);
+    if (maybeNewUser) {
+      user = { ...maybeNewUser };
+    }
+    if (user.userId !== uid) {
+      throw new Error(`Editing a user should not their id: new: ${user.userId}, old: ${uid}`);
+    }
+    data.experiment.participants[uid] = user;
     this.data.set({ ...data });
+  }
+
+  setCurrentExpStageName(expStageName: string) {
+    this.editCurrentUser((user) => {
+      user.currentStageName = expStageName;
+    });
   }
 
   setStageComplete(complete: boolean) {
-    const data = this.data();
-    data.user.currentStage.complete = complete;
-    this.data.set({ ...data });
+    this.editCurrentUser((user) => {
+      user.stageMap[user.currentStageName].complete = complete;
+    });
   }
 
-  updateExpStage(newExpStage: ExpDataKinds) {
-    const data = this.data();
-    Object.assign(this.user().currentStage.config, newExpStage);
-    this.data.set({ ...data });
+  editCurrentExpStageData<T extends ExpDataKinds>(f: (oldExpStage: T) => T | void) {
+    this.editCurrentUser((user) => {
+      const maybeNewData = f(user.stageMap[user.currentStageName].config as T);
+      if (maybeNewData) {
+        user.stageMap[user.currentStageName].config = maybeNewData;
+      }
+    });
   }
 
-  updateUser(newUserProfile: UserProfile) {
+  editExpStageData<T extends ExpDataKinds>(uid: string, f: (oldExpStage: T) => T | void) {
+    this.editUser(uid, (user) => {
+      const maybeNewData = f(user.stageMap[user.currentStageName].config as T);
+      if (maybeNewData) {
+        user.stageMap[user.currentStageName].config = maybeNewData;
+      }
+    });
+  }
+
+  updateUserProfile(newUserProfile: UserProfile) {
+    this.editCurrentUser((user) => {
+      user.profile = newUserProfile;
+    });
+  }
+
+  sendMessage(message: string, stageName: string): void {
+    const user = this.user();
     const data = this.data();
-    Object.assign(this.user().profile, newUserProfile);
+    for (const u of Object.values(data.experiment.participants)) {
+      const stage = u.stageMap[stageName];
+      if (stage.kind !== 'group-chat') {
+        throw new Error(`Cant send a message to stage ${stage.name}, it is of kind ${stage.kind}.`);
+      }
+      this.editExpStageData<ChatAboutItems>(u.userId, (config) => {
+        config.messages.push({
+          userId: user.userId,
+          messageType: 'userMessage',
+          text: message,
+          timestamp: new Date().valueOf(),
+        });
+      });
+    }
     this.data.set({ ...data });
   }
 

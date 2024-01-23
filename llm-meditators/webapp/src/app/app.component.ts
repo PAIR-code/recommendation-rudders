@@ -19,8 +19,8 @@ import { ExpStageKind } from '../lib/staged-exp/data-model';
 })
 export class AppComponent implements AfterViewInit {
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
-  public stageKind: Signal<ExpStageKind>;
-  public stageName: Signal<string>;
+  public currentStageKind: Signal<ExpStageKind>;
+  public currentStageName: Signal<string>;
 
   constructor(
     private route: ActivatedRoute,
@@ -28,8 +28,8 @@ export class AppComponent implements AfterViewInit {
     public dataService: SavedDataService,
     public authService: GoogleAuthService,
   ) {
-    this.stageKind = computed(() => this.dataService.user().currentStage.kind);
-    this.stageName = computed(() => this.dataService.user().currentStage.name);
+    this.currentStageKind = computed(() => this.dataService.currentStage().kind);
+    this.currentStageName = computed(() => this.dataService.currentStage().name);
 
     effect(() => {
       // document.querySelector('title')!.textContent =

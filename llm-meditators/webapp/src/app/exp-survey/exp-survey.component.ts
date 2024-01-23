@@ -16,8 +16,8 @@ import { Survey } from '../../lib/staged-exp/data-model';
 
 const dummySurveyData: Survey = {
   question: 'error: this should never happen',
-  lowerBound: "Lower Bound",
-  upperBound: "Upper Bound",
+  lowerBound: 'Lower Bound',
+  upperBound: 'Upper Bound',
   score: null,
   openFeedback: '',
   freeForm: false,
@@ -33,29 +33,18 @@ const dummySurveyData: Survey = {
 export class ExpSurveyComponent {
   public responseControl: FormControl<string | null>;
   public stageData: Signal<Survey>;
-  public error: Signal<string | null>;
 
   constructor(private dataService: SavedDataService) {
-    this.error = computed(() => {
-      const currentStage = this.dataService.user().currentStage;
-      if (!currentStage) {
-        return `currentStage is undefined`;
-      }
-      if (currentStage.kind !== 'survey') {
-        return `currentStage is kind is not right: ${JSON.stringify(currentStage, null, 2)}`;
-      }
-      return null;
-    });
-
     // Assumption: this is only ever constructed when
     // `this.dataService.data().experiment.currentStage` references a
     // ExpStageSimpleSurvey.
 
     this.stageData = computed(() => {
-      if (this.dataService.data().user.currentStage.kind !== 'survey') {
-        return dummySurveyData;
+      const stage = this.dataService.currentStage();
+      if (stage.kind !== 'survey') {
+        throw new Error(`bad stage kind ${stage.kind}`);
       }
-      return this.dataService.data().user.currentStage.config as Survey;
+      return stage.config;
     });
 
     this.responseControl = new FormControl<string>('');
@@ -63,7 +52,7 @@ export class ExpSurveyComponent {
       if (n) {
         const curStageData = this.stageData();
         curStageData.openFeedback = n;
-        this.dataService.updateExpStage(curStageData);
+        this.dataService.editCurrentExpStageData(() => curStageData);
       }
       console.log(this.stageData());
     });
@@ -72,7 +61,7 @@ export class ExpSurveyComponent {
   updateSliderValue(updatedValue: number) {
     const curStageData = this.stageData();
     curStageData.score = updatedValue;
-    this.dataService.updateExpStage(curStageData);
+    this.dataService.editCurrentExpStageData(() => curStageData);
     console.log(this.stageData());
   }
 }

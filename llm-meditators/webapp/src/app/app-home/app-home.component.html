@@ -1,29 +1,29 @@
 <div class="main">
   <div>
-    @if (this.dataService.user().currentStage.kind === 'start') {
+    @if (this.dataService.currentStage().kind === 'start') {
       Welcome to the study... here's some info about it...
-    } @else if (this.dataService.user().currentStage.kind === 'accept-tos') {
+    } @else if (this.dataService.currentStage().kind === 'accept-tos') {
       <app-exp-tos></app-exp-tos>
-    } @else if (this.dataService.user().currentStage.kind === 'set-profile') {
+    } @else if (this.dataService.currentStage().kind === 'set-profile') {
       <app-exp-profile></app-exp-profile>
-    } @else if (this.dataService.user().currentStage.kind === 'group-chat') {
+    } @else if (this.dataService.currentStage().kind === 'group-chat') {
       <app-exp-chat></app-exp-chat>
-    } @else if (this.dataService.user().currentStage.kind === 'rank-items') {
+    } @else if (this.dataService.currentStage().kind === RANKED_ITEMS_STAGE_KIND) {
       <app-exp-rating></app-exp-rating>
-    } @else if (this.dataService.user().currentStage.kind === 'survey') {
+    } @else if (this.dataService.currentStage().kind === 'survey') {
       <app-exp-survey></app-exp-survey>
-    } @else if (this.dataService.user().currentStage.kind === 'leader-vote') {
+    } @else if (this.dataService.currentStage().kind === 'leader-vote') {
       <app-exp-leader-vote></app-exp-leader-vote>
-    } @else if (this.dataService.user().currentStage.kind === 'end') {
+    } @else if (this.dataService.currentStage().kind === 'end') {
       <div>All done!</div>
     } @else {
       <div>
         Oh no! It looks like something went wrong, there is no component for
-        <span>{{ this.dataService.user().currentStage.kind }}</span>
+        <span>{{ this.dataService.currentStage().kind }}</span>
       </div>
     }
   </div>
-  @if (this.dataService.user().currentStage.kind !== 'end') {
+  @if (this.dataService.currentStage().kind !== 'end') {
     <button color="primary" mat-button (click)="nextStep()">
       <!-- [disabled]="!this.dataService.stageComplete()"  -->
       <!-- <mat-icon>redo</mat-icon> -->
