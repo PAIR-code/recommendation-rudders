@@ -261,10 +261,10 @@ export class SavedDataService {
     const user = this.user();
     const data = this.data();
     for (const u of Object.values(data.experiment.participants)) {
-      const stage = u.stageMap[stageName];
-      if (stage.kind !== 'group-chat') {
-        throw new Error(`Cant send a message to stage ${stage.name}, it is of kind ${stage.kind}.`);
-      }
+      // const stage = u.stageMap[stageName];
+      // if (stage.kind !== 'group-chat') {
+      //   throw new Error(`Cant send a message to stage ${stage.name}, it is of kind ${stage.kind}.`);
+      // }
       this.editExpStageData<ChatAboutItems>(u.userId, stageName, (config) => {
         console.log(u.userId, config);
         config.messages.push({
