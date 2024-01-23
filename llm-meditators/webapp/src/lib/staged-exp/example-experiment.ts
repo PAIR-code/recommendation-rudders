@@ -9,8 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   Experiment,
   ExpStage,
-  ExpStageTosAcceptance,
-  ExpStageUserProfile,
+  ExpStageTosAcceptanceAndUserProfile,
+  //ExpStageUserProfile,
   ExpStageSurvey,
   ExpStageStart,
   ExpStageVotes,
@@ -32,12 +32,17 @@ import * as items from './items';
 // -------------------------------------------------------------------------------------
 //  Initial Experiment Setup
 // -------------------------------------------------------------------------------------
-const acceptTos: ExpStageTosAcceptance = {
-  kind: 'accept-tos',
-  name: '1. Agree to the experiment',
+const acceptTosAndSetProfile: ExpStageTosAcceptanceAndUserProfile = {
+  kind: 'accept-tos-and-set-profile',
+  name: '1. Agree to the experiment and set your profile',
   complete: false,
   config: {
-    acceptedTimestamp: null,
+    pronouns: '',
+    avatarUrl: '',
+    name: '',
+    tosAcceptance: {
+      acceptedTimestamp: null,
+    },
   },
   // userAcceptance: Date,
 };
@@ -69,7 +74,7 @@ const initialWantToLeadSurvey: ExpStageSurvey = {
     questions: [initialWantToLeadQuestion],
   },
 };
-const setProfile: ExpStageUserProfile = {
+/* const setProfile: ExpStageUserProfile = {
   kind: 'set-profile',
   name: '4. Set your profile',
   complete: false,
@@ -79,10 +84,10 @@ const setProfile: ExpStageUserProfile = {
     name: '',
   },
   // userProfiles: {},
-};
+}; */
 const groupChat: ExpStageChatAboutItems = {
   kind: 'group-chat',
-  name: '5. Group discussion',
+  name: '4. Group discussion',
   complete: false,
   config: {
     ratingsToDiscuss: [],
@@ -101,7 +106,7 @@ Also indicate your overall feeling about the chat.`,
 }
 const chatDiscussionSurvey: ExpStageSurvey = {
   kind: 'survey',
-  name: '6. Post-chat survey',
+  name: '5. Post-chat survey',
   complete: false,
   config: {
     questions: [chatDiscussionQuestion],
@@ -118,7 +123,7 @@ const postChatWantToLeadQuestion: Question = {
 }
 const postChatWantToLeadSurvey: ExpStageSurvey = {
   kind: 'survey',
-  name: '7. Post-discussion leadership survey',
+  name: '6. Post-discussion leadership survey',
   complete: false,
   config: {
     questions: [postChatWantToLeadQuestion],
@@ -126,14 +131,14 @@ const postChatWantToLeadSurvey: ExpStageSurvey = {
 };
 const leaderVoting: ExpStageVotes = {
   kind: 'leader-vote',
-  name: '8. Vote for the leader',
+  name: '7. Vote for the leader',
   complete: false,
   config: {},
   // userAcceptance: Date,
 };
 const postChatWork: ExpStageItemRating = {
   kind: 'rank-items',
-  name: '9. Post-discussion work',
+  name: '8. Post-discussion work',
   complete: false,
   config: {
     ratings: [
@@ -154,7 +159,7 @@ Also indicate your overall feeling about the experience.`,
 }
 const finalSatisfactionSurvey: ExpStageSurvey = {
   kind: 'survey',
-  name: '10. final satisfaction survey',
+  name: '9. final satisfaction survey',
   complete: false,
   config: {
     questions: [finalSatisfactionQuestion],
@@ -170,6 +175,9 @@ export function initUserData(): User {
       name: '',
       pronouns: '',
       avatarUrl: '',
+      tosAcceptance: {
+        acceptedTimestamp: null,
+      },
     },
     currentStage: START_STAGE as ExpStage,
     completedStages: [] as ExpStage[],
@@ -193,10 +201,10 @@ export function initialExperimentSetup(count: number): Experiment {
     participants,
     // currentUser: null,
     stages: [
-      acceptTos,
+      acceptTosAndSetProfile,
       initialWork,
       initialWantToLeadSurvey,
-      setProfile,
+      //setProfile,
       groupChat,
       chatDiscussionSurvey,
       postChatWantToLeadSurvey,

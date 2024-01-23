@@ -94,9 +94,10 @@ export interface UserProfile {
   pronouns: string;
   avatarUrl: string;
   name: string;
+  tosAcceptance: TosAcceptance;
 }
-export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
-  kind: 'set-profile';
+export interface ExpStageTosAcceptanceAndUserProfile extends GenericExpStage<UserProfile> {
+  kind: 'accept-tos-and-set-profile';
 }
 
 // -------------------------------------------------------------------------------------
@@ -148,9 +149,9 @@ export const END_STAGE: ExpStageEnd = {
 export interface TosAcceptance {
   acceptedTimestamp: Date | null;
 }
-export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
-  kind: 'accept-tos';
-}
+//export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
+//  kind: 'accept-tos-and-set-profile';
+//}
 
 // -------------------------------------------------------------------------------------
 export type ExpDataKinds =
@@ -164,9 +165,8 @@ export type ExpDataKinds =
 
 export type ExpStage =
   | ExpStageStart
-  | ExpStageTosAcceptance
+  | ExpStageTosAcceptanceAndUserProfile
   | ExpStageSurvey
-  | ExpStageUserProfile
   | ExpStageVotes
   | ExpStageChatAboutItems
   | ExpStageItemRating
