@@ -13,3 +13,14 @@
     </div>
   }
 </div>
+
+<div class="message-form">
+  <mat-form-field class="full-width">
+    <mat-label>Message to send</mat-label>
+    <input matInput placeholder="Write your response" [(ngModel)]="message" />
+  </mat-form-field>
+  <button color="primary" mat-button (click)="sendMessage()">
+    <!-- <mat-icon>redo</mat-icon> -->
+    <span>Send</span>
+  </button>
+</div>

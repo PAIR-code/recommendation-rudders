@@ -9,13 +9,11 @@
 import { Component, Signal, computed } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { SavedDataService } from '../services/saved-data.service';
-import { ItemRatings } from '../../lib/staged-exp/data-model';
+import { ItemRatings, STAGE_KIND_RANKED_ITEMS } from '../../lib/staged-exp/data-model';
 
 const dummyRatingsData: ItemRatings = {
   ratings: [],
 };
-
-const CURRENT_STAGE_KIND = 'rank-items';
 
 @Component({
   selector: 'app-exp-rating',
@@ -26,31 +24,21 @@ const CURRENT_STAGE_KIND = 'rank-items';
 })
 export class ExpRatingComponent {
   public stageData: Signal<ItemRatings>;
-  public error: Signal<string | null>;
+  readonly RANKED_ITEMS_STAGE_KIND = STAGE_KIND_RANKED_ITEMS;
 
   constructor(private dataService: SavedDataService) {
-    this.error = computed(() => {
-      const currentStage = this.dataService.user().currentStage;
-      if (!currentStage) {
-        return `currentStage is undefined`;
-      }
-      if (currentStage.kind !== CURRENT_STAGE_KIND) {
-        return `currentStage is kind is not right: ${JSON.stringify(currentStage, null, 2)}`;
-      }
-      return null;
-    });
-
     this.stageData = computed(() => {
-      if (this.dataService.data().user.currentStage.kind !== CURRENT_STAGE_KIND) {
-        return dummyRatingsData;
+      const stage = this.dataService.currentStage();
+      if (stage.kind !== STAGE_KIND_RANKED_ITEMS) {
+        throw new Error(`Bad kind for Rating component ${stage.kind}.`);
       }
-      return this.dataService.data().user.currentStage.config as ItemRatings;
+      return stage.config;
     });
   }
 
   updateSliderValue(updatedValue: number, pairIdx: number) {
     const curStageData = this.stageData();
     curStageData.ratings[pairIdx].confidence = updatedValue;
-    this.dataService.updateExpStage(curStageData);
+    this.dataService.editCurrentExpStageData(() => curStageData);
   }
 }

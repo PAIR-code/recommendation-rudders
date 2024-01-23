@@ -37,38 +37,41 @@ import { GoogleAuthService } from './services/google-auth.service';
 import { GoogleSheetsService } from './services/google-sheets.service';
 import { CodemirrorConfigEditorModule } from './codemirror-config-editor/codemirror-config-editor.module';
 import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.component';
-//import { ExpProfileComponent } from './exp-profile/exp-profile.component';
+import { ExpProfileComponent } from './exp-profile/exp-profile.component';
 import { ExpRatingComponent } from './exp-rating/exp-rating.component';
 import { ExpChatComponent } from './exp-chat/exp-chat.component';
-import { ExpTosComponent } from "./exp-tos/exp-tos.component";
+import { ExpTosComponent } from './exp-tos/exp-tos.component';
+import { ExpTosAndProfileComponent } from './exp-tos-and-profile/exp-tos-and-profile.component';
 
 @NgModule({
-    declarations: [AppComponent, AppHomeComponent, AppSettingsComponent, PageNotFoundComponent],
-    providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
-    bootstrap: [AppComponent],
-    imports: [
-        BrowserModule,
-        AppRoutingModule,
-        BrowserAnimationsModule,
-        MatButtonModule,
-        MatSelectModule,
-        MatSidenavModule,
-        MatButtonToggleModule,
-        MatIconModule,
-        MatListModule,
-        FormsModule,
-        ReactiveFormsModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatMenuModule,
-        MatProgressBarModule,
-        CodemirrorConfigEditorModule,
-        ExpSurveyComponent,
-        ExpLeaderVoteComponent,
-        //ExpProfileComponent,
-        ExpRatingComponent,
-        ExpChatComponent,
-        ExpTosComponent
-    ]
+  declarations: [AppComponent, AppSettingsComponent, PageNotFoundComponent],
+  providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
+  bootstrap: [AppComponent],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    BrowserAnimationsModule,
+    MatButtonModule,
+    MatSelectModule,
+    MatSidenavModule,
+    MatButtonToggleModule,
+    MatIconModule,
+    MatListModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatMenuModule,
+    MatProgressBarModule,
+    CodemirrorConfigEditorModule,
+    AppHomeComponent,
+    ExpSurveyComponent,
+    ExpLeaderVoteComponent,
+    ExpProfileComponent,
+    ExpRatingComponent,
+    ExpChatComponent,
+    ExpTosComponent,
+    ExpTosAndProfileComponent,
+  ],
 })
 export class AppModule {}

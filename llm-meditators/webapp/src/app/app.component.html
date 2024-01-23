@@ -15,26 +15,36 @@
   <mat-sidenav-container>
     <mat-sidenav #sidenav mode="side" opened="true">
       <mat-nav-list class="menu-buttons">
-        <mat-list-item
-          [activated]="router.url === '/' && stageKind() === 'start'"
-          [disabled]="stageKind() !== 'start'"
-          matListItemTitle
-          routerLink="/"
-          routerLinkActive="active"
-          ariaCurrentWhenActive="page"
-        >
-          Welcome
-        </mat-list-item>
-        @for (stage of dataService.data().experiment.stages; track stage.name) {
+        @for (stageName of dataService.user().completedStageNames; track stageName) {
           <mat-list-item
-            [disabled]="stageName() !== stage.name"
-            [activated]="stageName() === stage.name"
+            [activated]="false"
             matListItemTitle
             routerLink="/"
             routerLinkActive="active"
             ariaCurrentWhenActive="page"
           >
-            {{ stage.name }}
+            {{ stageName }}
+          </mat-list-item>
+        }
+        <mat-list-item
+          [activated]="false"
+          matListItemTitle
+          routerLink="/"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
+          {{ currentStageName() }}
+        </mat-list-item>
+        @for (stageName of dataService.user().futureStageNames; track stageName) {
+          <mat-list-item
+            [disabled]="true"
+            [activated]="false"
+            matListItemTitle
+            routerLink="/"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+          >
+            {{ stageName }}
           </mat-list-item>
         }
         <mat-list-item

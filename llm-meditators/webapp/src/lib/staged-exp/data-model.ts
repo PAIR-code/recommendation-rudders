@@ -28,8 +28,9 @@ export interface ItemRating extends ItemPair {
 export interface ItemRatings {
   ratings: ItemRating[];
 }
+export const STAGE_KIND_RANKED_ITEMS = 'rank-items';
 export interface ExpStageItemRating extends GenericExpStage<ItemRatings> {
-  kind: 'rank-items';
+  kind: typeof STAGE_KIND_RANKED_ITEMS;
 }
 
 // -------------------------------------------------------------------------------------
@@ -39,6 +40,13 @@ export interface UserMessage {
   userId: string;
   text: string;
 }
+export const FAKE_EMPTY_USERID = '';
+export const fakeEmptyMessage: UserMessage = {
+  messageType: 'userMessage',
+  timestamp: 0,
+  userId: FAKE_EMPTY_USERID,
+  text: 'fakeMessage',
+};
 export interface DiscussItemsMessage {
   messageType: 'discussItemsMessage';
   timestamp: number;
@@ -55,12 +63,13 @@ export interface ChatAboutItems {
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
 }
+export const STAGE_KIND_CHAT = 'group-chat';
 export interface ExpStageChatAboutItems extends GenericExpStage<ChatAboutItems> {
-  kind: 'group-chat';
+  kind: typeof STAGE_KIND_CHAT;
 }
 
 export const fakeChat: ExpStageChatAboutItems = {
-  kind: 'group-chat',
+  kind: STAGE_KIND_CHAT,
   name: 'dummy-chat',
   complete: false,
   config: {
@@ -79,11 +88,12 @@ export enum LeaderVote {
 export interface Votes {
   [otherUserId: string]: LeaderVote;
 }
+export const STAGE_KIND_VOTES = 'leader-vote';
 export interface ExpStageVotes extends GenericExpStage<Votes> {
-  kind: 'leader-vote';
+  kind: typeof STAGE_KIND_VOTES;
 }
 export const fakeVote: ExpStageVotes = {
-  kind: 'leader-vote',
+  kind: STAGE_KIND_VOTES,
   name: 'fake leader vote',
   complete: false,
   config: {},
@@ -94,69 +104,56 @@ export interface UserProfile {
   pronouns: string;
   avatarUrl: string;
   name: string;
-  tosAcceptance: TosAcceptance;
 }
-export interface ExpStageTosAcceptanceAndUserProfile extends GenericExpStage<UserProfile> {
-  kind: 'accept-tos-and-set-profile';
+export const STAGE_KIND_PROFILE = 'set-profile';
+export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
+  kind: typeof STAGE_KIND_PROFILE;
+}
+export const fakeEmptyProfile: UserProfile = {
+  pronouns: 'fake pronouns',
+  avatarUrl: 'fake avatar url',
+  name: 'fake name',
+};
+
+// -------------------------------------------------------------------------------------
+export interface TosAndUserProfile {
+  pronouns: string;
+  avatarUrl: string;
+  name: string;
+  acceptedTosTimestamp: Date | null;
+}
+export const STAGE_KIND_TOS_AND_PROFILE = 'accept-tos-and-set-profile';
+export interface ExpStageTosAndUserProfile extends GenericExpStage<TosAndUserProfile> {
+  kind: typeof STAGE_KIND_TOS_AND_PROFILE;
 }
 
 // -------------------------------------------------------------------------------------
-export interface Question {
-  questionText: string;
-  answerText?: string;
-  upperBound: string;
-  lowerBound: string;
-  score: number | null; //  10 point scale.
-  openFeedback: boolean;
-}
-
 export interface Survey {
-  questions: Question[];
+  question: string;
+  lowerBound: string;
+  upperBound: string;
+  score: number | null; //  10 point scale.
+  openFeedback: string;
+  freeForm: boolean;
 }
+export const STAGE_KIND_SURVEY = 'survey';
 export interface ExpStageSurvey extends GenericExpStage<Survey> {
-  kind: 'survey';
+  kind: typeof STAGE_KIND_SURVEY;
 }
-
-export type EmptyObject = Record<string, never>;
-
-// -------------------------------------------------------------------------------------
-// The unique start stage, before they have started.
-export interface ExpStageStart extends GenericExpStage<EmptyObject> {
-  name: 'start';
-  kind: 'start';
-}
-export const START_STAGE: ExpStageStart = {
-  name: 'start',
-  kind: 'start',
-  complete: true,
-  config: {},
-};
-
-// -------------------------------------------------------------------------------------
-// The unique end stage, once completed.
-export interface ExpStageEnd extends GenericExpStage<EmptyObject> {
-  name: 'end';
-  kind: 'end';
-}
-export const END_STAGE: ExpStageEnd = {
-  name: 'end',
-  kind: 'end',
-  complete: false,
-  config: {},
-};
 
 // -------------------------------------------------------------------------------------
 export interface TosAcceptance {
-  acceptedTimestamp: Date | null;
+  acceptedTosTimestamp: Date | null;
 }
-//export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
-//  kind: 'accept-tos-and-set-profile';
-//}
+export const STAGE_KIND_ACCEPT_TOS = 'accept-tos';
+export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
+  kind: typeof STAGE_KIND_ACCEPT_TOS;
+}
 
 // -------------------------------------------------------------------------------------
 export type ExpDataKinds =
-  | EmptyObject // no data for start and end.
   | TosAcceptance
+  | TosAndUserProfile
   | Survey
   | UserProfile
   | Votes
@@ -164,24 +161,38 @@ export type ExpDataKinds =
   | ItemRatings;
 
 export type ExpStage =
-  | ExpStageStart
-  | ExpStageTosAcceptanceAndUserProfile
+  | ExpStageTosAcceptance
+  | ExpStageTosAndUserProfile
   | ExpStageSurvey
+  | ExpStageUserProfile
   | ExpStageVotes
   | ExpStageChatAboutItems
-  | ExpStageItemRating
-  | ExpStageEnd;
+  | ExpStageItemRating;
 
 export type ExpStageKind = ExpStage['kind'];
 
 // -------------------------------------------------------------------------------------
-export interface User {
-  accessCode: string; // likely stored in local browser cache/URL.
+// TODO: probably an enum does this for us better...?
+export const stageKinds = {
+  STAGE_KIND_ACCEPT_TOS: STAGE_KIND_ACCEPT_TOS as typeof STAGE_KIND_ACCEPT_TOS,
+  STAGE_KIND_TOS_AND_PROFILE: STAGE_KIND_TOS_AND_PROFILE as typeof STAGE_KIND_TOS_AND_PROFILE,
+  STAGE_KIND_SURVEY: STAGE_KIND_SURVEY as typeof STAGE_KIND_SURVEY,
+  STAGE_KIND_PROFILE: STAGE_KIND_PROFILE as typeof STAGE_KIND_PROFILE,
+  STAGE_KIND_VOTES: STAGE_KIND_VOTES as typeof STAGE_KIND_VOTES,
+  STAGE_KIND_RANKED_ITEMS: STAGE_KIND_RANKED_ITEMS as typeof STAGE_KIND_RANKED_ITEMS,
+  STAGE_KIND_CHAT: STAGE_KIND_CHAT as typeof STAGE_KIND_CHAT,
+};
+
+// -------------------------------------------------------------------------------------
+export interface UserData {
+  accessCode: string;
   userId: string;
   // Their appearance.
   profile: UserProfile;
-  currentStage: ExpStage;
-  completedStages: ExpStage[]; // current stage is the very last one.
+  stageMap: { [stageName: string]: ExpStage };
+  completedStageNames: string[]; // current stage is the very last one.
+  currentStageName: string;
+  futureStageNames: string[];
 }
 
 // Note: it should be that:
@@ -192,6 +203,5 @@ export interface User {
 // user actions, by a trusted cloud function.
 export interface Experiment {
   numberOfParticipants: number;
-  participants: { [userId: string]: User };
-  stages: ExpStage[];
+  participants: { [userId: string]: UserData };
 }
