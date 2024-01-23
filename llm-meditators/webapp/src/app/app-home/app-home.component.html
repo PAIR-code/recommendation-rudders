@@ -2,10 +2,10 @@
   <div>
     @if (this.dataService.user().currentStage.kind === 'start') {
       Welcome to the study... here's some info about it...
-    } @else if (this.dataService.user().currentStage.kind === 'accept-tos') {
+    } @else if (this.dataService.user().currentStage.kind === 'accept-tos-and-set-profile') {
       <app-exp-tos></app-exp-tos>
-    } @else if (this.dataService.user().currentStage.kind === 'set-profile') {
-      <app-exp-profile></app-exp-profile>
+    <!--} @else if (this.dataService.user().currentStage.kind === 'set-profile') {
+      <app-exp-profile></app-exp-profile>-->
     } @else if (this.dataService.user().currentStage.kind === 'group-chat') {
       <app-exp-chat></app-exp-chat>
     } @else if (this.dataService.user().currentStage.kind === 'rank-items') {

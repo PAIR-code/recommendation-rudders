@@ -37,7 +37,7 @@ import { GoogleAuthService } from './services/google-auth.service';
 import { GoogleSheetsService } from './services/google-sheets.service';
 import { CodemirrorConfigEditorModule } from './codemirror-config-editor/codemirror-config-editor.module';
 import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.component';
-import { ExpProfileComponent } from './exp-profile/exp-profile.component';
+//import { ExpProfileComponent } from './exp-profile/exp-profile.component';
 import { ExpRatingComponent } from './exp-rating/exp-rating.component';
 import { ExpChatComponent } from './exp-chat/exp-chat.component';
 import { ExpTosComponent } from "./exp-tos/exp-tos.component";
@@ -65,7 +65,7 @@ import { ExpTosComponent } from "./exp-tos/exp-tos.component";
         CodemirrorConfigEditorModule,
         ExpSurveyComponent,
         ExpLeaderVoteComponent,
-        ExpProfileComponent,
+        //ExpProfileComponent,
         ExpRatingComponent,
         ExpChatComponent,
         ExpTosComponent
