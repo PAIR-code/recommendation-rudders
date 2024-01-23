@@ -2,20 +2,20 @@
   <div class="main">
     <div>
       <h2 style="white-space: pre-wrap">
-        {{ stageData().question }}
+        {{ stageData().questions[0].questionText }}
       </h2>
     </div>
     <!-- create a slider -->
     <table>
       <tr>
-        <td class="bound">{{ stageData().lowerBound }}</td>
+        <td class="bound">{{ stageData().questions[0].lowerBound }}</td>
         <td><mat-slider min="0" max="10" step="1" showTickMarks discrete>
           <input matSliderThumb (valueChange)="updateSliderValue($event)" />
         </mat-slider> </td>
-        <td class="bound">{{ stageData().upperBound }}</td>
+        <td class="bound">{{ stageData().questions[0].upperBound }}</td>
       </tr>
     </table>
-    @if(stageData().freeForm){
+    @if(stageData().questions[0].openFeedback){
       <form class="settings-form">
         <mat-form-field class="full-width">
           <mat-label>Answer</mat-label>
