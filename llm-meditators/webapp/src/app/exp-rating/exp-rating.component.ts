@@ -9,7 +9,7 @@
 import { Component, Signal, computed } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { SavedDataService } from '../services/saved-data.service';
-import { ItemRatings, RANKED_ITEMS_STAGE_KIND } from '../../lib/staged-exp/data-model';
+import { ItemRatings, STAGE_KIND_RANKED_ITEMS } from '../../lib/staged-exp/data-model';
 
 const dummyRatingsData: ItemRatings = {
   ratings: [],
@@ -24,12 +24,12 @@ const dummyRatingsData: ItemRatings = {
 })
 export class ExpRatingComponent {
   public stageData: Signal<ItemRatings>;
-  readonly RANKED_ITEMS_STAGE_KIND = RANKED_ITEMS_STAGE_KIND;
+  readonly RANKED_ITEMS_STAGE_KIND = STAGE_KIND_RANKED_ITEMS;
 
   constructor(private dataService: SavedDataService) {
     this.stageData = computed(() => {
       const stage = this.dataService.currentStage();
-      if (stage.kind !== RANKED_ITEMS_STAGE_KIND) {
+      if (stage.kind !== STAGE_KIND_RANKED_ITEMS) {
         throw new Error(`Bad kind for Rating component ${stage.kind}.`);
       }
       return stage.config;

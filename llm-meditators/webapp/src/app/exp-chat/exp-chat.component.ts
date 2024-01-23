@@ -15,6 +15,8 @@ import { ChatMediatorMessageComponent } from './chat-mediator-message/chat-media
 import { MediatorFeedbackComponent } from './mediator-feedback/mediator-feedback.component';
 import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-exp-chat',
@@ -26,6 +28,8 @@ import { FormsModule } from '@angular/forms';
     MediatorFeedbackComponent,
     MatFormFieldModule,
     FormsModule,
+    MatButtonModule,
+    MatInputModule,
   ],
   templateUrl: './exp-chat.component.html',
   styleUrl: './exp-chat.component.scss',

@@ -12,7 +12,7 @@ import { TosAcceptance } from '../../lib/staged-exp/data-model';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 
 const dummyTosData: TosAcceptance = {
-  acceptedTimestamp: null,
+  acceptedTosTimestamp: null,
 };
 
 @Component({
@@ -44,7 +44,7 @@ export class ExpTosComponent {
     if (checked) {
       const date = new Date();
       this.dataService.editCurrentExpStageData<TosAcceptance>((d) => {
-        d.acceptedTimestamp = date;
+        d.acceptedTosTimestamp = date;
       });
     }
   }

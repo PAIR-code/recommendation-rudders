@@ -12,19 +12,12 @@ import {
   ExpStageTosAcceptance,
   ExpStageUserProfile,
   ExpStageSurvey,
-  ExpStageStart,
   ExpStageVotes,
   ExpStageChatAboutItems,
   ExpStageItemRating,
-  ExpStageEnd,
   UserData,
-  START_STAGE,
-  ExpDataKinds,
-  END_STAGE,
-  ItemPair,
-  Item,
-  LeaderVote,
-  RANKED_ITEMS_STAGE_KIND,
+  ExpStageTosAndUserProfile,
+  stageKinds,
 } from './data-model';
 
 import * as items from './items';
@@ -34,18 +27,33 @@ import * as items from './items';
 // -------------------------------------------------------------------------------------
 function acceptTos(): ExpStageTosAcceptance {
   return {
-    kind: 'accept-tos',
+    kind: stageKinds.STAGE_KIND_ACCEPT_TOS,
     name: '1. Agree to the experiment',
     complete: false,
     config: {
-      acceptedTimestamp: null,
+      acceptedTosTimestamp: null,
     },
     // userAcceptance: Date,
   };
 }
+
+function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
+  return {
+    kind: stageKinds.STAGE_KIND_TOS_AND_PROFILE,
+    name: '1. Agree to the experiment and set your profile',
+    complete: false,
+    config: {
+      pronouns: '',
+      avatarUrl: '',
+      name: '',
+      acceptedTosTimestamp: null,
+    },
+  };
+}
+
 function initialWork(): ExpStageItemRating {
   return {
-    kind: RANKED_ITEMS_STAGE_KIND,
+    kind: stageKinds.STAGE_KIND_RANKED_ITEMS,
     name: '2. Initial work',
     complete: false,
     config: {
@@ -59,7 +67,7 @@ function initialWork(): ExpStageItemRating {
 }
 function initialWantToLeadSurvey(): ExpStageSurvey {
   return {
-    kind: 'survey',
+    kind: stageKinds.STAGE_KIND_SURVEY,
     name: '3. intial leadership survey',
     complete: false,
     config: {
@@ -74,7 +82,7 @@ function initialWantToLeadSurvey(): ExpStageSurvey {
 }
 function setProfile(): ExpStageUserProfile {
   return {
-    kind: 'set-profile',
+    kind: stageKinds.STAGE_KIND_PROFILE,
     name: '4. Set your profile',
     complete: false,
     config: {
@@ -87,7 +95,7 @@ function setProfile(): ExpStageUserProfile {
 }
 function groupChat(): ExpStageChatAboutItems {
   return {
-    kind: 'group-chat',
+    kind: stageKinds.STAGE_KIND_CHAT,
     name: '5. Group discussion',
     complete: false,
     config: {
@@ -98,7 +106,7 @@ function groupChat(): ExpStageChatAboutItems {
 }
 function chatDiscussionSurvey(): ExpStageSurvey {
   return {
-    kind: 'survey',
+    kind: stageKinds.STAGE_KIND_SURVEY,
     name: '6. Post-chat survey',
     complete: false,
     config: {
@@ -114,7 +122,7 @@ function chatDiscussionSurvey(): ExpStageSurvey {
 }
 function postChatWantToLeadSurvey(): ExpStageSurvey {
   return {
-    kind: 'survey',
+    kind: stageKinds.STAGE_KIND_SURVEY,
     name: '7. Post-discussion leadership survey',
     complete: false,
     config: {
@@ -129,7 +137,7 @@ function postChatWantToLeadSurvey(): ExpStageSurvey {
 }
 function leaderVoting(): ExpStageVotes {
   return {
-    kind: 'leader-vote',
+    kind: stageKinds.STAGE_KIND_VOTES,
     name: '8. Vote for the leader',
     complete: false,
     config: {},
@@ -138,7 +146,7 @@ function leaderVoting(): ExpStageVotes {
 }
 function postChatWork(): ExpStageItemRating {
   return {
-    kind: RANKED_ITEMS_STAGE_KIND,
+    kind: stageKinds.STAGE_KIND_RANKED_ITEMS,
     name: '9. Post-discussion work',
     complete: false,
     config: {
@@ -153,7 +161,7 @@ function postChatWork(): ExpStageItemRating {
 
 function finalSatisfactionSurvey(): ExpStageSurvey {
   return {
-    kind: 'survey',
+    kind: stageKinds.STAGE_KIND_SURVEY,
     name: '10. final satisfaction survey',
     complete: false,
     config: {
@@ -208,10 +216,11 @@ function initParticipants(count: number, stages: ExpStage[]): { [userId: string]
 
 function makeStages() {
   return [
-    acceptTos(),
+    acceptTosAndSetProfile(),
+    // acceptTos(),
     initialWork(),
     initialWantToLeadSurvey(),
-    setProfile(),
+    // setProfile(),
     groupChat(),
     chatDiscussionSurvey(),
     postChatWantToLeadSurvey(),

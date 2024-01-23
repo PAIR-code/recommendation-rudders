@@ -13,12 +13,10 @@ import {
   ExpStage,
   UserData,
   ExpDataKinds,
-  END_STAGE,
   UserProfile,
-  ExpStageChatAboutItems,
   ChatAboutItems,
 } from '../../lib/staged-exp/data-model';
-import { initialExperimentSetup, initUserData } from '../../lib/staged-exp/example-experiment';
+import { initialExperimentSetup } from '../../lib/staged-exp/example-experiment';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
 

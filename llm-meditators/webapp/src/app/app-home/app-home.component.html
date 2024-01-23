@@ -1,21 +1,19 @@
 <div class="main">
   <div>
-    @if (this.dataService.currentStage().kind === 'start') {
-      Welcome to the study... here's some info about it...
-    } @else if (this.dataService.currentStage().kind === 'accept-tos') {
+    @if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_ACCEPT_TOS) {
       <app-exp-tos></app-exp-tos>
-    } @else if (this.dataService.currentStage().kind === 'set-profile') {
+    } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_PROFILE) {
       <app-exp-profile></app-exp-profile>
-    } @else if (this.dataService.currentStage().kind === 'group-chat') {
+    } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_CHAT) {
       <app-exp-chat></app-exp-chat>
-    } @else if (this.dataService.currentStage().kind === RANKED_ITEMS_STAGE_KIND) {
+    } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_RANKED_ITEMS) {
       <app-exp-rating></app-exp-rating>
-    } @else if (this.dataService.currentStage().kind === 'survey') {
+    } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
+      <app-exp-tos-and-profile></app-exp-tos-and-profile>
+    } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_SURVEY) {
       <app-exp-survey></app-exp-survey>
-    } @else if (this.dataService.currentStage().kind === 'leader-vote') {
+    } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_VOTES) {
       <app-exp-leader-vote></app-exp-leader-vote>
-    } @else if (this.dataService.currentStage().kind === 'end') {
-      <div>All done!</div>
     } @else {
       <div>
         Oh no! It looks like something went wrong, there is no component for
@@ -23,7 +21,7 @@
       </div>
     }
   </div>
-  @if (this.dataService.currentStage().kind !== 'end') {
+  @if (this.dataService.user().futureStageNames.length !== 0) {
     <button color="primary" mat-button (click)="nextStep()">
       <!-- [disabled]="!this.dataService.stageComplete()"  -->
       <!-- <mat-icon>redo</mat-icon> -->
