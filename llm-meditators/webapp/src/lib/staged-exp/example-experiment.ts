@@ -61,19 +61,12 @@ const initialWantToLeadQuestion: Question = {
   score: null,
 }
 
-const dummyQuestion: Question = {
-  questionText: `DummyQuestion`,
-  lowerBound: "I would most definitely not like to be the leader (0/10)",
-  upperBound: "I will fight to be the leader (10/10)",
-  openFeedback: false,
-  score: null,
-}
 const initialWantToLeadSurvey: ExpStageSurvey = {
   kind: 'survey',
   name: '3. intial leadership survey',
   complete: false,
   config: {
-    questions: [initialWantToLeadQuestion, dummyQuestion],
+    questions: [initialWantToLeadQuestion],
   },
 };
 const setProfile: ExpStageUserProfile = {
