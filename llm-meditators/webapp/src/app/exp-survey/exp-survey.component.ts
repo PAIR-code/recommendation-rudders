@@ -12,15 +12,18 @@ import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
-import { Survey } from '../../lib/staged-exp/data-model';
+import { Question, Survey } from '../../lib/staged-exp/data-model';
 
-const dummySurveyData: Survey = {
-  question: 'error: this should never happen',
+const dummyQuestion: Question = {
+  questionText: 'error: this should never happen',
+  answerText: '',
   lowerBound: "Lower Bound",
   upperBound: "Upper Bound",
-  score: null,
-  openFeedback: '',
-  freeForm: false,
+  openFeedback: false,
+  score: null
+};
+const dummySurveyData: Survey = {
+  questions: [dummyQuestion],
 };
 
 @Component({
@@ -62,16 +65,16 @@ export class ExpSurveyComponent {
     this.responseControl.valueChanges.forEach((n) => {
       if (n) {
         const curStageData = this.stageData();
-        curStageData.openFeedback = n;
+        curStageData.questions[0].answerText = n;
         this.dataService.updateExpStage(curStageData);
       }
       console.log(this.stageData());
     });
   }
 
-  updateSliderValue(updatedValue: number) {
+  updateSliderValue(updatedValue: number, idx: number) {
     const curStageData = this.stageData();
-    curStageData.score = updatedValue;
+    curStageData.questions[idx].score = updatedValue;
     this.dataService.updateExpStage(curStageData);
     console.log(this.stageData());
   }

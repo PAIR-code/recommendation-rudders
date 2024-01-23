@@ -1,27 +1,29 @@
 @if (error() == null) {
   <div class="main">
-    <div>
-      <h2 style="white-space: pre-wrap">
-        {{ stageData().question }}
-      </h2>
-    </div>
-    <!-- create a slider -->
-    <table>
-      <tr>
-        <td class="bound">{{ stageData().lowerBound }}</td>
-        <td><mat-slider min="0" max="10" step="1" showTickMarks discrete>
-          <input matSliderThumb (valueChange)="updateSliderValue($event)" />
-        </mat-slider> </td>
-        <td class="bound">{{ stageData().upperBound }}</td>
-      </tr>
-    </table>
-    @if(stageData().freeForm){
-      <form class="settings-form">
-        <mat-form-field class="full-width">
-          <mat-label>Answer</mat-label>
-          <input matInput placeholder="Write your response" [formControl]="responseControl" />
-        </mat-form-field>
-      </form>
+    @for (question of stageData().questions; track question; ; let idx = $index) {
+      <div>
+        <h2 style="white-space: pre-wrap">
+          {{ question.questionText }}
+        </h2>
+      </div>
+      <!-- create a slider -->
+      <table>
+        <tr>
+          <td class="bound">{{ question.lowerBound }}</td>
+          <td><mat-slider min="0" max="10" step="1" showTickMarks discrete>
+            <input matSliderThumb (valueChange)="updateSliderValue($event, idx)" />
+          </mat-slider> </td>
+          <td class="bound">{{ question.upperBound }}</td>
+        </tr>
+      </table>
+      @if(question.openFeedback){
+        <form class="settings-form">
+          <mat-form-field class="full-width">
+            <mat-label>Answer</mat-label>
+            <input matInput placeholder="Write your response" [formControl]="responseControl" />
+          </mat-form-field>
+        </form>
+      }
     }
   </div>
 } @else {
