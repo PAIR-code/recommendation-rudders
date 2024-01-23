@@ -1,20 +1,28 @@
 @if (error() == null) {
   <div class="main">
     <div>
-      <p style="white-space: pre-wrap">
+      <h2 style="white-space: pre-wrap">
         {{ stageData().question }}
-      </p>
+      </h2>
     </div>
     <!-- create a slider -->
-    <mat-slider min="0" max="10" step="1" showTickMarks discrete>
-      <input matSliderThumb (valueChange)="updateSliderValue($event)" />
-    </mat-slider>
-    <form class="settings-form">
-      <mat-form-field class="full-width">
-        <mat-label>Answer</mat-label>
-        <input matInput placeholder="Write your response" [formControl]="responseControl" />
-      </mat-form-field>
-    </form>
+    <table>
+      <tr>
+        <td class="bound">{{ stageData().lowerBound }}</td>
+        <td><mat-slider min="0" max="10" step="1" showTickMarks discrete>
+          <input matSliderThumb (valueChange)="updateSliderValue($event)" />
+        </mat-slider> </td>
+        <td class="bound">{{ stageData().upperBound }}</td>
+      </tr>
+    </table>
+    @if(stageData().freeForm){
+      <form class="settings-form">
+        <mat-form-field class="full-width">
+          <mat-label>Answer</mat-label>
+          <input matInput placeholder="Write your response" [formControl]="responseControl" />
+        </mat-form-field>
+      </form>
+    }
   </div>
 } @else {
   <div class="error">

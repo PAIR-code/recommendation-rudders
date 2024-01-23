@@ -16,8 +16,11 @@ import { Survey } from '../../lib/staged-exp/data-model';
 
 const dummySurveyData: Survey = {
   question: 'error: this should never happen',
+  lowerBound: "Lower Bound",
+  upperBound: "Upper Bound",
   score: null,
   openFeedback: '',
+  freeForm: false,
 };
 
 @Component({
