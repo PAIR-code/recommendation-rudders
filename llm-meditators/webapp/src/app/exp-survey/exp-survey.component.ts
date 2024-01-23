@@ -72,9 +72,9 @@ export class ExpSurveyComponent {
     });
   }
 
-  updateSliderValue(updatedValue: number) {
+  updateSliderValue(updatedValue: number, idx: number) {
     const curStageData = this.stageData();
-    curStageData.questions[0].score = updatedValue;
+    curStageData.questions[idx].score = updatedValue;
     this.dataService.updateExpStage(curStageData);
     console.log(this.stageData());
   }
