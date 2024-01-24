@@ -58,7 +58,7 @@ export class AppHomeComponent {
     this.currentStageName = computed(() => this.dataService.currentStage().name);
 
     this.holdingForLeaderReveal =
-      this.currentStageName() === ExpStageNames['9. Leader reveal'] && !this.everyoneReachedTheEnd();
+      this.currentStageName() === ExpStageNames['8. Leader reveal'] && !this.everyoneReachedTheEnd();
   }
 
   dismissError() {
