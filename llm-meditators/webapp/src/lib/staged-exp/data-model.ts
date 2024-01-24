@@ -33,11 +33,11 @@ export interface ItemRatings {
   ratings: ItemRating[];
 }
 
-export const STAGE_KIND_RANKED_ITEMS = 'rank-items';
+// export const STAGE_KIND_RANKED_ITEMS = 'rank-items';
 
-export interface ExpStageItemRatings extends GenericExpStage<ItemRatings> {
-  kind: typeof STAGE_KIND_RANKED_ITEMS;
-}
+// export interface ExpStageItemRatings extends GenericExpStage<ItemRatings> {
+//   kind: typeof STAGE_KIND_RANKED_ITEMS;
+// }
 
 // -------------------------------------------------------------------------------------
 export interface UserMessage {
@@ -153,10 +153,11 @@ export interface ExpStageTosAndUserProfile extends GenericExpStage<TosAndUserPro
 export interface Question {
   questionText: string;
   answerText?: string;
-  upperBound: string;
-  lowerBound: string;
-  score: number | null; //  10 point scale.
-  openFeedback: boolean;
+  upperBound?: string;
+  lowerBound?: string;
+  score?: number | null; //  10 point scale.
+  openFeedback?: boolean;
+  itemRatings?: ItemRatings;
 }
 
 export interface Survey {
@@ -198,7 +199,7 @@ export type ExpDataKinds =
   | UserProfile
   | Votes
   | ChatAboutItems
-  | ItemRatings
+  //| ItemRatings
   | LeaderReveal;
 
 export type ExpStage =
@@ -208,7 +209,7 @@ export type ExpStage =
   | ExpStageUserProfile
   | ExpStageVotes
   | ExpStageChatAboutItems
-  | ExpStageItemRatings
+  // | ExpStageItemRatings
   | ExpStageLeaderReveal;
 
 export type ExpStageKind = ExpStage['kind'];
@@ -221,7 +222,7 @@ export const stageKinds = {
   STAGE_KIND_SURVEY: STAGE_KIND_SURVEY as typeof STAGE_KIND_SURVEY,
   STAGE_KIND_PROFILE: STAGE_KIND_PROFILE as typeof STAGE_KIND_PROFILE,
   STAGE_KIND_VOTES: STAGE_KIND_VOTES as typeof STAGE_KIND_VOTES,
-  STAGE_KIND_RANKED_ITEMS: STAGE_KIND_RANKED_ITEMS as typeof STAGE_KIND_RANKED_ITEMS,
+  // STAGE_KIND_RANKED_ITEMS: STAGE_KIND_RANKED_ITEMS as typeof STAGE_KIND_RANKED_ITEMS,
   STAGE_KIND_CHAT: STAGE_KIND_CHAT as typeof STAGE_KIND_CHAT,
   STAGE_KIND_LEADER_REVEAL: STAGE_KIND_LEADER_REVEAL as typeof STAGE_KIND_LEADER_REVEAL,
 };

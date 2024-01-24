@@ -13,7 +13,7 @@ import {
   ExpStageSurvey,
   ExpStageVotes,
   ExpStageChatAboutItems,
-  ExpStageItemRatings,
+  //ExpStageItemRatings,
   UserData,
   ExpStageTosAndUserProfile,
   stageKinds,
@@ -45,20 +45,30 @@ function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
   };
 }
 
-function initialWork(): ExpStageItemRatings {
-  return {
-    kind: stageKinds.STAGE_KIND_RANKED_ITEMS,
-    name: '2. Initial work',
-    complete: false,
-    config: {
-      ratings: [
-        { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
-        { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
-      ],
-    },
-    // userAcceptance: Date,
-  };
+// function initialWork(): ExpStageItemRatings {
+//   return {
+//     kind: stageKinds.STAGE_KIND_RANKED_ITEMS,
+//     name: '2. Initial work',
+//     complete: false,
+//     config: {
+//       ratings: [
+//         { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+//         { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
+//       ],
+//     },
+//     // userAcceptance: Date,
+//   };
+// }
+const initialItemRatingsQuestion: Question = {
+  questionText: "",
+  itemRatings: { 
+    ratings: [
+      { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+      { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
+    ]
+  }
 }
+
 const initialWantToLeadQuestion: Question = {
   questionText: `Rate the how much you would like to be the group leader.`,
   lowerBound: "I would most definitely not like to be the leader (0/10)",
@@ -69,10 +79,10 @@ const initialWantToLeadQuestion: Question = {
 function initialWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
-    name: '3. intial leadership survey',
+    name: '2. intial leadership survey',
     complete: false,
     config: {
-      questions: [initialWantToLeadQuestion],
+      questions: [initialItemRatingsQuestion, initialWantToLeadQuestion],
     },
   };
 }
@@ -80,7 +90,7 @@ function initialWantToLeadSurvey(): ExpStageSurvey {
 function groupChat(): ExpStageChatAboutItems {
   return {
     kind: stageKinds.STAGE_KIND_CHAT,
-    name: '5. Group discussion',
+    name: '3. Group discussion',
     complete: false,
     config: {
       ratingsToDiscuss: [],
@@ -102,7 +112,7 @@ Also indicate your overall feeling about the chat.`,
 function chatDiscussionSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
-    name: '6. Post-chat survey',
+    name: '4. Post-chat survey',
     complete: false,
     config: {
       questions: [chatDiscussionQuestion],
@@ -122,7 +132,7 @@ const postChatWantToLeadQuestion: Question = {
 function postChatWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
-    name: '7. Post-discussion leadership survey',
+    name: '5. Post-discussion leadership survey',
     complete: false,
     config: {
       questions: [postChatWantToLeadQuestion],
@@ -133,27 +143,36 @@ function postChatWantToLeadSurvey(): ExpStageSurvey {
 function leaderVoting(): ExpStageVotes {
   return {
     kind: stageKinds.STAGE_KIND_VOTES,
-    name: '8. Vote for the leader',
+    name: '6. Vote for the leader',
     complete: false,
     config: {},
     // userAcceptance: Date,
   };
 }
 
-function postChatWork(): ExpStageItemRatings {
+const finalItemRatingsQuestion: Question = {
+  questionText: "",
+  itemRatings: { 
+    ratings: [
+      { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+      { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
+    ]
+  }
+}
+
+
+function postChatWork(): ExpStageSurvey {
   return {
-    kind: stageKinds.STAGE_KIND_RANKED_ITEMS,
-    name: '9. Post-discussion work',
+    kind: stageKinds.STAGE_KIND_SURVEY,
+    name: '7. Post-discussion work',
     complete: false,
     config: {
-      ratings: [
-        { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
-        { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
-      ],
+      questions: [finalItemRatingsQuestion],
     },
     // userAcceptance: Date,
   };
 }
+
 
 const finalSatisfactionQuestion: Question = {
   questionText: `Rate how happy you were with the final outcome.
@@ -168,7 +187,7 @@ Also indicate your overall feeling about the experience.`,
 function finalSatisfactionSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
-    name: '10. final satisfaction survey',
+    name: '8. final satisfaction survey',
     complete: false,
     config: {
       questions: [finalSatisfactionQuestion],
@@ -179,7 +198,7 @@ function finalSatisfactionSurvey(): ExpStageSurvey {
 function ultimateLeaderReveal(): ExpStageLeaderReveal {
   return {
     kind: stageKinds.STAGE_KIND_LEADER_REVEAL,
-    name: '11. Leader reveal',
+    name: '9. Leader reveal',
     complete: false,
     config: {
       revealTimestamp: null,
@@ -219,7 +238,7 @@ export function initUserData(stages: ExpStage[]): UserData {
 function makeStages() {
   return [
     acceptTosAndSetProfile(),
-    initialWork(),
+    //initialWork(),
     initialWantToLeadSurvey(),
     groupChat(),
     chatDiscussionSurvey(),
