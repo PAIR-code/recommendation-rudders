@@ -1,7 +1,9 @@
-import { Component, Signal, computed } from '@angular/core';
+import { reverse, sortBy } from 'lodash';
+import { ExpStageNames, Votes } from 'src/lib/staged-exp/data-model';
+
+import { Component, computed, Signal } from '@angular/core';
+
 import { SavedDataService } from '../services/saved-data.service';
-import { Votes, ExpStageNames } from 'src/lib/staged-exp/data-model';
-import { sortBy, reverse } from 'lodash';
 
 @Component({
   selector: 'app-exp-leader-reveal',

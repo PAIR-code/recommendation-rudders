@@ -1,12 +1,12 @@
 <div class="main">
-  <div>
+  <div class="exp-stage-content">
     @if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_ACCEPT_TOS) {
       <app-exp-tos></app-exp-tos>
     } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_PROFILE) {
       <app-exp-profile></app-exp-profile>
     } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_CHAT) {
       <app-exp-chat></app-exp-chat>
-    <!-- } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_RANKED_ITEMS) {
+      <!-- } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_RANKED_ITEMS) {
       <app-exp-rating></app-exp-rating> -->
     } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
       <app-exp-tos-and-profile></app-exp-tos-and-profile>
@@ -22,7 +22,13 @@
         <span>{{ this.dataService.currentStage().kind }}</span>
       </div>
     }
+    @if (currentStageName() !== workingOnStageName()) {
+      <div class="mask">
+        <!-- TODO: should probably disable editing in individual stage components as well -->
+      </div>
+    }
   </div>
+
   @if (this.dataService.user().futureStageNames.length !== 0) {
     <button color="primary" mat-button (click)="nextStep()" [disabled]="holdingForLeaderReveal">
       <!-- [disabled]="!this.dataService.stageComplete()"  -->

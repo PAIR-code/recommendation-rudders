@@ -6,10 +6,11 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, Signal, computed } from '@angular/core';
-import { SavedDataService } from '../services/saved-data.service';
-import { TosAcceptance } from '../../lib/staged-exp/data-model';
+import { Component, computed, Signal } from '@angular/core';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+
+import { TosAcceptance } from '../../lib/staged-exp/data-model';
+import { SavedDataService } from '../services/saved-data.service';
 
 @Component({
   selector: 'app-exp-tos',

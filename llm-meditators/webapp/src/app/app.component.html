@@ -23,8 +23,13 @@
             routerLink="/"
             routerLinkActive="active"
             ariaCurrentWhenActive="page"
+            (click)="updateCurrentStageName(stageName)"
+            class="menu-item {{ stageName === dataService.user().currentStageName ? 'current-stage' : '' }}"
           >
-            {{ stageName }}
+            <div class="menu-item-inner">
+              {{ stageName }}
+              <mat-icon class="icon completed" fontIcon="check"></mat-icon>
+            </div>
           </mat-list-item>
         }
         <mat-list-item
@@ -33,8 +38,13 @@
           routerLink="/"
           routerLinkActive="active"
           ariaCurrentWhenActive="page"
+          class="menu-item working-on-stage"
+          (click)="updateCurrentStageName(workingOnStageName())"
         >
-          {{ currentStageName() }}
+          <div class="menu-item-inner">
+            {{ workingOnStageName() }}
+            <div class="ongoing-badge">ongoing</div>
+          </div>
         </mat-list-item>
         @for (stageName of dataService.user().futureStageNames; track stageName) {
           <mat-list-item
@@ -44,6 +54,7 @@
             routerLink="/"
             routerLinkActive="active"
             ariaCurrentWhenActive="page"
+            class="menu-item future-stage"
           >
             {{ stageName }}
           </mat-list-item>

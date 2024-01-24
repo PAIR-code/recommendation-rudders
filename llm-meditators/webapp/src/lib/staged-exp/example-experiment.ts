@@ -61,22 +61,22 @@ function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
 //   };
 // }
 const initialItemRatingsQuestion: Question = {
-  questionText: "",
-  itemRatings: { 
+  questionText: '',
+  itemRatings: {
     ratings: [
       { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
       { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
-    ]
-  }
-}
+    ],
+  },
+};
 
 const initialWantToLeadQuestion: Question = {
   questionText: `Rate the how much you would like to be the group leader.`,
-  lowerBound: "I would most definitely not like to be the leader (0/10)",
-  upperBound: "I will fight to be the leader (10/10)",
+  lowerBound: 'I would most definitely not like to be the leader (0/10)',
+  upperBound: 'I will fight to be the leader (10/10)',
   openFeedback: false,
   score: null,
-}
+};
 function initialWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
@@ -104,11 +104,11 @@ const chatDiscussionQuestion: Question = {
   questionText: `Rate the chat dicussion on a 1-10 scale.
 Also indicate your overall feeling about the chat.`,
   answerText: '',
-  lowerBound: "I did not enjoy the discussion at all (0/10)",
-  upperBound: "The dicussion was a perfect experience to me (10/10)",
+  lowerBound: 'I did not enjoy the discussion at all (0/10)',
+  upperBound: 'The dicussion was a perfect experience to me (10/10)',
   openFeedback: true,
   score: null,
-}
+};
 
 function chatDiscussionSurvey(): ExpStageSurvey {
   return {
@@ -124,11 +124,11 @@ function chatDiscussionSurvey(): ExpStageSurvey {
 const postChatWantToLeadQuestion: Question = {
   questionText: `Rate the how much you would like to be the group leader.`,
   answerText: '',
-  lowerBound: "I would most definitely not like to be the leader (0/10)",
-  upperBound: "I will fight to be the leader (10/10)",
+  lowerBound: 'I would most definitely not like to be the leader (0/10)',
+  upperBound: 'I will fight to be the leader (10/10)',
   openFeedback: false,
   score: null,
-}
+};
 
 function postChatWantToLeadSurvey(): ExpStageSurvey {
   return {
@@ -152,15 +152,14 @@ function leaderVoting(): ExpStageVotes {
 }
 
 const finalItemRatingsQuestion: Question = {
-  questionText: "",
-  itemRatings: { 
+  questionText: '',
+  itemRatings: {
     ratings: [
       { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
       { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
-    ]
-  }
-}
-
+    ],
+  },
+};
 
 function postChatWork(): ExpStageSurvey {
   return {
@@ -185,16 +184,15 @@ function leaderReveal(): ExpStageLeaderReveal {
   };
 }
 
-
 const finalSatisfactionQuestion: Question = {
   questionText: `Rate how happy you were with the final outcome.
 Also indicate your overall feeling about the experience.`,
   answerText: '',
-  lowerBound: "I was most definitely disappointed (0/10)",
-  upperBound: "I was very happy (10/10)",
+  lowerBound: 'I was most definitely disappointed (0/10)',
+  upperBound: 'I was very happy (10/10)',
   openFeedback: true,
   score: null,
-}
+};
 
 function finalSatisfactionSurvey(): ExpStageSurvey {
   return {
@@ -218,6 +216,7 @@ export function initUserData(stages: ExpStage[]): UserData {
   if (!currentStageName) {
     throw new Error('Cannot create a user with no experimental stages to do');
   }
+  const workingOnStageName = currentStageName;
 
   const userId = `uid:${uuidv4()}`;
 
@@ -231,6 +230,7 @@ export function initUserData(stages: ExpStage[]): UserData {
     },
     stageMap,
     currentStageName,
+    workingOnStageName,
     completedStageNames: [] as string[],
     futureStageNames,
   };

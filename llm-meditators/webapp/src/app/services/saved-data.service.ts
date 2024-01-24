@@ -126,6 +126,7 @@ export class SavedDataService {
     this.currentStage = computed(() => {
       return this.user().stageMap[this.user().currentStageName];
     });
+
     this.stageComplete = computed(() => this.currentStage().complete);
 
     // Convenience signal for the appName.
@@ -178,12 +179,22 @@ export class SavedDataService {
 
   nextStep() {
     this.editCurrentUser((u) => {
-      const nextStageName = u.futureStageNames.shift();
-      if (!nextStageName) {
-        return;
+      if (u.workingOnStageName === u.currentStageName) {
+        const nextStageName = u.futureStageNames.shift();
+        if (!nextStageName) {
+          return;
+        }
+        u.completedStageNames.push(u.workingOnStageName);
+        u.workingOnStageName = nextStageName;
+        u.currentStageName = nextStageName;
+      } else {
+        // here, we can assume that u.currentStageName is among one of the completed stages.
+        const currentStageIdx = u.completedStageNames.indexOf(u.currentStageName);
+        u.currentStageName =
+          currentStageIdx === u.completedStageNames.length - 1
+            ? u.workingOnStageName
+            : u.completedStageNames[currentStageIdx + 1];
       }
-      u.completedStageNames.push(u.currentStageName);
-      u.currentStageName = nextStageName;
       this.editSession((session) => {
         session.stage = u.currentStageName;
       });
@@ -224,6 +235,12 @@ export class SavedDataService {
   setCurrentExpStageName(expStageName: string) {
     this.editCurrentUser((user) => {
       user.currentStageName = expStageName;
+    });
+  }
+
+  setWorkingOnExpStageName(expStageName: string) {
+    this.editCurrentUser((user) => {
+      user.workingOnStageName = expStageName;
     });
   }
 

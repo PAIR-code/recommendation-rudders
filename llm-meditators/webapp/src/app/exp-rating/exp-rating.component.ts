@@ -6,10 +6,11 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, Signal, computed } from '@angular/core';
+import { Component, computed, Signal } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
-import { SavedDataService } from '../services/saved-data.service';
+
 import { ExpStageItemRatings, ItemRatings, STAGE_KIND_RANKED_ITEMS } from '../../lib/staged-exp/data-model';
+import { SavedDataService } from '../services/saved-data.service';
 
 @Component({
   selector: 'app-exp-rating',

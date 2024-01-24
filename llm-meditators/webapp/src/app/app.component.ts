@@ -22,6 +22,7 @@ export class AppComponent implements AfterViewInit {
 
   public currentStageKind: Signal<ExpStageKind>;
   public currentStageName: Signal<string>;
+  public workingOnStageName: Signal<string>;
 
   constructor(
     private route: ActivatedRoute,
@@ -31,6 +32,7 @@ export class AppComponent implements AfterViewInit {
   ) {
     this.currentStageKind = computed(() => this.dataService.currentStage().kind);
     this.currentStageName = computed(() => this.dataService.currentStage().name);
+    this.workingOnStageName = computed(() => this.dataService.user().workingOnStageName);
 
     effect(() => {
       // document.querySelector('title')!.textContent =
@@ -44,5 +46,10 @@ export class AppComponent implements AfterViewInit {
     // also uncomment stuff in html.
     this.authService.prompt();
     this.authService.renderLoginButton(this.googleButton.nativeElement);
+  }
+
+  updateCurrentStageName(stageName: string) {
+    console.log('updateViewingStageName', stageName);
+    this.dataService.setCurrentExpStageName(stageName);
   }
 }
