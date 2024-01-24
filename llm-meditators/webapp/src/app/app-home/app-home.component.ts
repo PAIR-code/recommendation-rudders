@@ -9,7 +9,7 @@
 import { Component, Signal, computed } from '@angular/core';
 import { SavedDataService } from '../services/saved-data.service';
 import { LmApiService } from '../services/lm-api.service';
-import { stageKinds } from 'src/lib/staged-exp/data-model';
+import { ExpStageNames, stageKinds } from 'src/lib/staged-exp/data-model';
 import { ExpChatComponent } from '../exp-chat/exp-chat.component';
 import { ExpLeaderVoteComponent } from '../exp-leader-vote/exp-leader-vote.component';
 import { ExpProfileComponent } from '../exp-profile/exp-profile.component';
@@ -57,7 +57,8 @@ export class AppHomeComponent {
 
     this.currentStageName = computed(() => this.dataService.currentStage().name);
 
-    this.holdingForLeaderReveal = this.currentStageName() === '10. Leader reveal' && !this.everyoneReachedTheEnd();
+    this.holdingForLeaderReveal =
+      this.currentStageName() === ExpStageNames['9. Leader reveal'] && !this.everyoneReachedTheEnd();
   }
 
   dismissError() {

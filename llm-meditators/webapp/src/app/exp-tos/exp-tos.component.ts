@@ -11,10 +11,6 @@ import { SavedDataService } from '../services/saved-data.service';
 import { TosAcceptance } from '../../lib/staged-exp/data-model';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 
-const dummyTosData: TosAcceptance = {
-  acceptedTosTimestamp: null,
-};
-
 @Component({
   selector: 'app-exp-tos',
   standalone: true,
