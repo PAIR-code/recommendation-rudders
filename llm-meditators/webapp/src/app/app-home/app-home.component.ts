@@ -9,7 +9,7 @@
 import { Component, Signal, computed } from '@angular/core';
 import { SavedDataService } from '../services/saved-data.service';
 import { LmApiService } from '../services/lm-api.service';
-import { ExpStageNames, stageKinds } from 'src/lib/staged-exp/data-model';
+import { ExpStage, ExpStageNames, stageKinds } from 'src/lib/staged-exp/data-model';
 import { ExpChatComponent } from '../exp-chat/exp-chat.component';
 import { ExpLeaderVoteComponent } from '../exp-leader-vote/exp-leader-vote.component';
 import { ExpProfileComponent } from '../exp-profile/exp-profile.component';

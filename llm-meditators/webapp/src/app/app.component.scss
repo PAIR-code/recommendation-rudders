@@ -53,6 +53,41 @@ $toolbar-height: 60px;
   align-items: flex-start;
   flex: 1 1 auto;
   overflow: auto;
+
+  .current-stage {
+    background-color: #3f51b555;
+  }
+
+  .working-on-stage {
+    background-color: #ddd;
+  }
+
+  .menu-item-inner {
+    display: flex;
+    align-items: center;
+
+    .ongoing-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 8px;
+      border-radius: 5px;
+      background-color: orange;
+      padding: 1px 4px;
+      line-height: 1.1rem;
+      color: #fff;
+      font-size: 12px;
+      opacity: 1;
+    }
+
+    .icon {
+      margin-left: 6px;
+
+      &.completed {
+        color: rgb(1, 133, 1);
+      }
+    }
+  }
 }
 
 .content .mat-drawer-container {
