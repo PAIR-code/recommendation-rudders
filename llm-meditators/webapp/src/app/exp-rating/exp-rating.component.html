@@ -1,28 +1,43 @@
+<!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
+<!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
 <div class="main">
-  @for (itemPair of stageData().ratings; track $index) {
+  @for (itemPair of itemRatings.ratings; track $index) {
     <div class="item-pair">
+      <div class="title">Please rate the following pair of items:</div>
       <div class="item-pair-displays">
-        <div class="item-pair-item">
+        <div
+          class="item-pair-item {{ itemPair.choice === 'item1' ? 'selected' : '' }}"
+          (click)="setChoice($index, 'item1')"
+        >
           <img src="{{ itemPair.item1.imageUrl }}" alt="{{ itemPair.item1.name }}" />
           <span class="item-pair-item-name">{{ itemPair.item1.name }}</span>
         </div>
-        <div class="item-pair-item">
+        <div
+          class="item-pair-item {{ itemPair.choice === 'item2' ? 'selected' : '' }}"
+          (click)="setChoice($index, 'item2')"
+        >
           <img src="{{ itemPair.item2.imageUrl }}" alt="{{ itemPair.item2.name }}" />
           <span class="item-pair-item-name">{{ itemPair.item2.name }}</span>
         </div>
       </div>
-      <div class="item-pair-confidence">
-        <div class="confidence-value">
-          <strong>Confidence:</strong> {{ itemPair.confidence ? itemPair.confidence.toFixed(2) : 'Not rated' }}
+
+      @if (itemPair.choice !== null) {
+        <div class="item-pair-confidence">
+          <div class="confidence-value">
+            <strong>Confidence:</strong>
+            <span class="value {{ itemPair.confidence === null ? 'not-rated' : '' }}">
+              {{ itemPair.confidence !== null ? itemPair.confidence.toFixed(1) : 'Not rated' }}
+            </span>
+          </div>
+          <div class="slider-container">
+            <span class="slider-end-label">50/50</span>
+            <mat-slider min="0" max="1" step="0.1" discrete>
+              <input matSliderThumb (valueChange)="setConfidence($event, $index)" value="{{ itemPair.confidence }}" />
+            </mat-slider>
+            <span class="slider-end-label">Full <br />confidence</span>
+          </div>
         </div>
-        <div class="slider-container">
-          <!-- <span class="slider-end-label">-1</span> -->
-          <mat-slider min="-1" max="1" step="0.1" discrete>
-            <input matSliderThumb (valueChange)="updateSliderValue($event, $index)" value="0" />
-          </mat-slider>
-          <!-- <span class="slider-end-label">1</span> -->
-        </div>
-      </div>
+      }
     </div>
   }
 </div>

@@ -18,18 +18,24 @@ export interface Item {
   name: string; // displayed to the users, must be unique
   imageUrl: string; // for the picture
 }
+
 export interface ItemPair {
   item1: Item; // Item name
   item2: Item; // Item name
 }
+
 export interface ItemRating extends ItemPair {
-  confidence: number | null; // -1 = confidence one is best, 0 = 50/50, 1 = confident two is best
+  choice: 'item1' | 'item2' | null; // null = not yet rated
+  confidence: number | null; // 0 = 50/50, 1 = most confident
 }
+
 export interface ItemRatings {
   ratings: ItemRating[];
 }
+
 export const STAGE_KIND_RANKED_ITEMS = 'rank-items';
-export interface ExpStageItemRating extends GenericExpStage<ItemRatings> {
+
+export interface ExpStageItemRatings extends GenericExpStage<ItemRatings> {
   kind: typeof STAGE_KIND_RANKED_ITEMS;
 }
 
@@ -40,30 +46,38 @@ export interface UserMessage {
   userId: string;
   text: string;
 }
+
 export const FAKE_EMPTY_USERID = '';
+
 export const fakeEmptyMessage: UserMessage = {
   messageType: 'userMessage',
   timestamp: 0,
   userId: FAKE_EMPTY_USERID,
   text: 'fakeMessage',
 };
+
 export interface DiscussItemsMessage {
   messageType: 'discussItemsMessage';
   timestamp: number;
   itemRatingToDiscuss: ItemRating;
   text: string;
 }
+
 export interface MediatorMessage {
   messageType: 'mediatorMessage';
   timestamp: number;
   text: string;
 }
+
 export type Message = UserMessage | DiscussItemsMessage | MediatorMessage;
+
 export interface ChatAboutItems {
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
 }
+
 export const STAGE_KIND_CHAT = 'group-chat';
+
 export interface ExpStageChatAboutItems extends GenericExpStage<ChatAboutItems> {
   kind: typeof STAGE_KIND_CHAT;
 }
@@ -88,10 +102,13 @@ export enum LeaderVote {
 export interface Votes {
   [otherUserId: string]: LeaderVote;
 }
+
 export const STAGE_KIND_VOTES = 'leader-vote';
+
 export interface ExpStageVotes extends GenericExpStage<Votes> {
   kind: typeof STAGE_KIND_VOTES;
 }
+
 export const fakeVote: ExpStageVotes = {
   kind: STAGE_KIND_VOTES,
   name: 'fake leader vote',
@@ -105,10 +122,13 @@ export interface UserProfile {
   avatarUrl: string;
   name: string;
 }
+
 export const STAGE_KIND_PROFILE = 'set-profile';
+
 export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
   kind: typeof STAGE_KIND_PROFILE;
 }
+
 export const fakeEmptyProfile: UserProfile = {
   pronouns: 'fake pronouns',
   avatarUrl: 'fake avatar url',
@@ -122,7 +142,9 @@ export interface TosAndUserProfile {
   name: string;
   acceptedTosTimestamp: Date | null;
 }
+
 export const STAGE_KIND_TOS_AND_PROFILE = 'accept-tos-and-set-profile';
+
 export interface ExpStageTosAndUserProfile extends GenericExpStage<TosAndUserProfile> {
   kind: typeof STAGE_KIND_TOS_AND_PROFILE;
 }
@@ -136,7 +158,9 @@ export interface Survey {
   openFeedback: string;
   freeForm: boolean;
 }
+
 export const STAGE_KIND_SURVEY = 'survey';
+
 export interface ExpStageSurvey extends GenericExpStage<Survey> {
   kind: typeof STAGE_KIND_SURVEY;
 }
@@ -145,7 +169,9 @@ export interface ExpStageSurvey extends GenericExpStage<Survey> {
 export interface TosAcceptance {
   acceptedTosTimestamp: Date | null;
 }
+
 export const STAGE_KIND_ACCEPT_TOS = 'accept-tos';
+
 export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
   kind: typeof STAGE_KIND_ACCEPT_TOS;
 }
@@ -167,7 +193,7 @@ export type ExpStage =
   | ExpStageUserProfile
   | ExpStageVotes
   | ExpStageChatAboutItems
-  | ExpStageItemRating;
+  | ExpStageItemRatings;
 
 export type ExpStageKind = ExpStage['kind'];
 

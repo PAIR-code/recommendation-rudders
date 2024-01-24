@@ -9,11 +9,7 @@
 import { Component, Signal, computed } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { SavedDataService } from '../services/saved-data.service';
-import { ItemRatings, STAGE_KIND_RANKED_ITEMS } from '../../lib/staged-exp/data-model';
-
-const dummyRatingsData: ItemRatings = {
-  ratings: [],
-};
+import { ExpStageItemRatings, ItemRatings, STAGE_KIND_RANKED_ITEMS } from '../../lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-exp-rating',
@@ -23,22 +19,39 @@ const dummyRatingsData: ItemRatings = {
   styleUrl: './exp-rating.component.scss',
 })
 export class ExpRatingComponent {
-  public stageData: Signal<ItemRatings>;
-  readonly RANKED_ITEMS_STAGE_KIND = STAGE_KIND_RANKED_ITEMS;
+  public currStage: Signal<ExpStageItemRatings>;
+  public itemRatings: ItemRatings;
 
   constructor(private dataService: SavedDataService) {
-    this.stageData = computed(() => {
+    this.currStage = computed(() => {
       const stage = this.dataService.currentStage();
       if (stage.kind !== STAGE_KIND_RANKED_ITEMS) {
         throw new Error(`Bad kind for Rating component ${stage.kind}.`);
       }
-      return stage.config;
+      return stage;
     });
+
+    this.itemRatings = this.currStage().config;
   }
 
-  updateSliderValue(updatedValue: number, pairIdx: number) {
-    const curStageData = this.stageData();
-    curStageData.ratings[pairIdx].confidence = updatedValue;
-    this.dataService.editCurrentExpStageData(() => curStageData);
+  isComplete(): boolean {
+    let completed = true;
+    for (const rating of this.itemRatings.ratings) {
+      if (rating.choice === null || rating.confidence === null) {
+        completed = false;
+        break;
+      }
+    }
+    return completed;
+  }
+
+  setChoice(pairIdx: number, choice: 'item1' | 'item2') {
+    this.itemRatings.ratings[pairIdx].choice = choice;
+    this.dataService.editCurrentExpStageData<ItemRatings>(() => this.itemRatings);
+  }
+
+  setConfidence(updatedValue: number, pairIdx: number) {
+    this.itemRatings.ratings[pairIdx].confidence = updatedValue;
+    this.dataService.editCurrentExpStageData<ItemRatings>(() => this.itemRatings);
   }
 }

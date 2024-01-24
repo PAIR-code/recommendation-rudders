@@ -14,7 +14,7 @@ import {
   ExpStageSurvey,
   ExpStageVotes,
   ExpStageChatAboutItems,
-  ExpStageItemRating,
+  ExpStageItemRatings,
   UserData,
   ExpStageTosAndUserProfile,
   stageKinds,
@@ -25,17 +25,6 @@ import * as items from './items';
 // -------------------------------------------------------------------------------------
 //  Initial Experiment Setup
 // -------------------------------------------------------------------------------------
-function acceptTos(): ExpStageTosAcceptance {
-  return {
-    kind: stageKinds.STAGE_KIND_ACCEPT_TOS,
-    name: '1. Agree to the experiment',
-    complete: false,
-    config: {
-      acceptedTosTimestamp: null,
-    },
-    // userAcceptance: Date,
-  };
-}
 
 function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
   return {
@@ -51,15 +40,15 @@ function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
   };
 }
 
-function initialWork(): ExpStageItemRating {
+function initialWork(): ExpStageItemRatings {
   return {
     kind: stageKinds.STAGE_KIND_RANKED_ITEMS,
     name: '2. Initial work',
     complete: false,
     config: {
       ratings: [
-        { item1: items.compas, item2: items.blanket, confidence: null },
-        { item1: items.compas, item2: items.lighter, confidence: null },
+        { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+        { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
       ],
     },
     // userAcceptance: Date,
@@ -80,19 +69,7 @@ function initialWantToLeadSurvey(): ExpStageSurvey {
     },
   };
 }
-function setProfile(): ExpStageUserProfile {
-  return {
-    kind: stageKinds.STAGE_KIND_PROFILE,
-    name: '4. Set your profile',
-    complete: false,
-    config: {
-      pronouns: '',
-      avatarUrl: '',
-      name: '',
-    },
-    // userProfiles: {},
-  };
-}
+
 function groupChat(): ExpStageChatAboutItems {
   return {
     kind: stageKinds.STAGE_KIND_CHAT,
@@ -104,6 +81,7 @@ function groupChat(): ExpStageChatAboutItems {
     },
   };
 }
+
 function chatDiscussionSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
@@ -120,6 +98,7 @@ function chatDiscussionSurvey(): ExpStageSurvey {
     },
   };
 }
+
 function postChatWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
@@ -135,6 +114,7 @@ function postChatWantToLeadSurvey(): ExpStageSurvey {
     },
   };
 }
+
 function leaderVoting(): ExpStageVotes {
   return {
     kind: stageKinds.STAGE_KIND_VOTES,
@@ -144,15 +124,16 @@ function leaderVoting(): ExpStageVotes {
     // userAcceptance: Date,
   };
 }
-function postChatWork(): ExpStageItemRating {
+
+function postChatWork(): ExpStageItemRatings {
   return {
     kind: stageKinds.STAGE_KIND_RANKED_ITEMS,
     name: '9. Post-discussion work',
     complete: false,
     config: {
       ratings: [
-        { item1: items.compas, item2: items.blanket, confidence: null },
-        { item1: items.compas, item2: items.lighter, confidence: null },
+        { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+        { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
       ],
     },
     // userAcceptance: Date,
@@ -208,10 +189,8 @@ export function initUserData(stages: ExpStage[]): UserData {
 function makeStages() {
   return [
     acceptTosAndSetProfile(),
-    // acceptTos(),
     initialWork(),
     initialWantToLeadSurvey(),
-    // setProfile(),
     groupChat(),
     chatDiscussionSurvey(),
     postChatWantToLeadSurvey(),

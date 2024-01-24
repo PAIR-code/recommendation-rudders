@@ -20,19 +20,19 @@ import { ExpStageVotes, LeaderVote, UserData, UserProfile, Votes, fakeVote } fro
   imports: [MatRadioModule, MatButtonModule],
 })
 export class ExpLeaderVoteComponent {
-  public curStage: Signal<ExpStageVotes>;
+  public currStage: Signal<ExpStageVotes>;
   public otherParticipants: Signal<UserData[]>;
 
   readonly LeaderVote = LeaderVote;
   public votes: Votes;
 
   constructor(private dataService: SavedDataService) {
-    this.curStage = computed(() => {
-      const curStage = this.dataService.currentStage();
-      if (curStage.kind !== 'leader-vote') {
-        throw new Error(`Bad stage kind for group-chat component: ${curStage.kind}`);
+    this.currStage = computed(() => {
+      const currStage = this.dataService.currentStage();
+      if (currStage.kind !== 'leader-vote') {
+        throw new Error(`Bad stage kind for group-chat component: ${currStage.kind}`);
       }
-      return curStage;
+      return currStage;
     });
 
     this.otherParticipants = computed(() => {
@@ -42,7 +42,7 @@ export class ExpLeaderVoteComponent {
     });
 
     // Make sure that votes has all other participants, and only them.
-    this.votes = this.curStage().config;
+    this.votes = this.currStage().config;
     const otherParticipantsMap: { [userId: string]: UserData } = {};
     for (const p of this.otherParticipants()) {
       otherParticipantsMap[p.userId] = p;
