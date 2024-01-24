@@ -257,6 +257,16 @@ export class SavedDataService {
     });
   }
 
+  setCurrentUserId(userId: string) {
+    this.data.update((data) => {
+      if (Object.keys(data.experiment.participants).includes(userId) === false) {
+        throw new Error(`Cannot set current user to ${userId}, they do not exist`);
+      }
+      data.currentUserId = userId;
+      return data;
+    });
+  }
+
   sendMessage(message: string, stageName: string): void {
     const user = this.user();
     const data = this.data();

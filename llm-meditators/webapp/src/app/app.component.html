@@ -56,6 +56,15 @@
         >
           <div class="icon-menu-item"><mat-icon>settings</mat-icon>Settings</div>
         </mat-list-item>
+        <br />
+        <mat-form-field>
+          <mat-label>Current user</mat-label>
+          <mat-select [value]="currentUserId()" (selectionChange)="setCurrentUser($event)">
+            @for (userId of usersList; track userId) {
+              <mat-option [value]="userId">{{ userId }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
         <!-- <mat-list-item [activated]="router.url == '/data'" matListItemTitle routerLink="/data" routerLinkActive="active" ariaCurrentWhenActive="page">
           Data
         </mat-list-item>
