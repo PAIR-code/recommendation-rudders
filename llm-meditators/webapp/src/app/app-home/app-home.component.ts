@@ -6,7 +6,7 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component } from '@angular/core';
+import { Component, Signal, computed } from '@angular/core';
 import { SavedDataService } from '../services/saved-data.service';
 import { LmApiService } from '../services/lm-api.service';
 import { stageKinds } from 'src/lib/staged-exp/data-model';
@@ -38,6 +38,10 @@ import { MatButtonModule } from '@angular/material/button';
   styleUrls: ['./app-home.component.scss'],
 })
 export class AppHomeComponent {
+  public everyoneReachedTheEnd: Signal<boolean>;
+  public currentStageName: Signal<string>;
+  public holdingForLeaderReveal: boolean = false;
+
   public waiting: boolean = false;
   public errorMessage?: string;
   readonly stageKinds = stageKinds;
@@ -45,7 +49,16 @@ export class AppHomeComponent {
   constructor(
     private lmApiService: LmApiService,
     public dataService: SavedDataService,
-  ) {}
+  ) {
+    this.everyoneReachedTheEnd = computed(() => {
+      const users = Object.values(this.dataService.data().experiment.participants);
+      return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
+    });
+
+    this.currentStageName = computed(() => this.dataService.currentStage().name);
+
+    this.holdingForLeaderReveal = this.currentStageName() === '10. Leader reveal' && !this.everyoneReachedTheEnd();
+  }
 
   dismissError() {
     delete this.errorMessage;

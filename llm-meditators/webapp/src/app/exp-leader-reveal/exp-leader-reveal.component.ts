@@ -17,7 +17,7 @@ export class ExpLeaderRevealComponent {
   constructor(private dataService: SavedDataService) {
     this.everyoneReachedTheEnd = computed(() => {
       const users = Object.values(this.dataService.data().experiment.participants);
-      return users.map((userData) => userData.futureStageNames.length).every((n) => n === 0);
+      return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
     });
 
     this.finalLeader = computed(() => {

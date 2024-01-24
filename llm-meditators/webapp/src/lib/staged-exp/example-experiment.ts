@@ -144,10 +144,21 @@ function postChatWork(): ExpStageItemRatings {
   };
 }
 
+function leaderReveal(): ExpStageLeaderReveal {
+  return {
+    kind: stageKinds.STAGE_KIND_LEADER_REVEAL,
+    name: '10. Leader reveal',
+    complete: false,
+    config: {
+      revealTimestamp: null,
+    },
+  };
+}
+
 function finalSatisfactionSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
-    name: '10. final satisfaction survey',
+    name: '11. final satisfaction survey',
     complete: false,
     config: {
       question: `Rate how happy you were with the final outcome.
@@ -157,17 +168,6 @@ function finalSatisfactionSurvey(): ExpStageSurvey {
       score: null,
       openFeedback: '',
       freeForm: true,
-    },
-  };
-}
-
-function ultimateLeaderReveal(): ExpStageLeaderReveal {
-  return {
-    kind: stageKinds.STAGE_KIND_LEADER_REVEAL,
-    name: '11. Leader reveal',
-    complete: false,
-    config: {
-      revealTimestamp: null,
     },
   };
 }
@@ -211,8 +211,8 @@ function makeStages() {
     postChatWantToLeadSurvey(),
     leaderVoting(),
     postChatWork(),
+    leaderReveal(),
     finalSatisfactionSurvey(),
-    ultimateLeaderReveal(),
   ];
 }
 
