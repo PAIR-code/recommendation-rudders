@@ -28,7 +28,7 @@ export class ExpLeaderRevealComponent {
       });
 
       for (const user of users) {
-        const leaderVotes = user.stageMap[ExpStageNames['7. Vote for the leader']].config as Votes;
+        const leaderVotes = user.stageMap[ExpStageNames['6. Vote for the leader']].config as Votes;
         for (const userId of Object.keys(leaderVotes)) {
           const vote = leaderVotes[userId];
           if (vote === 'positive') {

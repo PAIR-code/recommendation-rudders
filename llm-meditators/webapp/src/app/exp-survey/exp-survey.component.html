@@ -1,27 +1,76 @@
+<!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
+<!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
 <div class="main">
-  <div>
-    <h2 style="white-space: pre-wrap">
-      {{ stageData().question }}
-    </h2>
-  </div>
-  <!-- create a slider -->
-  <table>
-    <tr>
-      <td class="bound">{{ stageData().lowerBound }}</td>
-      <td>
-        <mat-slider min="0" max="10" step="1" showTickMarks discrete>
-          <input matSliderThumb (valueChange)="updateSliderValue($event)" />
-        </mat-slider>
-      </td>
-      <td class="bound">{{ stageData().upperBound }}</td>
-    </tr>
-  </table>
-  @if (stageData().freeForm) {
-    <form class="settings-form">
-      <mat-form-field class="full-width">
-        <mat-label>Answer</mat-label>
-        <input matInput placeholder="Write your response" [formControl]="responseControl" />
-      </mat-form-field>
-    </form>
+  @for (question of stageData().questions; track question; let questionIdx = $index) {
+    @if (question.itemRatings) {
+      <!-- Rating Items -->
+      @for (itemPair of question.itemRatings.ratings; track $index) {
+        <div class="item-pair">
+          <div class="title">Please rate the following pair of items:</div>
+          <div class="item-pair-displays">
+            <div
+              class="item-pair-item {{ itemPair.choice === 'item1' ? 'selected' : '' }}"
+              (click)="setChoice(questionIdx, $index, 'item1')"
+            >
+              <img src="{{ itemPair.item1.imageUrl }}" alt="{{ itemPair.item1.name }}" />
+              <span class="item-pair-item-name">{{ itemPair.item1.name }}</span>
+            </div>
+            <div
+              class="item-pair-item {{ itemPair.choice === 'item2' ? 'selected' : '' }}"
+              (click)="setChoice(questionIdx, $index, 'item2')"
+            >
+              <img src="{{ itemPair.item2.imageUrl }}" alt="{{ itemPair.item2.name }}" />
+              <span class="item-pair-item-name">{{ itemPair.item2.name }}</span>
+            </div>
+          </div>
+    
+          @if (itemPair.choice !== null) {
+            <div class="item-pair-confidence">
+              <div class="confidence-value">
+                <strong>Confidence:</strong>
+                <span class="value {{ itemPair.confidence === null ? 'not-rated' : '' }}">
+                  {{ itemPair.confidence !== null ? itemPair.confidence.toFixed(1) : 'Not rated' }}
+                </span>
+              </div>
+              <div class="slider-container">
+                <span class="slider-end-label">50/50</span>
+                <mat-slider min="0" max="1" step="0.1" discrete>
+                  <input matSliderThumb (valueChange)="setConfidence(questionIdx, $event, $index)" value="{{ itemPair.confidence }}" />
+                </mat-slider>
+                <span class="slider-end-label">Full <br />confidence</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+    @else{  
+      <!-- Survey -->
+      <div>
+        <h2 style="white-space: pre-wrap">
+          {{ question.questionText }}
+        </h2>
+      </div>
+      <!-- create a slider -->
+      <table>
+        <tr>
+          <td class="bound">{{ question.lowerBound }}</td>
+          <td>
+            <mat-slider min="0" max="10" step="1" showTickMarks discrete>
+              <input matSliderThumb (valueChange)="updateSliderValue($event, questionIdx)" />
+            </mat-slider>
+          </td>
+          <td class="bound">{{ question.upperBound }}</td>
+        </tr>
+      </table>
+      @if (question.openFeedback) {
+        <form class="settings-form">
+          <mat-form-field class="full-width">
+            <mat-label>Answer</mat-label>
+            <input matInput placeholder="Write your response" [formControl]="responseControl[questionIdx]" />
+          </mat-form-field>
+        </form>
+      }
+    }
   }
 </div>

@@ -12,7 +12,19 @@ import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
-import { Survey } from '../../lib/staged-exp/data-model';
+import { Question, Survey, ItemRatings, ExpStageSurvey, STAGE_KIND_SURVEY } from '../../lib/staged-exp/data-model';
+
+const dummyQuestion: Question = {
+  questionText: 'error: this should never happen',
+  answerText: '',
+  lowerBound: "Lower Bound",
+  upperBound: "Upper Bound",
+  openFeedback: false,
+  score: null
+};
+const dummySurveyData: Survey = {
+  questions: [dummyQuestion],
+};
 
 @Component({
   selector: 'app-exp-survey',
@@ -22,8 +34,9 @@ import { Survey } from '../../lib/staged-exp/data-model';
   styleUrl: './exp-survey.component.scss',
 })
 export class ExpSurveyComponent {
-  public responseControl: FormControl<string | null>;
+  public responseControl: FormControl<string | null>[];
   public stageData: Signal<Survey>;
+  public itemRatings?: ItemRatings;
 
   constructor(private dataService: SavedDataService) {
     // Assumption: this is only ever constructed when
@@ -32,27 +45,60 @@ export class ExpSurveyComponent {
 
     this.stageData = computed(() => {
       const stage = this.dataService.currentStage();
-      if (stage.kind !== 'survey') {
+      if (stage.kind !== STAGE_KIND_SURVEY) {
         throw new Error(`bad stage kind ${stage.kind}`);
       }
       return stage.config;
     });
 
-    this.responseControl = new FormControl<string>('');
-    this.responseControl.valueChanges.forEach((n) => {
-      if (n) {
-        const curStageData = this.stageData();
-        curStageData.openFeedback = n;
-        this.dataService.editCurrentExpStageData(() => curStageData);
+    // if one of the this.currentStage().question
+    // has an itemRatings, then we use that one. Assumes max 
+    // one itemRatings question per stage.
+    for (let i = 0; i < this.stageData().questions.length; i++) {
+      if (this.stageData().questions[i].itemRatings) {
+        this.itemRatings = this.stageData().questions[i].itemRatings;
       }
-      console.log(this.stageData());
-    });
+    }
+
+    this.responseControl = new Array(this.stageData().questions.length);
+    for (let i = 0; i < this.stageData().questions.length; i++) {
+      this.responseControl[i] = new FormControl<string>("");
+    }
+    for (let i = 0; i < this.stageData().questions.length; i++) {
+      this.responseControl[i].valueChanges.forEach((n) => {
+        if (n) {
+          const curStageData = this.stageData();
+          curStageData.questions[i].answerText = n;
+          this.dataService.editCurrentExpStageData(() => curStageData);
+        }
+        console.log(this.stageData());
+      });
+    }
   }
 
-  updateSliderValue(updatedValue: number) {
+  updateSliderValue(updatedValue: number, idx: number) {
     const curStageData = this.stageData();
-    curStageData.score = updatedValue;
+    curStageData.questions[idx].score = updatedValue;
     this.dataService.editCurrentExpStageData(() => curStageData);
     console.log(this.stageData());
+  }
+
+
+  setChoice(questionIdx: number, pairIdx: number, choice: 'item1' | 'item2') {
+    if (this.itemRatings) {
+      this.itemRatings.ratings[pairIdx].choice = choice;
+      const curStageData = this.stageData();
+      curStageData.questions[questionIdx].itemRatings = this.itemRatings;
+      this.dataService.editCurrentExpStageData(() => curStageData);
+    }
+  }
+
+  setConfidence(questionIdx: number, updatedValue: number, pairIdx: number) {
+    if (this.itemRatings) {
+      this.itemRatings.ratings[pairIdx].confidence = updatedValue;
+      const curStageData = this.stageData();
+      curStageData.questions[questionIdx].itemRatings = this.itemRatings;
+      this.dataService.editCurrentExpStageData(() => curStageData);
+    }
   }
 }

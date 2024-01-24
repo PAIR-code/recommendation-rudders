@@ -33,11 +33,11 @@ export interface ItemRatings {
   ratings: ItemRating[];
 }
 
-export const STAGE_KIND_RANKED_ITEMS = 'rank-items';
+// export const STAGE_KIND_RANKED_ITEMS = 'rank-items';
 
-export interface ExpStageItemRatings extends GenericExpStage<ItemRatings> {
-  kind: typeof STAGE_KIND_RANKED_ITEMS;
-}
+// export interface ExpStageItemRatings extends GenericExpStage<ItemRatings> {
+//   kind: typeof STAGE_KIND_RANKED_ITEMS;
+// }
 
 // -------------------------------------------------------------------------------------
 export interface UserMessage {
@@ -143,13 +143,18 @@ export interface ExpStageTosAndUserProfile extends GenericExpStage<TosAndUserPro
 }
 
 // -------------------------------------------------------------------------------------
+export interface Question {
+  questionText: string;
+  answerText?: string;
+  upperBound?: string;
+  lowerBound?: string;
+  score?: number | null; //  10 point scale.
+  openFeedback?: boolean;
+  itemRatings?: ItemRatings;
+}
+
 export interface Survey {
-  question: string;
-  lowerBound: string;
-  upperBound: string;
-  score: number | null; //  10 point scale.
-  openFeedback: string;
-  freeForm: boolean;
+  questions: Question[];
 }
 
 export const STAGE_KIND_SURVEY = 'survey';
@@ -187,7 +192,7 @@ export type ExpDataKinds =
   | UserProfile
   | Votes
   | ChatAboutItems
-  | ItemRatings
+  //| ItemRatings
   | LeaderReveal;
 
 export type ExpStage =
@@ -197,7 +202,7 @@ export type ExpStage =
   | ExpStageUserProfile
   | ExpStageVotes
   | ExpStageChatAboutItems
-  | ExpStageItemRatings
+  // | ExpStageItemRatings
   | ExpStageLeaderReveal;
 
 export type ExpStageKind = ExpStage['kind'];
@@ -210,22 +215,21 @@ export const stageKinds = {
   STAGE_KIND_SURVEY: STAGE_KIND_SURVEY as typeof STAGE_KIND_SURVEY,
   STAGE_KIND_PROFILE: STAGE_KIND_PROFILE as typeof STAGE_KIND_PROFILE,
   STAGE_KIND_VOTES: STAGE_KIND_VOTES as typeof STAGE_KIND_VOTES,
-  STAGE_KIND_RANKED_ITEMS: STAGE_KIND_RANKED_ITEMS as typeof STAGE_KIND_RANKED_ITEMS,
+  // STAGE_KIND_RANKED_ITEMS: STAGE_KIND_RANKED_ITEMS as typeof STAGE_KIND_RANKED_ITEMS,
   STAGE_KIND_CHAT: STAGE_KIND_CHAT as typeof STAGE_KIND_CHAT,
   STAGE_KIND_LEADER_REVEAL: STAGE_KIND_LEADER_REVEAL as typeof STAGE_KIND_LEADER_REVEAL,
 };
 
 export enum ExpStageNames {
   '1. Agree to the experiment and set your profile' = '1. Agree to the experiment and set your profile',
-  '2. Initial work' = '2. Initial work',
-  '3. Intial leadership survey' = '3. Intial leadership survey',
-  '4. Group discussion' = '4. Group discussion',
-  '5. Post-chat survey' = '5. Post-chat survey',
-  '6. Post-discussion leadership survey' = '6. Post-discussion leadership survey',
-  '7. Vote for the leader' = '7. Vote for the leader',
-  '8. Post-discussion work' = '8. Post-discussion work',
-  '9. Leader reveal' = '9. Leader reveal',
-  '10. final satisfaction survey' = '10. final satisfaction survey',
+  '2. Initial leadership survey' = '2. Initial leadership survey',
+  '3. Group discussion' = '3. Group discussion',
+  '4. Post-chat survey' = '4. Post-chat survey',
+  '5. Post-discussion leadership survey' = '5. Post-discussion leadership survey',
+  '6. Vote for the leader' = '6. Vote for the leader',
+  '7. Post-discussion work' = '7. Post-discussion work',
+  '8. Leader reveal' = '8. Leader reveal',
+  '9. final satisfaction survey' = '9. final satisfaction survey',
 }
 
 // -------------------------------------------------------------------------------------
