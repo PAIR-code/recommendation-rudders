@@ -24,7 +24,7 @@
     }
   </div>
   @if (this.dataService.user().futureStageNames.length !== 0) {
-    <button color="primary" mat-button (click)="nextStep()">
+    <button color="primary" mat-button (click)="nextStep()" [disabled]="holdingForLeaderReveal">
       <!-- [disabled]="!this.dataService.stageComplete()"  -->
       <!-- <mat-icon>redo</mat-icon> -->
       <span>Next step</span>
