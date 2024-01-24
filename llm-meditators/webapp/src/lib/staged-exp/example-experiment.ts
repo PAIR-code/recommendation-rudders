@@ -18,6 +18,7 @@ import {
   ExpStageTosAndUserProfile,
   stageKinds,
   ExpStageLeaderReveal,
+  Question,
 } from './data-model';
 
 import * as items from './items';
@@ -58,18 +59,20 @@ function initialWork(): ExpStageItemRatings {
     // userAcceptance: Date,
   };
 }
+const initialWantToLeadQuestion: Question = {
+  questionText: `Rate the how much you would like to be the group leader.`,
+  lowerBound: "I would most definitely not like to be the leader (0/10)",
+  upperBound: "I will fight to be the leader (10/10)",
+  openFeedback: false,
+  score: null,
+}
 function initialWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: '3. intial leadership survey',
     complete: false,
     config: {
-      question: `Rate the how much you would like to be the group leader.`,
-      lowerBound: 'I would most definitely not like to be the leader (0/10)',
-      upperBound: 'I will fight to be the leader (10/10)',
-      freeForm: false,
-      score: null,
-      openFeedback: '',
+      questions: [initialWantToLeadQuestion],
     },
   };
 }
@@ -86,21 +89,34 @@ function groupChat(): ExpStageChatAboutItems {
   };
 }
 
+const chatDiscussionQuestion: Question = {
+  questionText: `Rate the chat dicussion on a 1-10 scale.
+Also indicate your overall feeling about the chat.`,
+  answerText: '',
+  lowerBound: "I did not enjoy the discussion at all (0/10)",
+  upperBound: "The dicussion was a perfect experience to me (10/10)",
+  openFeedback: true,
+  score: null,
+}
+
 function chatDiscussionSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: '6. Post-chat survey',
     complete: false,
     config: {
-      question: `Rate the chat dicussion on a 1-10 scale.
-  Also indicate your overall feeling about the chat.`,
-      lowerBound: 'I did not enjoy the discussion at all (0/10)',
-      upperBound: 'The dicussion was a perfect experience to me (10/10)',
-      score: null,
-      openFeedback: '',
-      freeForm: true,
+      questions: [chatDiscussionQuestion],
     },
   };
+}
+
+const postChatWantToLeadQuestion: Question = {
+  questionText: `Rate the how much you would like to be the group leader.`,
+  answerText: '',
+  lowerBound: "I would most definitely not like to be the leader (0/10)",
+  upperBound: "I will fight to be the leader (10/10)",
+  openFeedback: false,
+  score: null,
 }
 
 function postChatWantToLeadSurvey(): ExpStageSurvey {
@@ -109,12 +125,7 @@ function postChatWantToLeadSurvey(): ExpStageSurvey {
     name: '7. Post-discussion leadership survey',
     complete: false,
     config: {
-      question: `Rate the how much you would like to be the group leader.`,
-      lowerBound: 'I would most definitely not like to be the leader (0/10)',
-      upperBound: 'I will fight to be the leader (10/10)',
-      score: null,
-      openFeedback: '',
-      freeForm: false,
+      questions: [postChatWantToLeadQuestion],
     },
   };
 }
@@ -144,19 +155,23 @@ function postChatWork(): ExpStageItemRatings {
   };
 }
 
+const finalSatisfactionQuestion: Question = {
+  questionText: `Rate how happy you were with the final outcome.
+Also indicate your overall feeling about the experience.`,
+  answerText: '',
+  lowerBound: "I was most definitely disappointed (0/10)",
+  upperBound: "I was very happy (10/10)",
+  openFeedback: true,
+  score: null,
+}
+
 function finalSatisfactionSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: '10. final satisfaction survey',
     complete: false,
     config: {
-      question: `Rate how happy you were with the final outcome.
-      Also indicate your overall feeling about the experience.`,
-      lowerBound: 'I was most definitely disappointed (0/10)',
-      upperBound: 'I was very happy (10/10)',
-      score: null,
-      openFeedback: '',
-      freeForm: true,
+      questions: [finalSatisfactionQuestion],
     },
   };
 }

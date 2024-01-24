@@ -150,13 +150,17 @@ export interface ExpStageTosAndUserProfile extends GenericExpStage<TosAndUserPro
 }
 
 // -------------------------------------------------------------------------------------
-export interface Survey {
-  question: string;
-  lowerBound: string;
+export interface Question {
+  questionText: string;
+  answerText?: string;
   upperBound: string;
+  lowerBound: string;
   score: number | null; //  10 point scale.
-  openFeedback: string;
-  freeForm: boolean;
+  openFeedback: boolean;
+}
+
+export interface Survey {
+  questions: Question[];
 }
 
 export const STAGE_KIND_SURVEY = 'survey';

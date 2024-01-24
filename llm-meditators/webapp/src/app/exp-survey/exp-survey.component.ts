@@ -12,15 +12,18 @@ import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
-import { Survey } from '../../lib/staged-exp/data-model';
+import { Question, Survey } from '../../lib/staged-exp/data-model';
 
+const dummyQuestion: Question = {
+  questionText: 'error: this should never happen',
+  answerText: '',
+  lowerBound: "Lower Bound",
+  upperBound: "Upper Bound",
+  openFeedback: false,
+  score: null
+};
 const dummySurveyData: Survey = {
-  question: 'error: this should never happen',
-  lowerBound: 'Lower Bound',
-  upperBound: 'Upper Bound',
-  score: null,
-  openFeedback: '',
-  freeForm: false,
+  questions: [dummyQuestion],
 };
 
 @Component({
@@ -31,7 +34,7 @@ const dummySurveyData: Survey = {
   styleUrl: './exp-survey.component.scss',
 })
 export class ExpSurveyComponent {
-  public responseControl: FormControl<string | null>;
+  public responseControl: FormControl<string | null>[];
   public stageData: Signal<Survey>;
 
   constructor(private dataService: SavedDataService) {
@@ -47,20 +50,26 @@ export class ExpSurveyComponent {
       return stage.config;
     });
 
-    this.responseControl = new FormControl<string>('');
-    this.responseControl.valueChanges.forEach((n) => {
-      if (n) {
-        const curStageData = this.stageData();
-        curStageData.openFeedback = n;
-        this.dataService.editCurrentExpStageData(() => curStageData);
-      }
-      console.log(this.stageData());
-    });
+    
+    this.responseControl = new Array(this.stageData().questions.length);
+    for (let i = 0; i < this.stageData().questions.length; i++) {
+      this.responseControl[i] = new FormControl<string>("");
+    }
+    for (let i = 0; i < this.stageData().questions.length; i++) {
+      this.responseControl[i].valueChanges.forEach((n) => {
+        if (n) {
+          const curStageData = this.stageData();
+          curStageData.questions[i].answerText = n;
+          this.dataService.editCurrentExpStageData(() => curStageData);
+        }
+        console.log(this.stageData());
+      });
+    }
   }
 
-  updateSliderValue(updatedValue: number) {
+  updateSliderValue(updatedValue: number, idx: number) {
     const curStageData = this.stageData();
-    curStageData.score = updatedValue;
+    curStageData.questions[idx].score = updatedValue;
     this.dataService.editCurrentExpStageData(() => curStageData);
     console.log(this.stageData());
   }
