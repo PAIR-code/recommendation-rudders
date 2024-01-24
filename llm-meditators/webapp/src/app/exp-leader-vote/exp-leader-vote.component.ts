@@ -10,7 +10,7 @@ import { Component, Signal, computed } from '@angular/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { SavedDataService } from '../services/saved-data.service';
-import { ExpStageVotes, LeaderVote, UserData, UserProfile, Votes, fakeVote } from '../../lib/staged-exp/data-model';
+import { ExpStageVotes, LeaderVote, UserData, Votes } from '../../lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-exp-leader-vote',

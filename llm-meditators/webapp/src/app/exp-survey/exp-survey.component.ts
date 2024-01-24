@@ -14,15 +14,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
 import { Survey } from '../../lib/staged-exp/data-model';
 
-const dummySurveyData: Survey = {
-  question: 'error: this should never happen',
-  lowerBound: 'Lower Bound',
-  upperBound: 'Upper Bound',
-  score: null,
-  openFeedback: '',
-  freeForm: false,
-};
-
 @Component({
   selector: 'app-exp-survey',
   standalone: true,

@@ -10,10 +10,9 @@ import { Component, ElementRef, OnInit, ViewChild, effect } from '@angular/core'
 import { AppData, SavedDataService, initialAppData } from '../services/saved-data.service';
 import { FormControl } from '@angular/forms';
 import { LmApiService } from '../services/lm-api.service';
-import { GoogleSheetsService, isSheetsError } from '../services/google-sheets.service';
+import { GoogleSheetsService } from '../services/google-sheets.service';
 import { GoogleAuthService } from '../services/google-auth.service';
 import { GoogleDriveAppdataService } from '../services/google-drive-appdata.service';
-import { SimpleError, isErrorResponse } from 'src/lib/simple-errors/simple-errors';
 import { ConfigUpdate } from '../codemirror-config-editor/codemirror-config-editor.component';
 
 @Component({
@@ -71,7 +70,6 @@ export class AppSettingsComponent implements OnInit {
     });
 
     this.usersList = Object.values(this.dataService.data().experiment.participants).map(({ userId }) => userId);
-    console.log(this.usersList);
   }
 
   ngOnInit(): void {}

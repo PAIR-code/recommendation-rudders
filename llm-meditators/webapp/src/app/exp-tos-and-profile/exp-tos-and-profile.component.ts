@@ -6,22 +6,15 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, Signal, computed } from '@angular/core';
+import { Component } from '@angular/core';
 import { SavedDataService } from '../services/saved-data.service';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { STAGE_KIND_TOS_AND_PROFILE, TosAndUserProfile, UserProfile } from '../../lib/staged-exp/data-model';
+import { STAGE_KIND_TOS_AND_PROFILE, TosAndUserProfile } from '../../lib/staged-exp/data-model';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-
-const dummyProfileData: TosAndUserProfile = {
-  pronouns: 'They/Them',
-  avatarUrl: '/assets/avatars/they.png',
-  name: 'John Doe',
-  acceptedTosTimestamp: null,
-};
 
 @Component({
   selector: 'app-exp-tos-and-profile',
