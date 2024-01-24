@@ -19,6 +19,7 @@ import { ExpStageKind } from '../lib/staged-exp/data-model';
 })
 export class AppComponent implements AfterViewInit {
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
+
   public currentStageKind: Signal<ExpStageKind>;
   public currentStageName: Signal<string>;
 

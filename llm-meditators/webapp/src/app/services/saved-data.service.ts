@@ -21,15 +21,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
 
 export function initialAppData(): AppData {
-  const experiment = initialExperimentSetup(5);
+  const experiment = initialExperimentSetup(3);
   return {
+    currentUserId: Object.values(experiment.participants)[0].userId,
     settings: {
       name: 'LLM-Mediators',
       sheetsId: '',
       sheetsRange: '', // e.g.
     },
     experiment,
-    currentUserId: Object.values(experiment.participants)[0].userId,
   };
 }
 
@@ -255,6 +255,15 @@ export class SavedDataService {
     this.editCurrentUser((user) => {
       user.profile = newUserProfile;
     });
+  }
+
+  setCurrentUserId(userId: string) {
+    const data = this.data();
+    if (Object.keys(data.experiment.participants).includes(userId) === false) {
+      throw new Error(`Cannot set current user to ${userId}, they do not exist`);
+    }
+    data.currentUserId = userId;
+    this.data.set({ ...data });
   }
 
   sendMessage(message: string, stageName: string): void {
