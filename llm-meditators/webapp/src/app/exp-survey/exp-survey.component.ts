@@ -6,25 +6,14 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, Signal, computed } from '@angular/core';
-import { SavedDataService } from '../services/saved-data.service';
+import { Component, computed, Signal } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
-import { Question, Survey, ItemRatings, ExpStageSurvey, STAGE_KIND_SURVEY } from '../../lib/staged-exp/data-model';
 
-const dummyQuestion: Question = {
-  questionText: 'error: this should never happen',
-  answerText: '',
-  lowerBound: "Lower Bound",
-  upperBound: "Upper Bound",
-  openFeedback: false,
-  score: null
-};
-const dummySurveyData: Survey = {
-  questions: [dummyQuestion],
-};
+import { ItemRatings, Question, STAGE_KIND_SURVEY, Survey } from '../../lib/staged-exp/data-model';
+import { SavedDataService } from '../services/saved-data.service';
 
 @Component({
   selector: 'app-exp-survey',
@@ -52,7 +41,7 @@ export class ExpSurveyComponent {
     });
 
     // if one of the this.currentStage().question
-    // has an itemRatings, then we use that one. Assumes max 
+    // has an itemRatings, then we use that one. Assumes max
     // one itemRatings question per stage.
     for (let i = 0; i < this.stageData().questions.length; i++) {
       if (this.stageData().questions[i].itemRatings) {
@@ -62,7 +51,7 @@ export class ExpSurveyComponent {
 
     this.responseControl = new Array(this.stageData().questions.length);
     for (let i = 0; i < this.stageData().questions.length; i++) {
-      this.responseControl[i] = new FormControl<string>("");
+      this.responseControl[i] = new FormControl<string>('');
     }
     for (let i = 0; i < this.stageData().questions.length; i++) {
       this.responseControl[i].valueChanges.forEach((n) => {
@@ -82,7 +71,6 @@ export class ExpSurveyComponent {
     this.dataService.editCurrentExpStageData(() => curStageData);
     console.log(this.stageData());
   }
-
 
   setChoice(questionIdx: number, pairIdx: number, choice: 'item1' | 'item2') {
     if (this.itemRatings) {

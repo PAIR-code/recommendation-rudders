@@ -7,14 +7,15 @@
 ==============================================================================*/
 
 import { Component } from '@angular/core';
-import { SavedDataService } from '../services/saved-data.service';
-import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
-import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
+
 import { STAGE_KIND_TOS_AND_PROFILE, TosAndUserProfile } from '../../lib/staged-exp/data-model';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SavedDataService } from '../services/saved-data.service';
 
 @Component({
   selector: 'app-exp-tos-and-profile',

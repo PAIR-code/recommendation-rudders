@@ -6,14 +6,15 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, ElementRef, OnInit, ViewChild, effect } from '@angular/core';
-import { AppData, SavedDataService, initialAppData } from '../services/saved-data.service';
+import { Component, effect, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { LmApiService } from '../services/lm-api.service';
-import { GoogleSheetsService } from '../services/google-sheets.service';
+
+import { ConfigUpdate } from '../codemirror-config-editor/codemirror-config-editor.component';
 import { GoogleAuthService } from '../services/google-auth.service';
 import { GoogleDriveAppdataService } from '../services/google-drive-appdata.service';
-import { ConfigUpdate } from '../codemirror-config-editor/codemirror-config-editor.component';
+import { GoogleSheetsService } from '../services/google-sheets.service';
+import { LmApiService } from '../services/lm-api.service';
+import { AppData, initialAppData, SavedDataService } from '../services/saved-data.service';
 
 @Component({
   selector: 'app-app-settings',

@@ -7,13 +7,14 @@
 ==============================================================================*/
 
 import { Component } from '@angular/core';
-import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { SavedDataService } from '../services/saved-data.service';
+import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
+
 import { UserProfile } from '../../lib/staged-exp/data-model';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SavedDataService } from '../services/saved-data.service';
 
 @Component({
   selector: 'app-exp-profile',
