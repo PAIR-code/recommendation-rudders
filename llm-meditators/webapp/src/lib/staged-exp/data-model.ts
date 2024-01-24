@@ -109,13 +109,6 @@ export interface ExpStageVotes extends GenericExpStage<Votes> {
   kind: typeof STAGE_KIND_VOTES;
 }
 
-export const fakeVote: ExpStageVotes = {
-  kind: STAGE_KIND_VOTES,
-  name: 'fake leader vote',
-  complete: false,
-  config: {},
-};
-
 // -------------------------------------------------------------------------------------
 export interface UserProfile {
   pronouns: string;
@@ -226,6 +219,18 @@ export const stageKinds = {
   STAGE_KIND_CHAT: STAGE_KIND_CHAT as typeof STAGE_KIND_CHAT,
   STAGE_KIND_LEADER_REVEAL: STAGE_KIND_LEADER_REVEAL as typeof STAGE_KIND_LEADER_REVEAL,
 };
+
+export enum ExpStageNames {
+  '1. Agree to the experiment and set your profile' = '1. Agree to the experiment and set your profile',
+  '2. Initial leadership survey' = '2. Initial leadership survey',
+  '3. Group discussion' = '3. Group discussion',
+  '4. Post-chat survey' = '4. Post-chat survey',
+  '5. Post-discussion leadership survey' = '5. Post-discussion leadership survey',
+  '6. Vote for the leader' = '6. Vote for the leader',
+  '7. Post-discussion work' = '7. Post-discussion work',
+  '8. Leader reveal' = '8. Leader reveal',
+  '9. final satisfaction survey' = '9. final satisfaction survey',
+}
 
 // -------------------------------------------------------------------------------------
 export interface UserData {

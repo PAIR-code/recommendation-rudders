@@ -6,20 +6,14 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, Signal, computed } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SavedDataService } from '../services/saved-data.service';
-import { UserData, UserProfile } from '../../lib/staged-exp/data-model';
+import { UserProfile } from '../../lib/staged-exp/data-model';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-
-const dummyProfileData: UserProfile = {
-  pronouns: 'They/Them',
-  avatarUrl: '/assets/avatars/they.png',
-  name: 'John Doe',
-};
 
 @Component({
   selector: 'app-exp-profile',

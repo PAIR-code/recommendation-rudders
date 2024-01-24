@@ -1,6 +1,6 @@
 import { Component, Signal, computed } from '@angular/core';
 import { SavedDataService } from '../services/saved-data.service';
-import { Votes } from 'src/lib/staged-exp/data-model';
+import { Votes, ExpStageNames } from 'src/lib/staged-exp/data-model';
 import { sortBy, reverse } from 'lodash';
 
 @Component({
@@ -17,7 +17,7 @@ export class ExpLeaderRevealComponent {
   constructor(private dataService: SavedDataService) {
     this.everyoneReachedTheEnd = computed(() => {
       const users = Object.values(this.dataService.data().experiment.participants);
-      return users.map((userData) => userData.futureStageNames.length).every((n) => n === 0);
+      return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
     });
 
     this.finalLeader = computed(() => {
@@ -28,7 +28,7 @@ export class ExpLeaderRevealComponent {
       });
 
       for (const user of users) {
-        const leaderVotes = user.stageMap['8. Vote for the leader'].config as Votes;
+        const leaderVotes = user.stageMap[ExpStageNames['7. Vote for the leader']].config as Votes;
         for (const userId of Object.keys(leaderVotes)) {
           const vote = leaderVotes[userId];
           if (vote === 'positive') {
