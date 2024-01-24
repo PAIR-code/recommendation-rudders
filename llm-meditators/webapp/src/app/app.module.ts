@@ -16,7 +16,6 @@ import { AppComponent } from './app.component';
 import { AppHomeComponent } from './app-home/app-home.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
-import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
@@ -42,6 +41,8 @@ import { ExpRatingComponent } from './exp-rating/exp-rating.component';
 import { ExpChatComponent } from './exp-chat/exp-chat.component';
 import { ExpTosComponent } from './exp-tos/exp-tos.component';
 import { ExpTosAndProfileComponent } from './exp-tos-and-profile/exp-tos-and-profile.component';
+import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
+import { ExpLeaderRevealComponent } from './exp-leader-reveal/exp-leader-reveal.component';
 
 @NgModule({
   declarations: [AppComponent, AppSettingsComponent, PageNotFoundComponent],
@@ -72,6 +73,7 @@ import { ExpTosAndProfileComponent } from './exp-tos-and-profile/exp-tos-and-pro
     ExpChatComponent,
     ExpTosComponent,
     ExpTosAndProfileComponent,
+    ExpLeaderRevealComponent,
   ],
 })
 export class AppModule {}

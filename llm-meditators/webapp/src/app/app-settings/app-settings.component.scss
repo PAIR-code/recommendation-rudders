@@ -1,4 +1,5 @@
-.main {}
+.main {
+}
 
 .full-width {
   width: 100%;
@@ -8,7 +9,7 @@
   color: #990000;
   border-radius: 5px;
   border: solid 1px #990000;
-  background-color: #FBB;
+  background-color: #fbb;
   padding: 5px;
 }
 
@@ -20,9 +21,13 @@
   flex: 1;
 }
 
+mat-form-field {
+  width: 420px;
+}
+
 .code-full-screen {
   margin: 0px;
-  margin-top: 60px;
+  margin-top: 10px;
   flex: 1 1 auto;
   height: 100%;
   width: 100%;

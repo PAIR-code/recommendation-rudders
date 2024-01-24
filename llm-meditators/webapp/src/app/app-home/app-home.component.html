@@ -14,6 +14,8 @@
       <app-exp-survey></app-exp-survey>
     } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_VOTES) {
       <app-exp-leader-vote></app-exp-leader-vote>
+    } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_LEADER_REVEAL) {
+      <app-exp-leader-reveal></app-exp-leader-reveal>
     } @else {
       <div>
         Oh no! It looks like something went wrong, there is no component for

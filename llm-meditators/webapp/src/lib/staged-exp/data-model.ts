@@ -176,6 +176,16 @@ export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
   kind: typeof STAGE_KIND_ACCEPT_TOS;
 }
 
+export interface LeaderReveal {
+  revealTimestamp: Date | null;
+}
+
+export const STAGE_KIND_LEADER_REVEAL = 'leader-reveal';
+
+export interface ExpStageLeaderReveal extends GenericExpStage<LeaderReveal> {
+  kind: typeof STAGE_KIND_LEADER_REVEAL;
+}
+
 // -------------------------------------------------------------------------------------
 export type ExpDataKinds =
   | TosAcceptance
@@ -184,7 +194,8 @@ export type ExpDataKinds =
   | UserProfile
   | Votes
   | ChatAboutItems
-  | ItemRatings;
+  | ItemRatings
+  | LeaderReveal;
 
 export type ExpStage =
   | ExpStageTosAcceptance
@@ -193,7 +204,8 @@ export type ExpStage =
   | ExpStageUserProfile
   | ExpStageVotes
   | ExpStageChatAboutItems
-  | ExpStageItemRatings;
+  | ExpStageItemRatings
+  | ExpStageLeaderReveal;
 
 export type ExpStageKind = ExpStage['kind'];
 
@@ -207,6 +219,7 @@ export const stageKinds = {
   STAGE_KIND_VOTES: STAGE_KIND_VOTES as typeof STAGE_KIND_VOTES,
   STAGE_KIND_RANKED_ITEMS: STAGE_KIND_RANKED_ITEMS as typeof STAGE_KIND_RANKED_ITEMS,
   STAGE_KIND_CHAT: STAGE_KIND_CHAT as typeof STAGE_KIND_CHAT,
+  STAGE_KIND_LEADER_REVEAL: STAGE_KIND_LEADER_REVEAL as typeof STAGE_KIND_LEADER_REVEAL,
 };
 
 // -------------------------------------------------------------------------------------

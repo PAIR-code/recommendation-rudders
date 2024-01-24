@@ -6,11 +6,10 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 import { v4 as uuidv4 } from 'uuid';
+import { uniqueNamesGenerator, Config as UniqueNamesGenConfig, starWars } from 'unique-names-generator';
 import {
   Experiment,
   ExpStage,
-  ExpStageTosAcceptance,
-  ExpStageUserProfile,
   ExpStageSurvey,
   ExpStageVotes,
   ExpStageChatAboutItems,
@@ -18,9 +17,14 @@ import {
   UserData,
   ExpStageTosAndUserProfile,
   stageKinds,
+  ExpStageLeaderReveal,
 } from './data-model';
 
 import * as items from './items';
+
+const fakeNameGenConfig: UniqueNamesGenConfig = {
+  dictionaries: [starWars],
+};
 
 // -------------------------------------------------------------------------------------
 //  Initial Experiment Setup
@@ -157,6 +161,17 @@ function finalSatisfactionSurvey(): ExpStageSurvey {
   };
 }
 
+function ultimateLeaderReveal(): ExpStageLeaderReveal {
+  return {
+    kind: stageKinds.STAGE_KIND_LEADER_REVEAL,
+    name: '11. Leader reveal',
+    complete: false,
+    config: {
+      revealTimestamp: null,
+    },
+  };
+}
+
 // Example data to bootstrap us...
 export function initUserData(stages: ExpStage[]): UserData {
   const stageMap: { [stageName: string]: ExpStage } = {};
@@ -175,7 +190,7 @@ export function initUserData(stages: ExpStage[]): UserData {
     accessCode: `access-code:${uuidv4()}`,
     userId,
     profile: {
-      name: `fakename:${uuidv4()}`,
+      name: uniqueNamesGenerator(fakeNameGenConfig), // `fakename:${uuidv4()}`,
       pronouns: '',
       avatarUrl: '',
     },
@@ -197,6 +212,7 @@ function makeStages() {
     leaderVoting(),
     postChatWork(),
     finalSatisfactionSurvey(),
+    ultimateLeaderReveal(),
   ];
 }
 

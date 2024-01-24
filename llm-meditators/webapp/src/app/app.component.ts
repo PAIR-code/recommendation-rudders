@@ -22,9 +22,6 @@ export class AppComponent implements AfterViewInit {
 
   public currentStageKind: Signal<ExpStageKind>;
   public currentStageName: Signal<string>;
-  public currentUserId: Signal<string>;
-
-  public usersList: string[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -34,12 +31,6 @@ export class AppComponent implements AfterViewInit {
   ) {
     this.currentStageKind = computed(() => this.dataService.currentStage().kind);
     this.currentStageName = computed(() => this.dataService.currentStage().name);
-
-    this.currentUserId = computed(() => this.dataService.data().currentUserId);
-
-    this.usersList = Object.values(this.dataService.data().experiment.participants).map(({ userId }) => userId);
-    console.log(this.usersList);
-    console.log('currentUserId: ', this.currentUserId());
 
     effect(() => {
       // document.querySelector('title')!.textContent =
@@ -53,9 +44,5 @@ export class AppComponent implements AfterViewInit {
     // also uncomment stuff in html.
     this.authService.prompt();
     this.authService.renderLoginButton(this.googleButton.nativeElement);
-  }
-
-  setCurrentUser(event: { value: string }) {
-    this.dataService.setCurrentUserId(event.value);
   }
 }

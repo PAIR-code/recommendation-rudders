@@ -16,8 +16,9 @@ import { ExpProfileComponent } from '../exp-profile/exp-profile.component';
 import { ExpRatingComponent } from '../exp-rating/exp-rating.component';
 import { ExpSurveyComponent } from '../exp-survey/exp-survey.component';
 import { ExpTosAndProfileComponent } from '../exp-tos-and-profile/exp-tos-and-profile.component';
+import { ExpLeaderRevealComponent } from '../exp-leader-reveal/exp-leader-reveal.component';
 import { ExpTosComponent } from '../exp-tos/exp-tos.component';
-import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-home',
@@ -29,6 +30,7 @@ import { MatButton, MatButtonModule } from '@angular/material/button';
     ExpRatingComponent,
     ExpSurveyComponent,
     ExpTosAndProfileComponent,
+    ExpLeaderRevealComponent,
     ExpTosComponent,
     MatButtonModule,
   ],
