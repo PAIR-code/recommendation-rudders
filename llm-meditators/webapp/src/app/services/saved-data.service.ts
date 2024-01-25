@@ -15,6 +15,8 @@ import {
   ExpDataKinds,
   UserProfile,
   ChatAboutItems,
+  ExpStageKind,
+  UserMessage,
 } from '../../lib/staged-exp/data-model';
 import { initialExperimentSetup } from '../../lib/staged-exp/example-experiment';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -46,6 +48,12 @@ export interface AppSessionParamState {
 const DEFAULT_SESSION: AppSession = {
   stage: '',
 };
+
+export interface StageState {
+  name: string;
+  kind: ExpStageKind;
+  participants: UserProfile[];
+}
 
 function parseSessionParam(str: string | null): AppSessionParamState {
   if (!str) {
@@ -98,6 +106,9 @@ export class SavedDataService {
   public nameStageMap: Signal<{ [stageName: string]: ExpStage }>;
   public currentStage: Signal<ExpStage>;
 
+  // Experiment wide data
+  public stageStates: Signal<StageState[]>;
+
   // the current URL params...
   public session: WritableSignal<AppSession>;
 
@@ -111,6 +122,33 @@ export class SavedDataService {
   ) {
     // The data.
     this.data = signal(JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())));
+
+    this.stageStates = computed(() => {
+      const participants = Object.values(this.data().experiment.participants);
+      const stageStateMap: { [stageName: string]: StageState } = {};
+      const participant0 = participants[0];
+      const stageStates: StageState[] = [
+        ...participant0.completedStageNames, 
+        participant0.currentStageName, 
+        ...participant0.futureStageNames
+      ].map(name => { 
+        const kind = participant0.stageMap[name].kind;
+        return { 
+          name,
+          kind,
+          participants: []
+        }
+      });
+      stageStates.forEach(s => stageStateMap[s.name] = s);
+      participants.forEach(p => {
+        if(p.currentStageName in stageStateMap) {
+          stageStateMap[p.currentStageName].participants.push(p.profile);
+        } else {
+          throw new Error(`stage not in the first participants stages: ${p.currentStageName}`);
+        }
+      });
+      return stageStates;
+    });
 
     // The current URL params data.
     this.session = signal(DEFAULT_SESSION, { equal: _.isEqual });
@@ -293,12 +331,13 @@ export class SavedDataService {
       // }
       this.editExpStageData<ChatAboutItems>(u.userId, stageName, (config) => {
         console.log(u.userId, config);
-        config.messages.push({
+        const userMessage: UserMessage = {
           userId: user.userId,
           messageType: 'userMessage',
           text: message,
           timestamp: new Date().valueOf(),
-        });
+        };
+        config.messages.push(userMessage);
       });
     }
     this.data.set({ ...data });

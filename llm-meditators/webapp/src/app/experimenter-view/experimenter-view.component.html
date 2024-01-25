@@ -1,0 +1,11 @@
+@for(stageState of stageStates(); track stageState.name) {
+    <div>
+        
+    <div>{{stageState.name}}</div><div>{{stageState.participants.length}}</div>
+
+    @if (stageState.kind === STAGE_KIND_CHAT) {
+        <app-mediator-chat [chatRoomName]="stageState.name"></app-mediator-chat>
+    }
+
+    </div>
+}
