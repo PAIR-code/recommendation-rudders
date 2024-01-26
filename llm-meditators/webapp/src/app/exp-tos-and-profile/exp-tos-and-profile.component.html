@@ -17,7 +17,15 @@
     <mat-radio-button class="pronouns-radio-button" value="She/Her">She/Her</mat-radio-button>
     <mat-radio-button class="pronouns-radio-button" value="They/Them">They/Them</mat-radio-button>
     <mat-radio-button class="pronouns-radio-button" value="He/Him">He/Him</mat-radio-button>
+    <mat-radio-button class="pronouns-radio-button" value="Other">Other</mat-radio-button>
   </mat-radio-group>
+
+  @if (pronounOtherSelected) {
+    <mat-form-field class="full-width">
+      <mat-label>My Pronouns</mat-label>
+      <input matInput placeholder="Write your response" [formControl]="responseControlPronouns" />
+    </mat-form-field>
+  }
 
   <p>
     <br />
@@ -28,7 +36,7 @@
   <form class="settings-form">
     <mat-form-field class="full-width">
       <mat-label>My Name</mat-label>
-      <input matInput placeholder="Write your response" [formControl]="responseControl" />
+      <input matInput placeholder="Write your response" [formControl]="responseControlName" />
     </mat-form-field>
   </form>
 
