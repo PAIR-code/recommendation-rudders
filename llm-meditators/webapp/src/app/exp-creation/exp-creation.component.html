@@ -1,0 +1,36 @@
+<mat-card>
+  <mat-card-content>
+    <h2>Create an experiment:</h2>
+
+    <div class="stage-view">
+      <div class="sub-view reference-view">
+        <h4>Reference stage config:</h4>
+        <div class="code-wrapper">
+          <pre>{{ currentStageOracleConfigString }}</pre>
+        </div>
+      </div>
+      <div class="sub-view creation-view">
+        <h4>Edit stage config:</h4>
+        <json-editor [options]="editorOptions" [data]="data" (change)="updatedData($event)" #editor></json-editor>
+      </div>
+    </div>
+
+    <div class="navigation">
+      <button mat-button (click)="previousStage()" [disabled]="creationIndex === 0">Previous stage</button>
+
+      <span> {{ currentStage && currentStage!.name }} (Stage {{ creationIndex + 1 }}) </span>
+
+      <button mat-button (click)="nextStage()" [disabled]="creationIndex === oracleStages.length - 1">
+        Next stage
+      </button>
+    </div>
+
+    <div class="toolbar">
+      <button mat-raised-button color="warn" (click)="resetAll()">Reset all stage data & start over</button>
+      &nbsp;&nbsp;&nbsp;
+      <button mat-raised-button color="primary" (click)="makeExperiment()">
+        Make experiment with the current stage data!
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>

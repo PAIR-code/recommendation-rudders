@@ -20,8 +20,8 @@ import { initialExperimentSetup } from '../../lib/staged-exp/example-experiment'
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import * as _ from 'underscore';
 
-export function initialAppData(): AppData {
-  const experiment = initialExperimentSetup(3);
+export function initialAppData(stages?: ExpStage[]): AppData {
+  const experiment = initialExperimentSetup(3, stages);
   return {
     currentUserId: Object.values(experiment.participants)[0].userId,
     settings: {
@@ -327,7 +327,7 @@ export class SavedDataService {
     this.data.set({ ...data });
   }
 
-  reset() {
-    this.data.set(initialAppData());
+  reset(stages?: ExpStage[]) {
+    this.data.set(initialAppData(stages));
   }
 }

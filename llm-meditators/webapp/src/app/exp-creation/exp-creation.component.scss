@@ -1,0 +1,44 @@
+mat-card {
+  margin: 1rem 0rem 2rem 0rem;
+}
+
+.stage-view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  // align-items: stretch;
+
+  .sub-view {
+    padding: 0.5rem;
+  }
+
+  .reference-view {
+    max-height: 300px;
+    overflow: auto;
+
+    pre {
+      height: 100%;
+      width: 100%;
+      font-size: 12px;
+      line-height: 1rem;
+    }
+  }
+
+  .creation-view {
+    border-top: thin solid #ccc;
+  }
+}
+
+.navigation {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toolbar {
+  margin: 1.5rem 0rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}

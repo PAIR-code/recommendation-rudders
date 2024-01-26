@@ -245,7 +245,7 @@ export function initUserData(stages: ExpStage[]): UserData {
   };
 }
 
-function makeStages(): ExpStage[] {
+export function makeStages(): ExpStage[] {
   return [
     acceptTosAndSetProfile(),
     //initialWork(),
@@ -260,17 +260,17 @@ function makeStages(): ExpStage[] {
   ];
 }
 
-function initParticipants(count: number): { [userId: string]: UserData } {
+export function initParticipants(count: number, stages?: ExpStage[]): { [userId: string]: UserData } {
   const participants: { [userId: string]: UserData } = {};
   for (let i = 0; i < count; i++) {
-    const p = initUserData(makeStages());
+    const p = initUserData(stages ? stages : makeStages());
     participants[p.userId] = p;
   }
   return participants;
 }
 
-export function initialExperimentSetup(count: number): Experiment {
-  const participants = initParticipants(count);
+export function initialExperimentSetup(count: number, stages?: ExpStage[]): Experiment {
+  const participants = initParticipants(count, stages);
 
   const experiment: Experiment = {
     numberOfParticipants: Object.keys(participants).length,
