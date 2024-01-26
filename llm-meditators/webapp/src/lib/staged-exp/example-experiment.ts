@@ -20,6 +20,9 @@ import {
   ExpStageLeaderReveal,
   Question,
   ExpStageNames,
+  TosAndUserProfile,
+  Survey,
+  ChatAboutItems,
 } from './data-model';
 
 import * as items from './items';
@@ -32,15 +35,22 @@ const fakeNameGenConfig: UniqueNamesGenConfig = {
 //  Initial Experiment Setup
 // -------------------------------------------------------------------------------------
 
-function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
+function acceptTosAndSetProfile(config?: TosAndUserProfile): ExpStageTosAndUserProfile {
   return {
     kind: stageKinds.STAGE_KIND_TOS_AND_PROFILE,
     name: ExpStageNames['1. Agree to the experiment and set your profile'],
     complete: false,
-    config: {
+    config: config || {
       pronouns: '',
       avatarUrl: '',
       name: '',
+      tosLines: [
+        'In vel diam malesuada nibh vehicula rutrum eget vel lectus.',
+        'Suspendisse auctor dolor nec consectetur dignissim.',
+        'Cras accumsan turpis sit amet pellentesque dictum.',
+        'Vestibulum ut ex pulvinar, mollis sapien tincidunt, hendrerit sem.',
+        'Quisque vestibulum ex quis sapien tincidunt, id ornare erat sollicitudin.',
+      ],
       acceptedTosTimestamp: null,
     },
   };
@@ -77,23 +87,23 @@ const initialWantToLeadQuestion: Question = {
   openFeedback: false,
   score: null,
 };
-function initialWantToLeadSurvey(): ExpStageSurvey {
+function initialWantToLeadSurvey(config?: Survey): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: ExpStageNames['2. Initial leadership survey'],
     complete: false,
-    config: {
+    config: config || {
       questions: [initialItemRatingsQuestion, initialWantToLeadQuestion],
     },
   };
 }
 
-function groupChat(): ExpStageChatAboutItems {
+function groupChat(config?: ChatAboutItems): ExpStageChatAboutItems {
   return {
     kind: stageKinds.STAGE_KIND_CHAT,
     name: ExpStageNames['3. Group discussion'],
     complete: false,
-    config: {
+    config: config || {
       ratingsToDiscuss: [],
       messages: [],
     },
@@ -110,12 +120,12 @@ Also indicate your overall feeling about the chat.`,
   score: null,
 };
 
-function chatDiscussionSurvey(): ExpStageSurvey {
+function chatDiscussionSurvey(config?: Survey): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: ExpStageNames['4. Post-chat survey'],
     complete: false,
-    config: {
+    config: config || {
       questions: [chatDiscussionQuestion],
     },
   };
@@ -130,12 +140,12 @@ const postChatWantToLeadQuestion: Question = {
   score: null,
 };
 
-function postChatWantToLeadSurvey(): ExpStageSurvey {
+function postChatWantToLeadSurvey(config?: Survey): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: ExpStageNames['5. Post-discussion leadership survey'],
     complete: false,
-    config: {
+    config: config || {
       questions: [postChatWantToLeadQuestion],
     },
   };
@@ -161,12 +171,12 @@ const finalItemRatingsQuestion: Question = {
   },
 };
 
-function postChatWork(): ExpStageSurvey {
+function postChatWork(config?: Survey): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: '7. Post-discussion work',
     complete: false,
-    config: {
+    config: config || {
       questions: [finalItemRatingsQuestion],
     },
     // userAcceptance: Date,
@@ -194,12 +204,12 @@ Also indicate your overall feeling about the experience.`,
   score: null,
 };
 
-function finalSatisfactionSurvey(): ExpStageSurvey {
+function finalSatisfactionSurvey(config?: Survey): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: '9. final satisfaction survey',
     complete: false,
-    config: {
+    config: config || {
       questions: [finalSatisfactionQuestion],
     },
   };
@@ -235,7 +245,7 @@ export function initUserData(stages: ExpStage[]): UserData {
   };
 }
 
-function makeStages() {
+export function makeStages(): ExpStage[] {
   return [
     acceptTosAndSetProfile(),
     //initialWork(),
@@ -250,17 +260,17 @@ function makeStages() {
   ];
 }
 
-function initParticipants(count: number): { [userId: string]: UserData } {
+export function initParticipants(count: number, stages?: ExpStage[]): { [userId: string]: UserData } {
   const participants: { [userId: string]: UserData } = {};
   for (let i = 0; i < count; i++) {
-    const p = initUserData(makeStages());
+    const p = initUserData(stages ? stages : makeStages());
     participants[p.userId] = p;
   }
   return participants;
 }
 
-export function initialExperimentSetup(count: number): Experiment {
-  const participants = initParticipants(count);
+export function initialExperimentSetup(count: number, stages?: ExpStage[]): Experiment {
+  const participants = initParticipants(count, stages);
 
   const experiment: Experiment = {
     numberOfParticipants: Object.keys(participants).length,

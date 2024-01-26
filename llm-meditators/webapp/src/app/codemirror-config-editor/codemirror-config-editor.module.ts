@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-
 import { NgModule } from '@angular/core';
 import { CodemirrorConfigEditorComponent } from './codemirror-config-editor.component';
 
@@ -25,13 +24,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [CodemirrorConfigEditorComponent],
-  imports: [
-    BrowserAnimationsModule,
-    MatButtonModule,
-    CommonModule,
-    MatIconModule,
-    MatMenuModule
-  ],
+  imports: [BrowserAnimationsModule, MatButtonModule, CommonModule, MatIconModule, MatMenuModule],
   exports: [CodemirrorConfigEditorComponent],
 })
-export class CodemirrorConfigEditorModule { }
+export class CodemirrorConfigEditorModule {}

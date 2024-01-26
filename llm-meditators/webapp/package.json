@@ -21,6 +21,8 @@
     "@angular/platform-browser": "^17.0.6",
     "@angular/platform-browser-dynamic": "^17.0.6",
     "@angular/router": "^17.0.6",
+    "ang-jsoneditor": "^3.1.1",
+    "jsoneditor": "^10.0.0",
     "lodash": "^4.17.21",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
