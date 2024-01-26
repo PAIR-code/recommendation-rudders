@@ -1,10 +1,12 @@
+<div>Participant Chat View</div>
+
 <div class="messages">
   @for (message of messages(); track $index) {
     <div class="message">
       @if (message.messageType === 'userMessage') {
         <app-chat-user-message [message]="message"></app-chat-user-message>
       } @else if (message.messageType === 'mediatorMessage') {
-        <app-chat-mediator-message></app-chat-mediator-message>
+        <app-chat-mediator-message [message]="message"></app-chat-mediator-message>
       } @else if (message.messageType === 'discussItemsMessage') {
         <app-chat-discuss-items-message></app-chat-discuss-items-message>
       } @else {
