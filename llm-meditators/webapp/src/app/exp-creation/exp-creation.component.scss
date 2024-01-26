@@ -1,5 +1,100 @@
-mat-card {
-  margin: 1rem 0rem 2rem 0rem;
+.main {
+  padding: 1rem;
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  height: 80vh;
+}
+
+.stage-list {
+  // background-color: #999;
+  width: 250px;
+  padding-right: 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  overflow: auto;
+
+  .stage-container {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    background-color: #efefef;
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+
+    display: flex;
+    align-items: center;
+
+    &:hover {
+      background-color: #ddd;
+    }
+
+    &.active {
+      background-color: #ccc;
+    }
+
+    .stage-idx {
+      margin-right: 8px;
+    }
+
+    .stage-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  button {
+    flex-shrink: 0;
+  }
+}
+
+.stage-creation-container {
+  flex: 1;
+  padding: 1rem 1.5rem;
+
+  display: flex;
+  flex-direction: column;
+
+  .main-content {
+    flex: 1;
+
+    .form-element-wrapper {
+      min-width: 350px;
+
+      .mat-form-field {
+        width: 100%;
+      }
+    }
+  }
+
+  .tool-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    .unsaved-warning {
+      margin: 1rem;
+      color: #ed5109;
+    }
+  }
+}
+
+.stage-name-edit {
+  display: flex;
+  align-items: center;
+}
+
+.stage-kind-selection {
+  display: flex;
+  align-items: center;
 }
 
 .stage-view {

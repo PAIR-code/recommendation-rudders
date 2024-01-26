@@ -1,36 +1,134 @@
-<mat-card>
-  <mat-card-content>
-    <h2>Create an experiment:</h2>
+<div class="main">
+  <h2>Create an experiment:</h2>
 
-    <div class="stage-view">
-      <div class="sub-view reference-view">
-        <h4>Reference stage config:</h4>
-        <div class="code-wrapper">
-          <pre>{{ currentStageOracleConfigString }}</pre>
+  <div class="container">
+    <div class="stage-list">
+      @for (stageData of existingStages; track $index) {
+        <div class="stage-container {{ $index === currentEditingStageIndex && 'active' }}">
+          <div class="stage-idx">{{ $index + 1 }}.</div>
+          <div class="stage-content">
+            {{ !stageData.name || stageData.name.length === 0 ? 'Unnamed stage' : stageData.name }}
+          </div>
+        </div>
+      }
+      <!-- <div class="stage-container">
+        <div class="stage-idx">1</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">2</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container active">
+        <div class="stage-idx">3</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div>
+      <div class="stage-container">
+        <div class="stage-idx">4</div>
+        <div class="stage-content">asdf</div>
+      </div> -->
+      <br />
+      <button mat-button (click)="addNewStage()"><mat-icon>add</mat-icon> Add a stage</button>
+      <br />
+      <button mat-raised-button color="warn" (click)="resetExistingStages()">Reset all</button>
+    </div>
+
+    <mat-card class="stage-creation-container">
+      <div class="main-content">
+        <div class="stage-kind-selection">
+          <h3>Stage kind:</h3>
+          &nbsp;&nbsp;&nbsp;
+          <div class="form-element-wrapper">
+            <mat-form-field class="mat-form-field">
+              <mat-label>Choose a stage:</mat-label>
+              <mat-select>
+                @for (kind of availableStageKinds; track kind) {
+                  <mat-option [value]="kind">{{ kind }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="stage-name-edit">
+          <h3>Stage name:</h3>
+          &nbsp;&nbsp;&nbsp;
+          <div class="form-element-wrapper">
+            <mat-form-field class="mat-form-field">
+              <input matInput placeholder="Welcome to the experiment!" value="" />
+            </mat-form-field>
+          </div>
         </div>
       </div>
-      <div class="sub-view creation-view">
-        <h4>Edit stage config:</h4>
-        <json-editor [options]="editorOptions" [data]="data" (change)="updatedData($event)" #editor></json-editor>
+      <div class="tool-bar">
+        <div class="unsaved-warning">(Unsaved data)</div>
+        <button mat-raised-button color="primary">Save stage data</button>
+      </div>
+    </mat-card>
+  </div>
+
+  <div class="stage-view">
+    <div class="sub-view reference-view">
+      <h4>Reference stage config:</h4>
+      <div class="code-wrapper">
+        <pre>{{ currentStageOracleConfigString }}</pre>
       </div>
     </div>
-
-    <div class="navigation">
-      <button mat-button (click)="previousStage()" [disabled]="creationIndex === 0">Previous stage</button>
-
-      <span> {{ currentStage && currentStage!.name }} (Stage {{ creationIndex + 1 }}) </span>
-
-      <button mat-button (click)="nextStage()" [disabled]="creationIndex === oracleStages.length - 1">
-        Next stage
-      </button>
+    <div class="sub-view creation-view">
+      <h4>Edit stage config:</h4>
+      <json-editor [options]="editorOptions" [data]="data" (change)="updatedData($event)" #editor></json-editor>
     </div>
+  </div>
 
-    <div class="toolbar">
-      <button mat-raised-button color="warn" (click)="resetAll()">Reset all stage data & start over</button>
-      &nbsp;&nbsp;&nbsp;
-      <button mat-raised-button color="primary" (click)="makeExperiment()">
-        Make experiment with the current stage data!
-      </button>
-    </div>
-  </mat-card-content>
-</mat-card>
+  <div class="navigation">
+    <button mat-button (click)="previousStage()" [disabled]="creationIndex === 0">Previous stage</button>
+
+    <span> {{ currentStage && currentStage!.name }} (Stage {{ creationIndex + 1 }}) </span>
+
+    <button mat-button (click)="nextStage()" [disabled]="creationIndex === oracleStages.length - 1">Next stage</button>
+  </div>
+
+  <div class="toolbar">
+    <button mat-raised-button color="warn" (click)="resetAll()">Reset all stage data & start over</button>
+    &nbsp;&nbsp;&nbsp;
+    <button mat-raised-button color="primary" (click)="makeExperiment()">
+      Make experiment with the current stage data!
+    </button>
+  </div>
+</div>
