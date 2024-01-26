@@ -33,8 +33,10 @@ import { SavedDataService } from '../services/saved-data.service';
   styleUrl: './exp-tos-and-profile.component.scss',
 })
 export class ExpTosAndProfileComponent {
-  public responseControl: FormControl<string | null>;
+  public responseControlName: FormControl<string | null>;
+  public responseControlPronouns: FormControl<string | null>;
   public config: TosAndUserProfile;
+  public pronounOtherSelected = false;
 
   constructor(private dataService: SavedDataService) {
     const stage = this.dataService.currentStage();
@@ -43,10 +45,18 @@ export class ExpTosAndProfileComponent {
     }
     this.config = stage.config;
 
-    this.responseControl = new FormControl<string>('');
-    this.responseControl.valueChanges.forEach((n) => {
+    this.responseControlName = new FormControl<string>('');
+    this.responseControlName.valueChanges.forEach((n) => {
       if (n) {
         this.config.name = n;
+        this.updateStageAndUser();
+      }
+    });
+
+    this.responseControlPronouns = new FormControl<string>('');
+    this.responseControlPronouns.valueChanges.forEach((n) => {
+      if (n) {
+        this.config.pronouns = n;
         this.updateStageAndUser();
       }
     });
@@ -73,6 +83,13 @@ export class ExpTosAndProfileComponent {
 
   updatePronouns(updatedValue: MatRadioChange) {
     this.config.pronouns = updatedValue.value;
+    if (updatedValue.value === 'Other') {
+      this.pronounOtherSelected = true;
+      this.responseControlPronouns.setValue('');
+    }
+    else {
+      this.pronounOtherSelected = false;
+    }
     this.updateStageAndUser();
   }
 
