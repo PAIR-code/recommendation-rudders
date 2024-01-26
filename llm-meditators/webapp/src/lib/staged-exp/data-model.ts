@@ -133,6 +133,7 @@ export interface TosAndUserProfile {
   pronouns: string;
   avatarUrl: string;
   name: string;
+  tosLines: string[];
   acceptedTosTimestamp: Date | null;
 }
 

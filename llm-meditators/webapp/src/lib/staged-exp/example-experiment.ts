@@ -41,6 +41,13 @@ function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
       pronouns: '',
       avatarUrl: '',
       name: '',
+      tosLines: [
+        'In vel diam malesuada nibh vehicula rutrum eget vel lectus.',
+        'Suspendisse auctor dolor nec consectetur dignissim.',
+        'Cras accumsan turpis sit amet pellentesque dictum.',
+        'Vestibulum ut ex pulvinar, mollis sapien tincidunt, hendrerit sem.',
+        'Quisque vestibulum ex quis sapien tincidunt, id ornare erat sollicitudin.',
+      ],
       acceptedTosTimestamp: null,
     },
   };
