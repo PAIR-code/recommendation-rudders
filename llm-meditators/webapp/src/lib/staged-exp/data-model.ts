@@ -251,6 +251,8 @@ export interface UserData {
 // Admin editable, some parts of this are written to by certain
 // user actions, by a trusted cloud function.
 export interface Experiment {
+  name: string;
+  date: Date;
   numberOfParticipants: number;
   participants: { [userId: string]: UserData };
 }

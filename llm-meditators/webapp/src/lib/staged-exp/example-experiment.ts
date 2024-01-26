@@ -263,6 +263,8 @@ export function initialExperimentSetup(count: number): Experiment {
   const participants = initParticipants(count);
 
   const experiment: Experiment = {
+    name: 'initial version of llm-meditators experiment',
+    date: new Date(),
     numberOfParticipants: Object.keys(participants).length,
     participants,
   };
