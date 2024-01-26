@@ -14,13 +14,18 @@ import { PageNotFoundComponent } from './page-not-found/page-not-found.component
 import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
 import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.component';
 import { ExpTosComponent } from './exp-tos/exp-tos.component';
+import { ParticipantViewComponent } from './participant-view/participant-view.component';
+import { ExperimenterViewComponent } from './experimenter-view/experimenter-view.component';
 
 const routes: Routes = [
   { path: '', component: AppHomeComponent, pathMatch: 'full' },
-  { path: 'survey', component: ExpSurveyComponent, pathMatch: 'full' },
-  { path: 'leader-vote', component: ExpLeaderVoteComponent, pathMatch: 'full' },
   { path: 'settings', component: AppSettingsComponent, pathMatch: 'full' },
-  { path: 'tos', component: ExpTosComponent, pathMatch: 'full' },
+  {
+    path: 'experiment/:eid/participant/:pid',
+    component: ParticipantViewComponent,
+    pathMatch: 'full',
+  },
+  { path: 'experimenter', component: ExperimenterViewComponent, pathMatch: 'full' },
   { path: '**', component: PageNotFoundComponent },
 ];
 

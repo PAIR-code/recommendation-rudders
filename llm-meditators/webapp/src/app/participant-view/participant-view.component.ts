@@ -34,6 +34,7 @@ export class ParticipantViewComponent {
     public router: Router,
     public dataService: SavedDataService,
   ) {
+    route.params;
     this.currentStageKind = computed(() => this.dataService.currentStage().kind);
     this.currentStageName = computed(() => this.dataService.currentStage().name);
     this.workingOnStageName = computed(() => this.dataService.user().workingOnStageName);

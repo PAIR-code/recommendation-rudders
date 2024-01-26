@@ -20,7 +20,16 @@ import { Experiment } from 'src/lib/staged-exp/data-model';
 export class AppComponent implements AfterViewInit {
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
 
+  public error: string = '';
+
   public accessCode: string = '';
+  public get accessCodeValue() {
+    return this.accessCode;
+  }
+  public set accessCodeValue(s: string) {
+    this.error = '';
+    this.accessCode = s;
+  }
 
   public experiments: Signal<Experiment[]>;
 
@@ -30,11 +39,21 @@ export class AppComponent implements AfterViewInit {
     public dataService: SavedDataService,
     public authService: GoogleAuthService,
   ) {
-    this.experiments = computed(() => this.dataService.data().experiments);
+    this.experiments = computed(() =>
+      Object.values(this.dataService.data().experiments).sort((a, b) => a.name.localeCompare(b.name)),
+    );
 
     effect(() => {
       document.title = `Experiment: ${this.dataService.appName()}`;
     });
+  }
+
+  joinExperiment() {
+    const parts = this.accessCode.split(':');
+    if (parts.length !== 3) {
+      this.error = 'Bad access code';
+    }
+    const [experimentId, userId, accessCode] = parts;
   }
 
   ngAfterViewInit() {
