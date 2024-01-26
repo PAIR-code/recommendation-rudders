@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { CodemirrorConfigEditorComponent } from './codemirror-config-editor.component';
@@ -29,13 +28,8 @@ describe('CodemirrorConfigEditorComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [BrowserAnimationsModule,
-        MatButtonModule,
-        CommonModule,
-        MatIconModule,
-        MatMenuModule
-      ],
-      declarations: [CodemirrorConfigEditorComponent]
+      imports: [BrowserAnimationsModule, MatButtonModule, CommonModule, MatIconModule, MatMenuModule],
+      declarations: [CodemirrorConfigEditorComponent],
     }).compileComponents();
   });
 

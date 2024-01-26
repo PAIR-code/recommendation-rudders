@@ -37,7 +37,7 @@ export class AppComponent implements AfterViewInit {
     effect(() => {
       // document.querySelector('title')!.textContent =
       //   this.dataService.appName();
-      document.title = `Rudders: ${this.dataService.appName()}`;
+      document.title = `Experiment: ${this.dataService.appName()}`;
     });
   }
 

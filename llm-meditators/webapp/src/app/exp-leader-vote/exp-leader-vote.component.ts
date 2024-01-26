@@ -75,11 +75,11 @@ export class ExpLeaderVoteComponent {
       this.dataService.setStageComplete(true);
     }
     this.votes[userId] = value;
-    this.dataService.editCurrentExpStageData<Votes>(() => this.votes);
+    this.dataService.editWorkingOnExpStageData<Votes>(() => this.votes);
   }
 
   resetVote(userId: string) {
     this.votes[userId] = LeaderVote.NOT_RATED;
-    this.dataService.editCurrentExpStageData<Votes>(() => this.votes);
+    this.dataService.editWorkingOnExpStageData<Votes>(() => this.votes);
   }
 }

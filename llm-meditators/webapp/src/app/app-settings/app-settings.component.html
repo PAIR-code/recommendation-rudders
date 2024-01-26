@@ -6,6 +6,11 @@
         <input matInput placeholder="Write a name for your app" [formControl]="appNameControl" />
       </mat-form-field>
     </div>
+  </form>
+
+  <app-exp-creation></app-exp-creation>
+
+  <form class="settings-form">
     <div class="row">
       <div class="appinfo">
         App data: <span>{{ sizeString() }}</span>

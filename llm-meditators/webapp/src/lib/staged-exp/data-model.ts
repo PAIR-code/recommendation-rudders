@@ -139,6 +139,7 @@ export interface TosAndUserProfile {
   pronouns: string;
   avatarUrl: string;
   name: string;
+  tosLines: string[];
   acceptedTosTimestamp: Date | null;
 }
 
@@ -246,7 +247,6 @@ export interface UserData {
   profile: UserProfile;
   stageMap: { [stageName: string]: ExpStage };
   completedStageNames: string[]; // current stage is the very last one.
-  currentStageName: string;
   workingOnStageName: string;
   futureStageNames: string[];
 }
