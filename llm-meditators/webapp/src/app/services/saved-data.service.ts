@@ -17,6 +17,7 @@ import {
   ChatAboutItems,
   ExpStageKind,
   UserMessage,
+  MediatorMessage,
 } from '../../lib/staged-exp/data-model';
 import { initialExperimentSetup } from '../../lib/staged-exp/example-experiment';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -338,6 +339,22 @@ export class SavedDataService {
           timestamp: new Date().valueOf(),
         };
         config.messages.push(userMessage);
+      });
+    }
+    this.data.set({ ...data });
+  }
+
+  sendMediatorMessage(message: string): void {
+    const data = this.data();
+    for (const u of Object.values(data.experiment.participants)) {
+      const stageName = u.currentStageName;
+      this.editExpStageData<ChatAboutItems>(u.userId, stageName, (config) => {
+        const mediatorMessage: MediatorMessage = {
+          messageType: 'mediatorMessage',
+          text: message,
+          timestamp: new Date().valueOf(),
+        };
+        config.messages.push(mediatorMessage);
       });
     }
     this.data.set({ ...data });
