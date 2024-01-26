@@ -1,10 +1,26 @@
+<h2>Experimenter View</h2>    
+    <h3>Welcome to the experimenter view! Here you can select the number of particpants in each stage of the experiment and mediate the chat.</h3>
+    <h3>Number of participants in each stage:</h3>
+    
 @for(stageState of stageStates(); track stageState.name) {
     <div>
-        
-    <div>{{stageState.name}}</div><div>{{stageState.participants.length}}</div>
+    
+        {{stageState.name}}: {{stageState.participants.length}}
 
     @if (stageState.kind === STAGE_KIND_CHAT) {
-        <app-mediator-chat [chatRoomName]="stageState.name"></app-mediator-chat>
+        <mat-accordion>
+            <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        Current state of the Chat Discussion
+                    </mat-panel-title>
+                    <mat-panel-description>
+                        You can interact directly with the chat here.
+                    </mat-panel-description>
+                </mat-expansion-panel-header>
+                    <app-mediator-chat [chatRoomName]="stageState.name"></app-mediator-chat>
+            </mat-expansion-panel>
+        </mat-accordion>
     }
 
     </div>

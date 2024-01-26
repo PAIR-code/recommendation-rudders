@@ -2,11 +2,12 @@ import { Component, Signal } from '@angular/core';
 import { SavedDataService, StageState } from '../services/saved-data.service';
 import { STAGE_KIND_CHAT } from 'src/lib/staged-exp/data-model';
 import { MediatorChatComponent } from '../exp-chat/mediator-chat/mediator-chat.component';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 @Component({
   selector: 'app-experimenter-view',
   standalone: true,
-  imports: [ MediatorChatComponent ],
+  imports: [ MediatorChatComponent, MatExpansionModule ],
   templateUrl: './experimenter-view.component.html',
   styleUrl: './experimenter-view.component.scss'
 })
