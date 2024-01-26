@@ -17,7 +17,7 @@ import {
   ChatAboutItems,
 } from '../../lib/staged-exp/data-model';
 import { initialExperimentSetup } from '../../lib/staged-exp/example-experiment';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import * as _ from 'underscore';
 
 export function initialAppData(): AppData {
@@ -59,9 +59,9 @@ function parseSessionParam(str: string | null): AppSessionParamState {
   }
 }
 
-function prepareSessionParam(session: AppSession): string {
-  return JSON.stringify(session);
-}
+// function prepareSessionParam(session: AppSession): string {
+//   return JSON.stringify(session);
+// }
 
 // -------------------------------------------------------------------------------------
 //  App Settings & Data (saved in local storage / firebase)
@@ -100,6 +100,7 @@ export class SavedDataService {
 
   // the current URL params...
   public session: WritableSignal<AppSession>;
+  public defaultSession: Signal<AppSession>;
 
   // Any errors.
   public errors: WritableSignal<string[]>;
@@ -112,21 +113,25 @@ export class SavedDataService {
     // The data.
     this.data = signal(JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())));
 
-    // The current URL params data.
-    this.session = signal(DEFAULT_SESSION, { equal: _.isEqual });
-
     // Current user related data...
     this.user = computed(() => {
       const data = this.data();
       return data.experiment.participants[data.currentUserId];
     });
+
+    // The current URL params data.
+    this.defaultSession = computed(() =>
+      Object.assign({ ...DEFAULT_SESSION }, { stage: this.user().workingOnStageName }),
+    );
+    this.session = signal(this.defaultSession(), { equal: _.isEqual });
+
     this.nameStageMap = computed(() => {
       return this.user().stageMap;
     });
     this.currentStage = computed(() => {
-      return this.user().stageMap[this.user().currentStageName];
+      const stage = this.session().stage || this.user().workingOnStageName;
+      return this.user().stageMap[stage];
     });
-
     this.stageComplete = computed(() => this.currentStage().complete);
 
     // Convenience signal for the appName.
@@ -135,28 +140,44 @@ export class SavedDataService {
     this.dataSize = computed(() => this.dataJson().length);
     this.errors = signal([]);
 
-    const params = signal<Partial<AppSession>>({});
-    this.route.queryParamMap.forEach((paramMap) => {
-      // console.log('updating params state: ', paramMap.get('state'));
-      const paramSessionState = parseSessionParam(paramMap.get('state'));
-      params.set(paramSessionState.session);
-      this.errors.update((errors) => errors.concat(paramSessionState.errors));
+    // This is a rather delicate bit of logic that corelates session parameters to URL parameters.
+    // It ensures that all and only non-default session parameters are always
+    // represented in the URL.
+    let firstEmptyParams = true;
+    const lastSession = signal<AppSession>(DEFAULT_SESSION);
+    this.route.queryParams.forEach((urlParams) => {
+      // Don't update on the very first value, which is always {} even if URL params are provided.
+      if (firstEmptyParams) {
+        firstEmptyParams = false;
+        return;
+      }
       const oldSession = untracked(this.session);
-      const newSession = Object.assign({ ...oldSession }, paramSessionState.session);
-      if (!_.isEqual(newSession, oldSession)) {
-        this.session.set(newSession);
+      const fullUrlSession: AppSession = Object.assign({ ...this.defaultSession() }, urlParams);
+      lastSession.set(fullUrlSession);
+      if (!_.isEqual(oldSession, fullUrlSession)) {
+        this.session.set(fullUrlSession);
       }
     });
 
+    let firstSessionUpdate = true;
     effect(() => {
-      const newSession = this.session();
-      const oldParams = untracked(params);
-      const oldParamSession = Object.assign({ ...DEFAULT_SESSION }, oldParams);
-      // console.log('might update search params', JSON.stringify({oldParamSession, newSession}));
-      if (!_.isEqual(oldParamSession, newSession)) {
+      // Don't update on the very first value, which is restored from user saved default session.
+      if (firstSessionUpdate) {
+        firstSessionUpdate = false;
+        return;
+      }
+      // Remove any entries that are the default value: keep the URL minimal.
+      const trimmedNewSession: Partial<AppSession> = { ...this.session() };
+      for (const k of Object.keys(trimmedNewSession)) {
+        const key = k as keyof Partial<AppSession>;
+        if (_.isEqual(trimmedNewSession[key], this.defaultSession()[key])) {
+          delete trimmedNewSession[key];
+        }
+      }
+      if (!_.isEqual(lastSession(), this.session())) {
         this.router.navigate([], {
           relativeTo: this.route,
-          queryParams: { state: prepareSessionParam(newSession) },
+          queryParams: trimmedNewSession as Params,
         });
       }
     }, {});
@@ -178,25 +199,27 @@ export class SavedDataService {
   }
 
   nextStep() {
+    let currentStageName = this.currentStage().name;
     this.editCurrentUser((u) => {
-      if (u.workingOnStageName === u.currentStageName) {
+      if (u.workingOnStageName === currentStageName) {
         const nextStageName = u.futureStageNames.shift();
         if (!nextStageName) {
           return;
         }
         u.completedStageNames.push(u.workingOnStageName);
         u.workingOnStageName = nextStageName;
-        u.currentStageName = nextStageName;
+        currentStageName = nextStageName;
       } else {
         // here, we can assume that u.currentStageName is among one of the completed stages.
-        const currentStageIdx = u.completedStageNames.indexOf(u.currentStageName);
-        u.currentStageName =
+        const currentStageIdx = u.completedStageNames.indexOf(currentStageName);
+        currentStageName =
           currentStageIdx === u.completedStageNames.length - 1
             ? u.workingOnStageName
             : u.completedStageNames[currentStageIdx + 1];
       }
+
       this.editSession((session) => {
-        session.stage = u.currentStageName;
+        session.stage = currentStageName;
       });
     });
   }
@@ -233,8 +256,8 @@ export class SavedDataService {
   }
 
   setCurrentExpStageName(expStageName: string) {
-    this.editCurrentUser((user) => {
-      user.currentStageName = expStageName;
+    this.editSession((session) => {
+      session.stage = expStageName;
     });
   }
 
@@ -246,15 +269,15 @@ export class SavedDataService {
 
   setStageComplete(complete: boolean) {
     this.editCurrentUser((user) => {
-      user.stageMap[user.currentStageName].complete = complete;
+      user.stageMap[user.workingOnStageName].complete = complete;
     });
   }
 
-  editCurrentExpStageData<T extends ExpDataKinds>(f: (oldExpStage: T) => T | void) {
+  editWorkingOnExpStageData<T extends ExpDataKinds>(f: (oldExpStage: T) => T | void) {
     this.editCurrentUser((user) => {
-      const maybeNewData = f(user.stageMap[user.currentStageName].config as T);
+      const maybeNewData = f(user.stageMap[user.workingOnStageName].config as T);
       if (maybeNewData) {
-        user.stageMap[user.currentStageName].config = maybeNewData;
+        user.stageMap[user.workingOnStageName].config = maybeNewData;
       }
     });
   }

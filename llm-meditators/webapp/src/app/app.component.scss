@@ -54,12 +54,16 @@ $toolbar-height: 60px;
   flex: 1 1 auto;
   overflow: auto;
 
-  .current-stage {
-    background-color: #3f51b555;
+  .highlighted {
+    background-color: #ddd;
   }
 
   .working-on-stage {
-    background-color: #ddd;
+    .menu-item-inner {}
+  }
+
+  .active {
+    color: #D00;
   }
 
   .menu-item-inner {

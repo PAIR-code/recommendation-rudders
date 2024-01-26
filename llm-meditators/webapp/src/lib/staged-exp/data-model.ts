@@ -240,7 +240,6 @@ export interface UserData {
   profile: UserProfile;
   stageMap: { [stageName: string]: ExpStage };
   completedStageNames: string[]; // current stage is the very last one.
-  currentStageName: string;
   workingOnStageName: string;
   futureStageNames: string[];
 }

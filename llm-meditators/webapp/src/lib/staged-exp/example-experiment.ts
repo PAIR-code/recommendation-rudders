@@ -229,7 +229,6 @@ export function initUserData(stages: ExpStage[]): UserData {
       avatarUrl: '',
     },
     stageMap,
-    currentStageName,
     workingOnStageName,
     completedStageNames: [] as string[],
     futureStageNames,
