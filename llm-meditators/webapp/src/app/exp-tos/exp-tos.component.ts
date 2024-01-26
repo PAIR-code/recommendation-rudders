@@ -40,7 +40,7 @@ export class ExpTosComponent {
     const checked = updatedValue.checked;
     if (checked) {
       const date = new Date();
-      this.dataService.editCurrentExpStageData<TosAcceptance>((d) => {
+      this.dataService.editWorkingOnExpStageData<TosAcceptance>((d) => {
         d.acceptedTosTimestamp = date;
       });
     }

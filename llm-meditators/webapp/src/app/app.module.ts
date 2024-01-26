@@ -42,6 +42,7 @@ import { NgModule } from '@angular/core';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 import { SavedDataService } from './services/saved-data.service';
 import { VertexApiService } from './services/vertex-api.service';
+import { RouterModule } from '@angular/router';
 
 @NgModule({
   declarations: [AppComponent, AppSettingsComponent, PageNotFoundComponent],
@@ -49,6 +50,7 @@ import { VertexApiService } from './services/vertex-api.service';
   bootstrap: [AppComponent],
   imports: [
     BrowserModule,
+    RouterModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     MatButtonModule,

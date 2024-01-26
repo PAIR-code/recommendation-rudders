@@ -82,7 +82,7 @@ export class ExpTosAndProfileComponent {
   }
 
   updateStageAndUser() {
-    this.dataService.editCurrentExpStageData(() => this.config);
+    this.dataService.editWorkingOnExpStageData(() => this.config);
     this.dataService.updateUserProfile(this.config);
     this.dataService.setStageComplete(this.isComplete());
   }

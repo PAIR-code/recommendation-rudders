@@ -18,14 +18,14 @@
       <mat-nav-list class="menu-buttons">
         @for (stageName of dataService.user().completedStageNames; track stageName) {
           <mat-list-item
-            [activated]="false"
             matListItemTitle
-            routerLink="/"
-            routerLinkActive="active"
+            [routerLink]="['/']"
+            [queryParams]="{ stage: stageName }"
+            [class.highlighted]="dataService.session().stage === stageName"
             ariaCurrentWhenActive="page"
-            (click)="updateCurrentStageName(stageName)"
-            class="menu-item {{ stageName === dataService.user().currentStageName ? 'current-stage' : '' }}"
+            class="menu-item"
           >
+            <!-- (click)="updateCurrentStageName(stageName)" -->
             <div class="menu-item-inner">
               {{ stageName }}
               <mat-icon class="icon completed" fontIcon="check"></mat-icon>
@@ -33,17 +33,19 @@
           </mat-list-item>
         }
         <mat-list-item
-          [activated]="false"
           matListItemTitle
-          routerLink="/"
-          routerLinkActive="active"
+          [routerLink]="['/']"
           ariaCurrentWhenActive="page"
+          #rla="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }"
+          routerLinkActive
           class="menu-item working-on-stage"
-          (click)="updateCurrentStageName(workingOnStageName())"
+          [class.highlighted]="dataService.session().stage === workingOnStageName() && rla.isActive"
         >
           <div class="menu-item-inner">
             {{ workingOnStageName() }}
             <div class="ongoing-badge">ongoing</div>
+            {{ rla.isActive }}
           </div>
         </mat-list-item>
         @for (stageName of dataService.user().futureStageNames; track stageName) {
@@ -51,8 +53,6 @@
             [disabled]="true"
             [activated]="false"
             matListItemTitle
-            routerLink="/"
-            routerLinkActive="active"
             ariaCurrentWhenActive="page"
             class="menu-item future-stage"
           >
@@ -60,10 +60,9 @@
           </mat-list-item>
         }
         <mat-list-item
-          [activated]="router.url === '/settings'"
           matListItemTitle
           routerLink="/settings"
-          routerLinkActive="active"
+          routerLinkActive="highlighted"
           ariaCurrentWhenActive="page"
         >
           <div class="icon-menu-item"><mat-icon>settings</mat-icon>Settings</div>

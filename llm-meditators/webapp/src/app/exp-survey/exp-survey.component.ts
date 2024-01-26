@@ -58,7 +58,7 @@ export class ExpSurveyComponent {
         if (n) {
           const curStageData = this.stageData();
           curStageData.questions[i].answerText = n;
-          this.dataService.editCurrentExpStageData(() => curStageData);
+          this.dataService.editWorkingOnExpStageData(() => curStageData);
         }
         console.log(this.stageData());
       });
@@ -68,7 +68,7 @@ export class ExpSurveyComponent {
   updateSliderValue(updatedValue: number, idx: number) {
     const curStageData = this.stageData();
     curStageData.questions[idx].score = updatedValue;
-    this.dataService.editCurrentExpStageData(() => curStageData);
+    this.dataService.editWorkingOnExpStageData(() => curStageData);
     console.log(this.stageData());
   }
 
@@ -77,7 +77,7 @@ export class ExpSurveyComponent {
       this.itemRatings.ratings[pairIdx].choice = choice;
       const curStageData = this.stageData();
       curStageData.questions[questionIdx].itemRatings = this.itemRatings;
-      this.dataService.editCurrentExpStageData(() => curStageData);
+      this.dataService.editWorkingOnExpStageData(() => curStageData);
     }
   }
 
@@ -86,7 +86,7 @@ export class ExpSurveyComponent {
       this.itemRatings.ratings[pairIdx].confidence = updatedValue;
       const curStageData = this.stageData();
       curStageData.questions[questionIdx].itemRatings = this.itemRatings;
-      this.dataService.editCurrentExpStageData(() => curStageData);
+      this.dataService.editWorkingOnExpStageData(() => curStageData);
     }
   }
 }
