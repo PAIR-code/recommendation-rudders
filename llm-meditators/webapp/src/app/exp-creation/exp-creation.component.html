@@ -1,68 +1,28 @@
+<!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
+<!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
 <div class="main">
   <h2>Create an experiment:</h2>
 
   <div class="container">
-    <div class="stage-list">
+    <div cdkDropList class="stage-list" (cdkDropListDropped)="drop($event)">
       @for (stageData of existingStages; track $index) {
-        <div class="stage-container {{ $index === currentEditingStageIndex && 'active' }}">
+        <div
+          class="stage-container {{ $index === currentEditingStageIndex && 'active' }}"
+          (click)="navigateToStage($index)"
+          cdkDrag
+        >
           <div class="stage-idx">{{ $index + 1 }}.</div>
           <div class="stage-content">
             {{ !stageData.name || stageData.name.length === 0 ? 'Unnamed stage' : stageData.name }}
           </div>
+          <div class="stage-delete">
+            <button mat-icon-button (click)="deleteStage($event, $index)">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
         </div>
       }
-      <!-- <div class="stage-container">
-        <div class="stage-idx">1</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">2</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container active">
-        <div class="stage-idx">3</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div>
-      <div class="stage-container">
-        <div class="stage-idx">4</div>
-        <div class="stage-content">asdf</div>
-      </div> -->
+
       <br />
       <button mat-button (click)="addNewStage()"><mat-icon>add</mat-icon> Add a stage</button>
       <br />
@@ -77,7 +37,7 @@
           <div class="form-element-wrapper">
             <mat-form-field class="mat-form-field">
               <mat-label>Choose a stage:</mat-label>
-              <mat-select>
+              <mat-select [(ngModel)]="currentEditingStage.kind" (selectionChange)="onChange($event)">
                 @for (kind of availableStageKinds; track kind) {
                   <mat-option [value]="kind">{{ kind }}</mat-option>
                 }
@@ -91,14 +51,22 @@
           &nbsp;&nbsp;&nbsp;
           <div class="form-element-wrapper">
             <mat-form-field class="mat-form-field">
-              <input matInput placeholder="Welcome to the experiment!" value="" />
+              <input
+                matInput
+                type="text"
+                placeholder="Welcome to the experiment!"
+                [(ngModel)]="currentEditingStage.name"
+                (input)="onChange($event)"
+              />
             </mat-form-field>
           </div>
         </div>
       </div>
       <div class="tool-bar">
-        <div class="unsaved-warning">(Unsaved data)</div>
-        <button mat-raised-button color="primary">Save stage data</button>
+        @if (hasUnsavedData) {
+          <div class="unsaved-warning">(Unsaved data)</div>
+        }
+        <button mat-raised-button color="primary" (click)="persistExistingStages()">Save data</button>
       </div>
     </mat-card>
   </div>

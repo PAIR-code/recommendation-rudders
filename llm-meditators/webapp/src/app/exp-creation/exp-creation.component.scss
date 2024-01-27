@@ -27,8 +27,6 @@
     font-size: 0.9rem;
     background-color: #efefef;
     cursor: pointer;
-    transition: all 0.1s ease-in-out;
-
     display: flex;
     align-items: center;
 
@@ -45,9 +43,7 @@
     }
 
     .stage-content {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      flex: 1;
     }
   }
 
@@ -136,4 +132,29 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+}
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  background-color: #666;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drop-list-dragging .stage-container:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }

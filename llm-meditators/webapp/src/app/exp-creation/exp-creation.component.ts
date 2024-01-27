@@ -1,8 +1,11 @@
 import { JsonEditorComponent, JsonEditorOptions, NgJsonEditorModule } from 'ang-jsoneditor';
+import { isEqual } from 'lodash';
 import { ExpStage, ExpStageNames, stageKinds } from 'src/lib/staged-exp/data-model';
 import { makeStages } from 'src/lib/staged-exp/example-experiment';
 
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, ViewChild } from '@angular/core';
+import { FormGroup, FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,7 +21,7 @@ const EXISTING_STAGES_KEY = 'existing-stages';
 const CREATED_STAGES_KEY = 'created-stages';
 
 const getInitStageData = (): Partial<ExpStage> => {
-  return { complete: false };
+  return { complete: false, name: Math.random().toString(36).substring(7) };
 };
 
 @Component({
@@ -32,6 +35,9 @@ const getInitStageData = (): Partial<ExpStage> => {
     MatSelectModule,
     MatFormFieldModule,
     MatInputModule,
+    FormsModule,
+    CdkDropList,
+    CdkDrag,
   ],
   templateUrl: './exp-creation.component.html',
   styleUrl: './exp-creation.component.scss',
@@ -40,7 +46,6 @@ export class ExpCreationComponent {
   // new stuff
   public existingStages: Partial<ExpStage>[] = [];
   public currentEditingStageIndex = -1;
-  public workingStageData: object = {};
 
   // old stuff
   public editorOptions: JsonEditorOptions;
@@ -74,10 +79,8 @@ export class ExpCreationComponent {
       this.existingStages = existingStages;
     } else {
       this.existingStages = [getInitStageData()];
-      this.localStore.saveData(EXISTING_STAGES_KEY, this.existingStages);
     }
     this.currentEditingStageIndex = 0;
-    this.workingStageData = structuredClone(this.existingStages[this.currentEditingStageIndex]);
 
     // old stuff
     const createdStages = this.localStore.getData(CREATED_STAGES_KEY) as ExpStage[];
@@ -99,21 +102,60 @@ export class ExpCreationComponent {
     return this.existingStages[this.currentEditingStageIndex];
   }
 
+  get hasUnsavedData() {
+    const existingStages = this.localStore.getData(EXISTING_STAGES_KEY) as ExpStage[];
+    return !isEqual(existingStages, this.existingStages);
+  }
+
+  persistExistingStages() {
+    this.localStore.saveData(EXISTING_STAGES_KEY, this.existingStages);
+  }
+
+  drop(event: CdkDragDrop<string[]>) {
+    moveItemInArray(this.existingStages, event.previousIndex, event.currentIndex);
+    this.persistExistingStages();
+
+    this.navigateToStage(event.currentIndex);
+  }
+
   addNewStage() {
     this.existingStages.push(getInitStageData());
-    this.localStore.saveData(EXISTING_STAGES_KEY, this.existingStages);
+    this.persistExistingStages();
 
     this.currentEditingStageIndex = this.existingStages.length - 1;
-    this.workingStageData = structuredClone(this.existingStages[this.currentEditingStageIndex]);
+  }
+
+  deleteStage(event: Event, index: number) {
+    event.stopPropagation();
+
+    if (this.existingStages.length === 1) {
+      // only one left
+      this.existingStages[0] = getInitStageData();
+    } else {
+      if (this.currentEditingStageIndex > index) {
+        this.currentEditingStageIndex -= 1;
+      }
+      this.existingStages.splice(index, 1);
+    }
+
+    this.persistExistingStages();
   }
 
   resetExistingStages() {
     this.localStore.removeData(EXISTING_STAGES_KEY);
+
     this.existingStages = [getInitStageData()];
-    this.localStore.saveData(EXISTING_STAGES_KEY, this.existingStages);
+    this.persistExistingStages();
 
     this.currentEditingStageIndex = 0;
-    this.workingStageData = structuredClone(this.existingStages[this.currentEditingStageIndex]);
+  }
+
+  navigateToStage(idx: number) {
+    this.currentEditingStageIndex = idx;
+  }
+
+  onChange(event: any) {
+    this.persistExistingStages();
   }
 
   /**
