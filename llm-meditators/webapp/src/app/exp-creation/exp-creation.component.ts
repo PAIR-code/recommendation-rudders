@@ -1,18 +1,30 @@
 import { JsonEditorComponent, JsonEditorOptions, NgJsonEditorModule } from 'ang-jsoneditor';
 import { isEqual } from 'lodash';
-import { ExpStage, ExpStageNames, stageKinds } from 'src/lib/staged-exp/data-model';
+import {
+  ExpStage,
+  ExpStageNames,
+  getDefaultChatAboutItemsConfig,
+  getDefaultLeaderRevealConfig,
+  getDefaultSurveyConfig,
+  getDefaultVotesConfig,
+  getDefaultTosAndUserProfileConfig,
+  stageKinds,
+  ExpStageTosAndUserProfile,
+} from 'src/lib/staged-exp/data-model';
 import { makeStages } from 'src/lib/staged-exp/example-experiment';
 
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, ViewChild } from '@angular/core';
-import { FormGroup, FormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
+import { CodemirrorConfigEditorModule } from '../codemirror-config-editor/codemirror-config-editor.module';
 import { LocalService } from '../services/local.service';
 import { SavedDataService } from '../services/saved-data.service';
 
@@ -21,7 +33,7 @@ const EXISTING_STAGES_KEY = 'existing-stages';
 const CREATED_STAGES_KEY = 'created-stages';
 
 const getInitStageData = (): Partial<ExpStage> => {
-  return { complete: false, name: Math.random().toString(36).substring(7) };
+  return { complete: false, name: '' };
 };
 
 @Component({
@@ -35,6 +47,8 @@ const getInitStageData = (): Partial<ExpStage> => {
     MatSelectModule,
     MatFormFieldModule,
     MatInputModule,
+    MatTooltipModule,
+    // CodemirrorConfigEditorModule,
     FormsModule,
     CdkDropList,
     CdkDrag,
@@ -107,11 +121,26 @@ export class ExpCreationComponent {
     return !isEqual(existingStages, this.existingStages);
   }
 
+  stageSetupIncomplete(stageData?: ExpStage) {
+    const _stageData = stageData || this.currentEditingStage;
+
+    if (!_stageData.kind) return true;
+    if (!_stageData.name || _stageData.name.length === 0) return true;
+
+    if (_stageData.kind === stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
+      if (_stageData.config?.tosLines.length === 0) return true;
+    } else if (_stageData.kind === stageKinds.STAGE_KIND_SURVEY) {
+      if (_stageData.config?.questions.length === 0) return true;
+    }
+
+    return false;
+  }
+
   persistExistingStages() {
     this.localStore.saveData(EXISTING_STAGES_KEY, this.existingStages);
   }
 
-  drop(event: CdkDragDrop<string[]>) {
+  dropStage(event: CdkDragDrop<string[]>) {
     moveItemInArray(this.existingStages, event.previousIndex, event.currentIndex);
     this.persistExistingStages();
 
@@ -125,6 +154,26 @@ export class ExpCreationComponent {
     this.currentEditingStageIndex = this.existingStages.length - 1;
   }
 
+  addNewTosLine() {
+    (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines.push('');
+    this.persistExistingStages();
+  }
+
+  deleteTosLine(event: Event, index: number) {
+    (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines.splice(index, 1);
+    this.persistExistingStages();
+  }
+
+  dropTosLine(event: CdkDragDrop<string[]>) {
+    moveItemInArray(
+      (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines,
+      event.previousIndex,
+      event.currentIndex,
+    );
+
+    this.persistExistingStages();
+  }
+
   deleteStage(event: Event, index: number) {
     event.stopPropagation();
 
@@ -132,7 +181,7 @@ export class ExpCreationComponent {
       // only one left
       this.existingStages[0] = getInitStageData();
     } else {
-      if (this.currentEditingStageIndex > index) {
+      if (this.currentEditingStageIndex >= index) {
         this.currentEditingStageIndex -= 1;
       }
       this.existingStages.splice(index, 1);
@@ -154,7 +203,31 @@ export class ExpCreationComponent {
     this.currentEditingStageIndex = idx;
   }
 
-  onChange(event: any) {
+  onChange(event: any, type?: string) {
+    if (type === 'stage-kind') {
+      console.log('Switched to:', this.currentEditingStage.kind);
+      let newConfig = {};
+      switch (this.currentEditingStage.kind) {
+        case stageKinds.STAGE_KIND_TOS_AND_PROFILE:
+          newConfig = getDefaultTosAndUserProfileConfig();
+          break;
+        case stageKinds.STAGE_KIND_SURVEY:
+          newConfig = getDefaultSurveyConfig();
+          break;
+        case stageKinds.STAGE_KIND_VOTES:
+          newConfig = getDefaultVotesConfig();
+          break;
+        case stageKinds.STAGE_KIND_CHAT:
+          newConfig = getDefaultChatAboutItemsConfig();
+          break;
+        case stageKinds.STAGE_KIND_LEADER_REVEAL:
+          newConfig = getDefaultLeaderRevealConfig();
+          break;
+      }
+      this.currentEditingStage.config = newConfig;
+      console.log(this.currentEditingStage);
+    }
+
     this.persistExistingStages();
   }
 

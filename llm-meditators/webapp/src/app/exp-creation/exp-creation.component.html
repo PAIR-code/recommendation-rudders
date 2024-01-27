@@ -4,19 +4,41 @@
   <h2>Create an experiment:</h2>
 
   <div class="container">
-    <div cdkDropList class="stage-list" (cdkDropListDropped)="drop($event)">
+    <div cdkDropList class="stage-list" (cdkDropListDropped)="dropStage($event)">
       @for (stageData of existingStages; track $index) {
         <div
           class="stage-container {{ $index === currentEditingStageIndex && 'active' }}"
           (click)="navigateToStage($index)"
           cdkDrag
         >
-          <div class="stage-idx">{{ $index + 1 }}.</div>
+          <div class="stage-idx">{{ $index + 1 }}</div>
+          <div class="stage-icon" matTooltip="{{ stageData.kind || 'Please select a stage kind!' }}">
+            @switch (stageData.kind) {
+              @case (stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
+                <mat-icon>portrait</mat-icon>
+              }
+              @case (stageKinds.STAGE_KIND_CHAT) {
+                <mat-icon>forum</mat-icon>
+              }
+              @case (stageKinds.STAGE_KIND_SURVEY) {
+                <mat-icon>poll</mat-icon>
+              }
+              @case (stageKinds.STAGE_KIND_VOTES) {
+                <mat-icon>how_to_vote</mat-icon>
+              }
+              @case (stageKinds.STAGE_KIND_LEADER_REVEAL) {
+                <mat-icon>emoji_events</mat-icon>
+              }
+              @default {
+                <mat-icon class="unknow-stage-kind">question_mark</mat-icon>
+              }
+            }
+          </div>
           <div class="stage-content">
             {{ !stageData.name || stageData.name.length === 0 ? 'Unnamed stage' : stageData.name }}
           </div>
           <div class="stage-delete">
-            <button mat-icon-button (click)="deleteStage($event, $index)">
+            <button mat-icon-button matTooltip="Delelte this stage" (click)="deleteStage($event, $index)">
               <mat-icon>close</mat-icon>
             </button>
           </div>
@@ -24,7 +46,7 @@
       }
 
       <br />
-      <button mat-button (click)="addNewStage()"><mat-icon>add</mat-icon> Add a stage</button>
+      <button mat-button (click)="addNewStage()"><mat-icon>add</mat-icon> New stage</button>
       <br />
       <button mat-raised-button color="warn" (click)="resetExistingStages()">Reset all</button>
     </div>
@@ -37,7 +59,7 @@
           <div class="form-element-wrapper">
             <mat-form-field class="mat-form-field">
               <mat-label>Choose a stage:</mat-label>
-              <mat-select [(ngModel)]="currentEditingStage.kind" (selectionChange)="onChange($event)">
+              <mat-select [(ngModel)]="currentEditingStage.kind" (selectionChange)="onChange($event, 'stage-kind')">
                 @for (kind of availableStageKinds; track kind) {
                   <mat-option [value]="kind">{{ kind }}</mat-option>
                 }
@@ -61,8 +83,37 @@
             </mat-form-field>
           </div>
         </div>
+
+        @if (currentEditingStage.kind === stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
+          <h3>Terms of Service (ToS) lines:</h3>
+          <div cdkDropList class="tos-lines" (cdkDropListDropped)="dropTosLine($event)">
+            @for (line of currentEditingStage.config!.tosLines; track $index) {
+              <div class="tos-line">
+                <mat-form-field cdkDrag class="mat-form-field">
+                  <textarea
+                    matInput
+                    type="text"
+                    placeholder="In vel diam malesuada nibh vehicula rutrum eget vel lectus."
+                    [(ngModel)]="currentEditingStage.config!.tosLines[$index]"
+                    (input)="onChange($event)"
+                  >
+                  </textarea>
+                </mat-form-field>
+                &nbsp;
+                <button mat-icon-button matTooltip="Delelte this line" (click)="deleteTosLine($event, $index)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            }
+            <button mat-button (click)="addNewTosLine()"><mat-icon>add</mat-icon> Add a ToS Line</button>
+          </div>
+        }
       </div>
       <div class="tool-bar">
+        @if (stageSetupIncomplete()) {
+          <div class="unsaved-warning">(Incomplete stage setup)</div>
+        }
+
         @if (hasUnsavedData) {
           <div class="unsaved-warning">(Unsaved data)</div>
         }

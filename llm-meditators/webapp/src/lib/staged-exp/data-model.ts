@@ -76,6 +76,13 @@ export interface ChatAboutItems {
   messages: Message[];
 }
 
+export const getDefaultChatAboutItemsConfig = (): ChatAboutItems => {
+  return {
+    ratingsToDiscuss: [],
+    messages: [],
+  };
+};
+
 export const STAGE_KIND_CHAT = 'group-chat';
 
 export interface ExpStageChatAboutItems extends GenericExpStage<ChatAboutItems> {
@@ -102,6 +109,10 @@ export enum LeaderVote {
 export interface Votes {
   [otherUserId: string]: LeaderVote;
 }
+
+export const getDefaultVotesConfig = (): Votes => {
+  return {};
+};
 
 export const STAGE_KIND_VOTES = 'leader-vote';
 
@@ -137,6 +148,16 @@ export interface TosAndUserProfile {
   acceptedTosTimestamp: Date | null;
 }
 
+export const getDefaultTosAndUserProfileConfig = (): TosAndUserProfile => {
+  return {
+    pronouns: '',
+    avatarUrl: '',
+    name: '',
+    tosLines: [''],
+    acceptedTosTimestamp: null,
+  };
+};
+
 export const STAGE_KIND_TOS_AND_PROFILE = 'accept-tos-and-set-profile';
 
 export interface ExpStageTosAndUserProfile extends GenericExpStage<TosAndUserProfile> {
@@ -158,6 +179,12 @@ export interface Survey {
   questions: Question[];
 }
 
+export const getDefaultSurveyConfig = (): Survey => {
+  return {
+    questions: [],
+  };
+};
+
 export const STAGE_KIND_SURVEY = 'survey';
 
 export interface ExpStageSurvey extends GenericExpStage<Survey> {
@@ -178,6 +205,12 @@ export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
 export interface LeaderReveal {
   revealTimestamp: Date | null;
 }
+
+export const getDefaultLeaderRevealConfig = (): LeaderReveal => {
+  return {
+    revealTimestamp: null,
+  };
+};
 
 export const STAGE_KIND_LEADER_REVEAL = 'leader-reveal';
 

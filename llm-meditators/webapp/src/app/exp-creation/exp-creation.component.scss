@@ -19,37 +19,64 @@
   flex-direction: column;
   overflow: auto;
 
-  .stage-container {
-    box-sizing: border-box;
-    width: 100%;
-    margin: 0px;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-    background-color: #efefef;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-
-    &:hover {
-      background-color: #ddd;
-    }
-
-    &.active {
-      background-color: #ccc;
-    }
-
-    .stage-idx {
-      margin-right: 8px;
-    }
-
-    .stage-content {
-      flex: 1;
-    }
-  }
-
   button {
     flex-shrink: 0;
   }
+}
+
+.stage-container,
+.cdk-drag-preview {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0px;
+  // padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  background-color: #efefef;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    background-color: #ddd;
+  }
+
+  &.active {
+    background-color: #ccc;
+  }
+}
+
+.stage-idx {
+  margin-right: 8px;
+  height: 100%;
+  width: 24px;
+  background-color: #0ee9ed4b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 5px;
+  transform: scale(0.8);
+  opacity: 0.8;
+
+  .unknow-stage-kind {
+    color: #ce4200;
+  }
+}
+
+.stage-content {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.stage-delete {
+  opacity: 0.7;
 }
 
 .stage-creation-container {
@@ -93,6 +120,23 @@
   align-items: center;
 }
 
+.tos-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  .tos-line {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+
+    .mat-form-field {
+      flex: 1;
+    }
+  }
+}
+
 .stage-view {
   width: 100%;
   display: flex;
@@ -134,18 +178,18 @@
   justify-content: flex-end;
 }
 
-.cdk-drag-preview {
-  box-sizing: border-box;
-  width: 100%;
-  margin: 0px;
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  background-color: #666;
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
+// .cdk-drag-preview {
+//   box-sizing: border-box;
+//   width: 100%;
+//   margin: 0px;
+//   padding: 0.75rem 1rem;
+//   font-size: 0.9rem;
+//   background-color: #666;
+//   color: #fff;
+//   cursor: pointer;
+//   display: flex;
+//   align-items: center;
+// }
 
 .cdk-drag-placeholder {
   opacity: 0;
