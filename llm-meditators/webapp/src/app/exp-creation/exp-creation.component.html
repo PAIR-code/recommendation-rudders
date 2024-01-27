@@ -2,7 +2,17 @@
 <!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
 <!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
 <div class="main">
-  <h2>Create an experiment:</h2>
+  <div class="top-bar">
+    <h2>Create an experiment:</h2>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="makeExperimentWithExistingStages()"
+      [disabled]="experimentSetupIncomplete()"
+    >
+      Make experiment with the current stage data!
+    </button>
+  </div>
 
   <div class="container">
     <div cdkDropList class="stage-list" (cdkDropListDropped)="dropStage($event)">
@@ -38,6 +48,9 @@
           <div class="stage-content">
             {{ !stageData.name || stageData.name.length === 0 ? 'Unnamed stage' : stageData.name }}
           </div>
+          @if (stageSetupIncomplete(stageData)) {
+            <div class="stage-incomplete" matTooltip="Stage incomplete"><mat-icon>warning</mat-icon></div>
+          }
           <div class="stage-delete">
             <button mat-icon-button matTooltip="Delelte this stage" (click)="deleteStage($event, $index)">
               <mat-icon>close</mat-icon>
@@ -50,6 +63,7 @@
       <button mat-button (click)="addNewStage()"><mat-icon>add</mat-icon> New stage</button>
       <br />
       <button mat-raised-button color="warn" (click)="resetExistingStages()">Reset all</button>
+      <br />
     </div>
 
     <mat-card class="stage-creation-container">
@@ -310,34 +324,5 @@
         }
       </div>
     </mat-card>
-  </div>
-
-  <div class="stage-view">
-    <div class="sub-view reference-view">
-      <h4>Reference stage config:</h4>
-      <div class="code-wrapper">
-        <pre>{{ currentStageOracleConfigString }}</pre>
-      </div>
-    </div>
-    <div class="sub-view creation-view">
-      <h4>Edit stage config:</h4>
-      <json-editor [options]="editorOptions" [data]="data" (change)="updatedData($event)" #editor></json-editor>
-    </div>
-  </div>
-
-  <div class="navigation">
-    <button mat-button (click)="previousStage()" [disabled]="creationIndex === 0">Previous stage</button>
-
-    <span> {{ currentStage && currentStage!.name }} (Stage {{ creationIndex + 1 }}) </span>
-
-    <button mat-button (click)="nextStage()" [disabled]="creationIndex === oracleStages.length - 1">Next stage</button>
-  </div>
-
-  <div class="toolbar">
-    <button mat-raised-button color="warn" (click)="resetAll()">Reset all stage data & start over</button>
-    &nbsp;&nbsp;&nbsp;
-    <button mat-raised-button color="primary" (click)="makeExperiment()">
-      Make experiment with the current stage data!
-    </button>
   </div>
 </div>

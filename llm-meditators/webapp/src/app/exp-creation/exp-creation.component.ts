@@ -1,4 +1,3 @@
-import { JsonEditorComponent, JsonEditorOptions, NgJsonEditorModule } from 'ang-jsoneditor';
 import { isEqual } from 'lodash';
 import {
   ExpStage,
@@ -16,10 +15,9 @@ import {
   ExpStageSurvey,
   getDefaultItemRating,
 } from 'src/lib/staged-exp/data-model';
-import { makeStages } from 'src/lib/staged-exp/example-experiment';
 
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -29,14 +27,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { CodemirrorConfigEditorModule } from '../codemirror-config-editor/codemirror-config-editor.module';
 import { LocalService } from '../services/local.service';
 import { SavedDataService } from '../services/saved-data.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 
 const EXISTING_STAGES_KEY = 'existing-stages';
-
-const CREATED_STAGES_KEY = 'created-stages';
 
 const getInitStageData = (): Partial<ExpStage> => {
   return { complete: false, name: '' };
@@ -48,14 +43,12 @@ const getInitStageData = (): Partial<ExpStage> => {
   imports: [
     MatButtonModule,
     MatCardModule,
-    NgJsonEditorModule,
     MatIconModule,
     MatSelectModule,
     MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
     MatTooltipModule,
-    // CodemirrorConfigEditorModule,
     FormsModule,
     CdkDropList,
     CdkDrag,
@@ -68,15 +61,6 @@ export class ExpCreationComponent {
   public existingStages: Partial<ExpStage>[] = [];
   public currentEditingStageIndex = -1;
 
-  // old stuff
-  public editorOptions: JsonEditorOptions;
-
-  public oracleStages = makeStages();
-  public createdStages: ExpStage[] = [];
-  public creationIndex = 0;
-
-  public data = {};
-
   readonly ExpStageNames = ExpStageNames;
   readonly stageKinds = stageKinds;
 
@@ -87,8 +71,6 @@ export class ExpCreationComponent {
     stageKinds.STAGE_KIND_CHAT,
     stageKinds.STAGE_KIND_LEADER_REVEAL,
   ];
-
-  @ViewChild('editor') editor: JsonEditorComponent = new JsonEditorComponent();
 
   constructor(
     private dataService: SavedDataService,
@@ -102,21 +84,6 @@ export class ExpCreationComponent {
       this.existingStages = [getInitStageData()];
     }
     this.currentEditingStageIndex = 0;
-
-    // old stuff
-    const createdStages = this.localStore.getData(CREATED_STAGES_KEY) as ExpStage[];
-    if (createdStages) {
-      this.createdStages = createdStages;
-    } else {
-      this.createdStages = JSON.parse(JSON.stringify(this.oracleStages));
-      this.persistCreatedStages();
-    }
-    this.data = JSON.parse(JSON.stringify(this.createdStages[this.creationIndex].config));
-
-    this.editorOptions = new JsonEditorOptions();
-    this.editorOptions.modes = ['code'];
-    this.editorOptions.mode = 'code';
-    this.editorOptions.mainMenuBar = false;
   }
 
   get currentEditingStage() {
@@ -206,7 +173,7 @@ export class ExpCreationComponent {
     this.persistExistingStages();
   }
 
-  stageSetupIncomplete(stageData?: ExpStage) {
+  stageSetupIncomplete(stageData?: Partial<ExpStage>) {
     const _stageData = stageData || this.currentEditingStage;
 
     if (!_stageData.kind) return true;
@@ -219,6 +186,10 @@ export class ExpCreationComponent {
     }
 
     return false;
+  }
+
+  experimentSetupIncomplete() {
+    return this.existingStages.some((stage) => this.stageSetupIncomplete(stage));
   }
 
   persistExistingStages() {
@@ -295,56 +266,8 @@ export class ExpCreationComponent {
     this.persistExistingStages();
   }
 
-  /**
-   *
-   * old
-   * stuff
-   *
-   */
-  get currentStage() {
-    return this.createdStages[this.creationIndex];
-  }
-
-  get currentStageOracleConfigString() {
-    return JSON.stringify(this.oracleStages[this.creationIndex].config, null, 2);
-  }
-
-  updatedData(event: any) {
-    const newData = JSON.parse(JSON.stringify(this.editor.get()));
-    // console.log('updatedData', newData);
-    this.createdStages[this.creationIndex].config = newData;
-    this.persistCreatedStages();
-  }
-
-  previousStage() {
-    this.creationIndex = this.creationIndex === 0 ? 0 : this.creationIndex - 1;
-    this.data = JSON.parse(JSON.stringify(this.createdStages[this.creationIndex].config));
-  }
-
-  nextStage() {
-    this.creationIndex =
-      this.creationIndex === this.oracleStages.length - 1 ? this.creationIndex : this.creationIndex + 1;
-    this.data = JSON.parse(JSON.stringify(this.createdStages[this.creationIndex].config));
-  }
-
-  private persistCreatedStages() {
-    this.localStore.saveData(CREATED_STAGES_KEY, this.createdStages);
-  }
-
-  private resetCreatedStages() {
-    this.localStore.removeData(CREATED_STAGES_KEY);
-  }
-
-  resetAll() {
-    this.resetCreatedStages();
-    this.createdStages = JSON.parse(JSON.stringify(this.oracleStages));
-    console.log('createdStages', this.createdStages);
-    this.persistCreatedStages();
-    this.creationIndex = 0;
-    this.data = JSON.parse(JSON.stringify(this.createdStages[this.creationIndex].config));
-  }
-
-  makeExperiment() {
-    this.dataService.reset(this.localStore.getData(CREATED_STAGES_KEY) as ExpStage[]);
+  makeExperimentWithExistingStages() {
+    console.log(this.localStore.getData(EXISTING_STAGES_KEY));
+    this.dataService.reset(this.localStore.getData(EXISTING_STAGES_KEY) as ExpStage[]);
   }
 }
