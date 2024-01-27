@@ -6,8 +6,6 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { NgJsonEditorModule } from 'ang-jsoneditor';
-
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -56,7 +54,6 @@ import { VertexApiService } from './services/vertex-api.service';
     RouterModule,
     AppRoutingModule,
     BrowserAnimationsModule,
-    NgJsonEditorModule,
     MatButtonModule,
     MatSelectModule,
     MatSidenavModule,

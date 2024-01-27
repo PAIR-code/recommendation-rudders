@@ -35,7 +35,7 @@ const fakeNameGenConfig: UniqueNamesGenConfig = {
 //  Initial Experiment Setup
 // -------------------------------------------------------------------------------------
 
-function acceptTosAndSetProfile(config?: TosAndUserProfile): ExpStageTosAndUserProfile {
+export function acceptTosAndSetProfile(config?: TosAndUserProfile): ExpStageTosAndUserProfile {
   return {
     kind: stageKinds.STAGE_KIND_TOS_AND_PROFILE,
     name: ExpStageNames['1. Agree to the experiment and set your profile'],
@@ -48,8 +48,6 @@ function acceptTosAndSetProfile(config?: TosAndUserProfile): ExpStageTosAndUserP
         'In vel diam malesuada nibh vehicula rutrum eget vel lectus.',
         'Suspendisse auctor dolor nec consectetur dignissim.',
         'Cras accumsan turpis sit amet pellentesque dictum.',
-        'Vestibulum ut ex pulvinar, mollis sapien tincidunt, hendrerit sem.',
-        'Quisque vestibulum ex quis sapien tincidunt, id ornare erat sollicitudin.',
       ],
       acceptedTosTimestamp: null,
     },
@@ -87,6 +85,7 @@ const initialWantToLeadQuestion: Question = {
   openFeedback: false,
   score: null,
 };
+
 function initialWantToLeadSurvey(config?: Survey): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,

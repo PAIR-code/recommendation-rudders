@@ -8,17 +8,19 @@
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { AppHomeComponent as AppHomeComponent } from './app-home/app-home.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
-import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
-import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
-import { ExpLeaderVoteComponent } from './exp-leader-vote/exp-leader-vote.component';
+import { ExpCreationComponent } from './exp-creation/exp-creation.component';
 import { ExpTosComponent } from './exp-tos/exp-tos.component';
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 import { ExperimenterViewComponent } from './experimenter-view/experimenter-view.component';
 
 const routes: Routes = [
   { path: '', component: AppHomeComponent, pathMatch: 'full' },
   { path: 'settings', component: AppSettingsComponent, pathMatch: 'full' },
+  { path: 'create-experiment', component: ExpCreationComponent, pathMatch: 'full' },
+  { path: 'tos', component: ExpTosComponent, pathMatch: 'full' },
   { path: 'experimenter-view', component: ExperimenterViewComponent, pathMatch: 'full' },
   { path: '**', component: PageNotFoundComponent },
 ];
