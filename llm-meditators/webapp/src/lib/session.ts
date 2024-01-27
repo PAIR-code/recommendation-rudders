@@ -8,12 +8,14 @@ export class Session<T> {
   public sessionData: WritableSignal<T>;
 
   constructor(
+    // fromRouteParams corresponds to URL parts: /foo/:id/bar/:name
+    //  will set the variable: `name` and `id`
     private fromUrlParams: Signal<Partial<T>>,
     private defaultSessionData: T,
   ) {
     // The current URL params data.
     // Update this to have default data if/as needed.
-    this.defaultSession = signal(defaultSessionData);
+    this.defaultSession = signal(this.defaultSessionData);
     // Object.assign({ ...DEFAULT_SESSION }, { stage: this.user().workingOnStageName }));
     this.sessionData = signal(this.defaultSession(), { equal: _.isEqual });
 

@@ -5,7 +5,15 @@
  * Use of this source code is governed by an Apache2 license that can be
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
-import { AfterViewInit, Component, ElementRef, Signal, ViewChild, computed, effect } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Signal,
+  ViewChild,
+  computed,
+  effect,
+} from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { SavedDataService } from '../services/saved-data.service';
 import { ExpStageKind } from '../../lib/staged-exp/data-model';
@@ -14,6 +22,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
+import { AppStateParticipant } from 'src/lib/app';
 
 @Component({
   selector: 'app-participant-view',
@@ -25,6 +34,7 @@ import { RouterModule } from '@angular/router';
 export class ParticipantViewComponent {
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
 
+  public appState: AppStateParticipant;
   public currentStageKind: Signal<ExpStageKind>;
   public currentStageName: Signal<string>;
   public workingOnStageName: Signal<string>;
@@ -34,7 +44,8 @@ export class ParticipantViewComponent {
     public router: Router,
     public dataService: SavedDataService,
   ) {
-    route.params;
+    this.appState = new AppStateParticipant(route, router, dataService.data);
+
     this.currentStageKind = computed(() => this.dataService.currentStage().kind);
     this.currentStageName = computed(() => this.dataService.currentStage().name);
     this.workingOnStageName = computed(() => this.dataService.user().workingOnStageName);

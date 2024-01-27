@@ -30,7 +30,7 @@ import * as _ from 'underscore';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { Session } from 'src/lib/session';
-import { AppSettings, AppState, initAppState, initialAppData, SavedAppData } from 'src/lib/app';
+import { AppSettings, initialAppData, SavedAppData } from 'src/lib/app';
 
 // -------------------------------------------------------------------------------------
 //  The Service Class...
@@ -40,7 +40,6 @@ import { AppSettings, AppState, initAppState, initialAppData, SavedAppData } fro
 })
 export class SavedDataService {
   public data: WritableSignal<SavedAppData>;
-  public state: WritableSignal<AppState>;
 
   // About the app itself.
   public appName: Signal<string>;
@@ -59,7 +58,6 @@ export class SavedDataService {
     this.data = signal(
       JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())),
     );
-    this.state = signal(initAppState);
 
     // Convenience signal for the appName.
     this.appName = computed(() => this.data().settings.name);
@@ -79,47 +77,6 @@ export class SavedDataService {
       data.settings[settingKey] = settingValue;
       this.data.set({ ...data });
     }
-  }
-
-  editExpStageData<T extends ExpDataKinds>(
-    uid: string,
-    stageName: string,
-    f: (oldExpStage: T) => T | void,
-  ) {
-    this.editUser(uid, (user) => {
-      const maybeNewData = f(user.stageMap[stageName].config as T);
-      if (maybeNewData) {
-        user.stageMap[stageName].config = maybeNewData;
-      }
-    });
-  }
-
-  setCurrentUserId(userId: string) {
-    if (Object.keys(data.experiment.participants).includes(userId) === false) {
-      throw new Error(`Cannot set current user to ${userId}, they do not exist`);
-    }
-    this.session.this.data.set({ ...data });
-  }
-
-  sendMessage(message: string, stageName: string): void {
-    const user = this.user();
-    const data = this.data();
-    for (const u of Object.values(data.experiment.participants)) {
-      // const stage = u.stageMap[stageName];
-      // if (stage.kind !== 'group-chat') {
-      //   throw new Error(`Cant send a message to stage ${stage.name}, it is of kind ${stage.kind}.`);
-      // }
-      this.editExpStageData<ChatAboutItems>(u.userId, stageName, (config) => {
-        console.log(u.userId, config);
-        config.messages.push({
-          userId: user.userId,
-          messageType: 'userMessage',
-          text: message,
-          timestamp: new Date().valueOf(),
-        });
-      });
-    }
-    this.data.set({ ...data });
   }
 
   reset() {

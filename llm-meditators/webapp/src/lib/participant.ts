@@ -1,7 +1,7 @@
 import { computed, effect, Signal, signal, untracked, WritableSignal } from '@angular/core';
-import { Experiment, ExpStage, UserData, ExpDataKinds, UserProfile, ChatAboutItems } from './staged-exp/data-model';
+import { Experiment, ExpStage, UserData, ExpDataKinds, UserProfile } from './staged-exp/data-model';
 import { Session } from './session';
-import { SavedAppData, ParticipantSession } from './app';
+import { SavedAppData, ParticipantSession, editParticipant } from './app';
 
 export class Participant {
   public userData: Signal<UserData>;
@@ -12,45 +12,30 @@ export class Participant {
   constructor(
     private appData: WritableSignal<SavedAppData>,
     private session: Session<ParticipantSession>,
-    public experimentName: string,
-    public userId: string,
+    public participant: { experiment: string; id: string },
   ) {
     this.experiment = computed(() => {
-      const experiment = this.appData().experiments[experimentName];
+      const experiment = this.appData().experiments[participant.experiment];
       if (!experiment) {
-        throw new Error(`No such experiment name: ${experimentName}`);
+        throw new Error(`No such experiment name: ${participant.experiment}`);
       }
       return experiment;
     });
     this.userData = computed(() => {
-      const user = this.experiment().participants[userId];
+      const user = this.experiment().participants[participant.id];
       if (!user) {
-        throw new Error(`No such user id: ${userId}`);
+        throw new Error(`No such user id: ${participant.id}`);
       }
       return user;
     });
     this.viewingStage = computed(() => this.userData().stageMap[this.session.sessionData().stage]);
-    this.workingOnStage = computed(() => this.userData().stageMap[this.userData().workingOnStageName]);
+    this.workingOnStage = computed(
+      () => this.userData().stageMap[this.userData().workingOnStageName],
+    );
   }
 
   public edit(f: (user: UserData) => UserData | void): void {
-    const data = this.appData();
-    // We have to force update the user object also, because change tracking for
-    // the user Signal is based on reference.
-    let user: UserData = { ...this.userData() };
-    const maybeNewUser = f(user);
-    if (maybeNewUser) {
-      user = { ...maybeNewUser };
-    }
-    if (user.userId !== this.userId) {
-      // TODO: we could consider allowing this with an option to the call...
-      throw new Error(`Editing a user should not their id: new: ${user.userId}, old: ${this.userId}`);
-    }
-    // TODO...
-    // Editing experiment like this means we assume no async changes to the experiment...
-    // If we had signals linked to the experiment, tracked by reference, they will not know...
-    this.experiment().participants[user.userId] = user;
-    this.appData.set({ ...data });
+    editParticipant(this.appData, this.participant, f);
   }
 
   setViewingStage(expStageName: string) {
