@@ -71,6 +71,12 @@ export const fakeEmptyMessage: UserMessage = {
   text: 'fakeMessage',
 };
 
+export const fakeEmptyMediatorMessage: MediatorMessage = {
+  messageType: 'mediatorMessage',
+  timestamp: 0,
+  text: 'fakeMessage',
+};
+
 export interface DiscussItemsMessage {
   messageType: 'discussItemsMessage';
   timestamp: number;
