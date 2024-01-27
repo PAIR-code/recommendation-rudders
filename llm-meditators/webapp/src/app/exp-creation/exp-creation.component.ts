@@ -10,6 +10,11 @@ import {
   getDefaultTosAndUserProfileConfig,
   stageKinds,
   ExpStageTosAndUserProfile,
+  getDefaultItemRatingsQuestion,
+  Question,
+  getDefaultScaleQuestion,
+  ExpStageSurvey,
+  getDefaultItemRating,
 } from 'src/lib/staged-exp/data-model';
 import { makeStages } from 'src/lib/staged-exp/example-experiment';
 
@@ -27,6 +32,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { CodemirrorConfigEditorModule } from '../codemirror-config-editor/codemirror-config-editor.module';
 import { LocalService } from '../services/local.service';
 import { SavedDataService } from '../services/saved-data.service';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 const EXISTING_STAGES_KEY = 'existing-stages';
 
@@ -45,6 +51,7 @@ const getInitStageData = (): Partial<ExpStage> => {
     NgJsonEditorModule,
     MatIconModule,
     MatSelectModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
     MatTooltipModule,
@@ -121,6 +128,84 @@ export class ExpCreationComponent {
     return !isEqual(existingStages, this.existingStages);
   }
 
+  // tos lines
+  addNewTosLine() {
+    (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines.push('');
+    this.persistExistingStages();
+  }
+
+  deleteTosLine(event: Event, index: number) {
+    (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines.splice(index, 1);
+    this.persistExistingStages();
+  }
+
+  dropTosLine(event: CdkDragDrop<string[]>) {
+    moveItemInArray(
+      (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines,
+      event.previousIndex,
+      event.currentIndex,
+    );
+
+    this.persistExistingStages();
+  }
+
+  // survey questions
+  addNewSurveyQuestion(event: Event, type: 'rating' | 'scale') {
+    let question: Question | null = null;
+    if (type === 'rating') {
+      question = getDefaultItemRatingsQuestion();
+    } else if (type === 'scale') {
+      question = getDefaultScaleQuestion();
+    }
+    (this.currentEditingStage as ExpStageSurvey).config.questions.push(question as Question);
+    this.persistExistingStages();
+  }
+
+  deleteSurveyQuestion(event: Event, index: number) {
+    (this.currentEditingStage as ExpStageSurvey).config.questions.splice(index, 1);
+    this.persistExistingStages();
+  }
+
+  moveSurveyQuestion(direction: 'up' | 'down', questionIndex: number) {
+    if (questionIndex === 0 && direction === 'up') return;
+    if (
+      questionIndex === (this.currentEditingStage as ExpStageSurvey).config?.questions.length - 1 &&
+      direction === 'down'
+    )
+      return;
+
+    moveItemInArray(
+      (this.currentEditingStage as ExpStageSurvey).config.questions,
+      questionIndex,
+      direction === 'up' ? questionIndex - 1 : questionIndex + 1,
+    );
+  }
+
+  dropSurveyQuestion(event: CdkDragDrop<string[]>) {
+    moveItemInArray(
+      (this.currentEditingStage as ExpStageSurvey).config.questions,
+      event.previousIndex,
+      event.currentIndex,
+    );
+
+    this.persistExistingStages();
+  }
+
+  // item rating
+  addNewItemRating(questionIndex: number) {
+    const rating = getDefaultItemRating();
+    (this.currentEditingStage as ExpStageSurvey).config.questions[questionIndex].itemRatings?.ratings.push(rating);
+    this.persistExistingStages();
+  }
+
+  deleteItemRating(event: Event, questionIndex: number, ratingIndex: number) {
+    (this.currentEditingStage as ExpStageSurvey).config.questions[questionIndex].itemRatings?.ratings.splice(
+      ratingIndex,
+      1,
+    );
+    this.persistExistingStages();
+  }
+
   stageSetupIncomplete(stageData?: ExpStage) {
     const _stageData = stageData || this.currentEditingStage;
 
@@ -152,26 +237,6 @@ export class ExpCreationComponent {
     this.persistExistingStages();
 
     this.currentEditingStageIndex = this.existingStages.length - 1;
-  }
-
-  addNewTosLine() {
-    (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines.push('');
-    this.persistExistingStages();
-  }
-
-  deleteTosLine(event: Event, index: number) {
-    (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines.splice(index, 1);
-    this.persistExistingStages();
-  }
-
-  dropTosLine(event: CdkDragDrop<string[]>) {
-    moveItemInArray(
-      (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines,
-      event.previousIndex,
-      event.currentIndex,
-    );
-
-    this.persistExistingStages();
   }
 
   deleteStage(event: Event, index: number) {
@@ -225,7 +290,6 @@ export class ExpCreationComponent {
           break;
       }
       this.currentEditingStage.config = newConfig;
-      console.log(this.currentEditingStage);
     }
 
     this.persistExistingStages();

@@ -29,6 +29,21 @@ export interface ItemRating extends ItemPair {
   confidence: number | null; // 0 = 50/50, 1 = most confident
 }
 
+export const getDefaultItemRating = (): ItemRating => {
+  return {
+    item1: {
+      name: '',
+      imageUrl: '',
+    },
+    item2: {
+      name: '',
+      imageUrl: '',
+    },
+    choice: null,
+    confidence: null,
+  };
+};
+
 export interface ItemRatings {
   ratings: ItemRating[];
 }
@@ -174,6 +189,26 @@ export interface Question {
   openFeedback?: boolean;
   itemRatings?: ItemRatings;
 }
+
+export const getDefaultItemRatingsQuestion = (): Question => {
+  return {
+    questionText: '',
+    itemRatings: {
+      ratings: [],
+    },
+  };
+};
+
+export const getDefaultScaleQuestion = (): Question => {
+  return {
+    questionText: ``,
+    answerText: '',
+    lowerBound: '',
+    upperBound: '',
+    openFeedback: false,
+    score: null,
+  };
+};
 
 export interface Survey {
   questions: Question[];

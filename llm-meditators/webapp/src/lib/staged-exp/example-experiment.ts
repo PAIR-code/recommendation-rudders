@@ -85,6 +85,7 @@ const initialWantToLeadQuestion: Question = {
   openFeedback: false,
   score: null,
 };
+
 function initialWantToLeadSurvey(config?: Survey): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
