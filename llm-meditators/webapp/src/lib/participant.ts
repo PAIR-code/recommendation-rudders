@@ -1,8 +1,11 @@
 import { computed, effect, Signal, signal, untracked, WritableSignal } from '@angular/core';
 import { Experiment, ExpStage, UserData, ExpDataKinds, UserProfile } from './staged-exp/data-model';
 import { Session } from './session';
-import { SavedAppData, ParticipantSession, editParticipant } from './app';
+import { SavedAppData, ParticipantSession, editParticipant, sendParticipantMessage } from './app';
 
+// TODO:
+// Make this cleverly parameterised over the "viewingStage" ExpStage type,
+// so that editStageData can make sure it never edits the wrong data kind.
 export class Participant {
   public userData: Signal<UserData>;
   public experiment: Signal<Experiment>;
@@ -11,31 +14,38 @@ export class Participant {
 
   constructor(
     private appData: WritableSignal<SavedAppData>,
-    private session: Session<ParticipantSession>,
-    public participant: { experiment: string; id: string },
+    public session: Session<ParticipantSession>,
+    public destory?: () => void,
+    // public participant: { experiment: string; id: string },
   ) {
+    const experimentId = this.session.state().experiment;
+    const participantId = this.session.state().user;
     this.experiment = computed(() => {
-      const experiment = this.appData().experiments[participant.experiment];
+      const experiment = this.appData().experiments[experimentId];
       if (!experiment) {
-        throw new Error(`No such experiment name: ${participant.experiment}`);
+        throw new Error(`No such experiment name: ${experimentId}`);
       }
       return experiment;
     });
     this.userData = computed(() => {
-      const user = this.experiment().participants[participant.id];
+      const user = this.experiment().participants[participantId];
       if (!user) {
-        throw new Error(`No such user id: ${participant.id}`);
+        throw new Error(`No such user id: ${participantId}`);
       }
       return user;
     });
-    this.viewingStage = computed(() => this.userData().stageMap[this.session.sessionData().stage]);
+    this.viewingStage = computed(() => this.userData().stageMap[this.session.state().stage]);
     this.workingOnStage = computed(
       () => this.userData().stageMap[this.userData().workingOnStageName],
     );
   }
 
   public edit(f: (user: UserData) => UserData | void): void {
-    editParticipant(this.appData, this.participant, f);
+    editParticipant(
+      this.appData,
+      { experiment: this.session.state().experiment, id: this.session.state().user },
+      f,
+    );
   }
 
   setViewingStage(expStageName: string) {
@@ -50,11 +60,11 @@ export class Participant {
     });
   }
 
-  setStageComplete(complete: boolean) {
-    this.edit((user) => {
-      user.stageMap[user.workingOnStageName].complete = complete;
-    });
-  }
+  // setStageComplete(complete: boolean) {
+  //   this.edit((user) => {
+  //     user.stageMap[user.workingOnStageName].complete = complete;
+  //   });
+  // }
 
   editStageData<T extends ExpDataKinds>(f: (oldExpStage: T) => T | void) {
     this.edit((user) => {
@@ -69,6 +79,14 @@ export class Participant {
     this.edit((user) => {
       user.profile = newUserProfile;
     });
+  }
+
+  sendMessage(message: string) {
+    sendParticipantMessage(
+      this.appData,
+      { experiment: this.experiment().name, id: this.userData().userId },
+      { stageName: this.workingOnStage().name, message },
+    );
   }
 
   nextStep() {

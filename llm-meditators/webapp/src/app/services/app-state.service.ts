@@ -23,23 +23,38 @@ import {
   ExpDataKinds,
   UserProfile,
   ChatAboutItems,
+  STAGE_KIND_SURVEY,
+  ExpStageKind,
+  GenericExpStage,
 } from '../../lib/staged-exp/data-model';
 import { initialExperimentSetup } from '../../lib/staged-exp/example-experiment';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router, UrlSegment } from '@angular/router';
 import * as _ from 'underscore';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { Session } from 'src/lib/session';
-import { AppSettings, initialAppData, SavedAppData } from 'src/lib/app';
+import {
+  AppSettings,
+  AppState,
+  APPSTATE_PARTICIPANT,
+  initAppState,
+  initialAppData,
+  SavedAppData,
+} from 'src/lib/app';
+import { Participant } from 'src/lib/participant';
+
+// function urlPathVarMatcher(segments: UrlSegment[]);
 
 // -------------------------------------------------------------------------------------
-//  The Service Class...
+//  The App State Service...
 // -------------------------------------------------------------------------------------
 @Injectable({
   providedIn: 'root',
 })
-export class SavedDataService {
+export class AppStateService {
   public data: WritableSignal<SavedAppData>;
+
+  public state: WritableSignal<AppState> = signal(initAppState);
 
   // About the app itself.
   public appName: Signal<string>;
@@ -54,6 +69,15 @@ export class SavedDataService {
     private router: Router,
     private route: ActivatedRoute,
   ) {
+    // this.route.url.forEach((urlFragments) => {
+    //   if (urlFragments.length === 0) {
+    //     this.state.set(initAppState);
+    //     return;
+    //   } else if (urlFragments[0].path === 'participant') {
+    //     if(this.state().kind === APPSTATE_PARTICIPANT)
+    //   }
+    // });
+
     // The data.
     this.data = signal(
       JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())),
@@ -69,6 +93,29 @@ export class SavedDataService {
     effect(() => {
       localStorage.setItem('data', this.dataJson());
     });
+  }
+
+  // TODO: do some magic to make the type T get inferred from stageKind.
+  getParticipantAndStage<K extends ExpStage['kind'], T extends ExpStage & { kind: K }>(
+    stageKind: K,
+  ): {
+    participant: Participant;
+    stageData: Signal<T extends GenericExpStage<infer Kind> ? Kind : never>;
+  } {
+    const appState = this.state();
+    if (appState.kind !== APPSTATE_PARTICIPANT) {
+      throw new Error(`ParticipantStageViewComponent participant state`);
+    }
+    const participant = appState.particpant;
+
+    const stageData = computed(() => {
+      const stage = participant.viewingStage();
+      if (stage.kind !== stageKind) {
+        throw new Error(`incorrect stage: ${stage.kind}.`);
+      }
+      return stage.config as T extends GenericExpStage<infer Kind> ? Kind : never;
+    });
+    return { stageData, participant };
   }
 
   setSetting(settingKey: keyof AppSettings, settingValue: string) {

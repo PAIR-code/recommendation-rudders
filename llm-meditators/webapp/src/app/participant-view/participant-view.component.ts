@@ -9,56 +9,67 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  OnDestroy,
   Signal,
   ViewChild,
   computed,
   effect,
 } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { SavedDataService } from '../services/saved-data.service';
+import { AppStateService } from '../services/app-state.service';
 import { ExpStageKind } from '../../lib/staged-exp/data-model';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
-import { AppStateParticipant } from 'src/lib/app';
+import { APPSTATE_PARTICIPANT, makeRouteLinkedParticipant } from 'src/lib/app';
+import { Participant } from 'src/lib/participant';
+import { ParticipantStageViewComponent } from '../participant-stage-view/participant-stage-view.component';
 
 @Component({
   selector: 'app-participant-view',
   standalone: true,
-  imports: [MatIconModule, MatSidenavModule, MatMenuModule, MatListModule, RouterModule],
+  imports: [
+    MatIconModule,
+    MatSidenavModule,
+    MatMenuModule,
+    MatListModule,
+    RouterModule,
+    ParticipantStageViewComponent,
+  ],
   templateUrl: './participant-view.component.html',
   styleUrl: './participant-view.component.scss',
 })
-export class ParticipantViewComponent {
+export class ParticipantViewComponent implements OnDestroy {
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
 
-  public appState: AppStateParticipant;
-  public currentStageKind: Signal<ExpStageKind>;
-  public currentStageName: Signal<string>;
-  public workingOnStageName: Signal<string>;
+  participant: Participant;
 
   constructor(
     private route: ActivatedRoute,
     public router: Router,
-    public dataService: SavedDataService,
+    public stateService: AppStateService,
   ) {
-    this.appState = new AppStateParticipant(route, router, dataService.data);
-
-    this.currentStageKind = computed(() => this.dataService.currentStage().kind);
-    this.currentStageName = computed(() => this.dataService.currentStage().name);
-    this.workingOnStageName = computed(() => this.dataService.user().workingOnStageName);
+    this.participant = makeRouteLinkedParticipant(router, route, stateService.data);
+    stateService.state.set({ kind: APPSTATE_PARTICIPANT, particpant: this.participant });
 
     effect(() => {
       // document.querySelector('title')!.textContent =
       //   this.dataService.appName();
-      document.title = `Experiment: ${this.dataService.appName()}`;
+      document.title = `Experiment: ${this.stateService.appName()}`;
     });
   }
 
   updateCurrentStageName(stageName: string) {
-    console.log('updateViewingStageName', stageName);
-    this.dataService.setCurrentExpStageName(stageName);
+    this.participant.setViewingStage(stageName);
+    // console.log('updateViewingStageName', stageName);
+    // this.dataService.setCurrentExpStageName(stageName);
+  }
+
+  ngOnDestroy(): void {
+    if (this.participant.destory) {
+      this.participant.destory();
+    }
   }
 }

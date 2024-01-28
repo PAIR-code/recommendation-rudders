@@ -1,9 +1,10 @@
 import { reverse, sortBy } from 'lodash';
-import { ExpStageNames, Votes } from 'src/lib/staged-exp/data-model';
+import { LeaderReveal, STAGE_KIND_LEADER_REVEAL, Votes } from 'src/lib/staged-exp/data-model';
 
 import { Component, computed, Signal } from '@angular/core';
 
-import { SavedDataService } from '../services/saved-data.service';
+import { AppStateService } from '../services/app-state.service';
+import { Participant } from 'src/lib/participant';
 
 @Component({
   selector: 'app-exp-leader-reveal',
@@ -13,24 +14,32 @@ import { SavedDataService } from '../services/saved-data.service';
   styleUrl: './exp-leader-reveal.component.scss',
 })
 export class ExpLeaderRevealComponent {
+  public participant: Participant;
+  public stageData: LeaderReveal;
+
   public everyoneReachedTheEnd: Signal<boolean>;
   public finalLeader: Signal<string>;
 
-  constructor(private dataService: SavedDataService) {
+  constructor(private stateService: AppStateService) {
+    const { participant, stageData } =
+      stateService.getParticipantAndStage(STAGE_KIND_LEADER_REVEAL);
+    this.stageData = stageData();
+    this.participant = participant;
+
     this.everyoneReachedTheEnd = computed(() => {
-      const users = Object.values(this.dataService.data().experiment.participants);
+      const users = Object.values(this.participant.experiment().participants);
       return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
     });
 
     this.finalLeader = computed(() => {
-      const users = Object.values(this.dataService.data().experiment.participants);
+      const users = Object.values(this.participant.experiment().participants);
       const votes: { [userId: string]: number } = {};
       users.forEach(({ userId }) => {
         votes[userId] = 0;
       });
 
       for (const user of users) {
-        const leaderVotes = user.stageMap[ExpStageNames['6. Vote for the leader']].config as Votes;
+        const leaderVotes = user.stageMap[this.stageData.pendingVoteStageName].config as Votes;
         for (const userId of Object.keys(leaderVotes)) {
           const vote = leaderVotes[userId];
           if (vote === 'positive') {

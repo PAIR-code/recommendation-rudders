@@ -40,13 +40,19 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { NgModule } from '@angular/core';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
-import { SavedDataService } from './services/saved-data.service';
+import { AppStateService } from './services/app-state.service';
 import { VertexApiService } from './services/vertex-api.service';
 import { RouterModule } from '@angular/router';
 
 @NgModule({
   declarations: [AppComponent, AppSettingsComponent, PageNotFoundComponent],
-  providers: [VertexApiService, SavedDataService, LmApiService, GoogleAuthService, GoogleSheetsService],
+  providers: [
+    VertexApiService,
+    AppStateService,
+    LmApiService,
+    GoogleAuthService,
+    GoogleSheetsService,
+  ],
   bootstrap: [AppComponent],
   imports: [
     BrowserModule,

@@ -8,14 +8,14 @@
 
 import { TestBed } from '@angular/core/testing';
 
-import { SavedDataService } from './saved-data.service';
+import { AppStateService } from './app-state.service';
 
-describe('SavedDataService', () => {
-  let service: SavedDataService;
+describe('AppStateService', () => {
+  let service: AppStateService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(SavedDataService);
+    service = TestBed.inject(AppStateService);
   });
 
   it('should be created', () => {

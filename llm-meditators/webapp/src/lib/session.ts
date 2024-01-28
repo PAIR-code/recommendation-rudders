@@ -5,7 +5,7 @@ import { computed, effect, Signal, signal, untracked, WritableSignal } from '@an
 export class Session<T> {
   public toUrlParams: WritableSignal<Partial<T>>;
   public defaultSession: WritableSignal<T>;
-  public sessionData: WritableSignal<T>;
+  public state: WritableSignal<T>;
 
   constructor(
     // fromRouteParams corresponds to URL parts: /foo/:id/bar/:name
@@ -17,7 +17,7 @@ export class Session<T> {
     // Update this to have default data if/as needed.
     this.defaultSession = signal(this.defaultSessionData);
     // Object.assign({ ...DEFAULT_SESSION }, { stage: this.user().workingOnStageName }));
-    this.sessionData = signal(this.defaultSession(), { equal: _.isEqual });
+    this.state = signal(this.defaultSession(), { equal: _.isEqual });
 
     // This is a rather delicate bit of logic that corelates session parameters to URL parameters.
     // It ensures that all and only non-default session parameters are always
@@ -33,14 +33,14 @@ export class Session<T> {
         firstEmptyParams = false;
         return;
       }
-      const oldSession = untracked(this.sessionData);
+      const oldSession = untracked(this.state);
       const fullUrlSession: T = Object.assign(
         { ...this.defaultSession() } as object,
         urlParams,
       ) as T;
       lastSession.set(fullUrlSession);
       if (!_.isEqual(oldSession, fullUrlSession)) {
-        this.sessionData.set(fullUrlSession);
+        this.state.set(fullUrlSession);
       }
     });
 
@@ -52,14 +52,14 @@ export class Session<T> {
         return;
       }
       // Remove any entries that are the default value: keep the URL minimal.
-      const trimmedNewSession: Partial<T> = { ...this.sessionData() };
+      const trimmedNewSession: Partial<T> = { ...this.state() };
       for (const k of Object.keys(trimmedNewSession)) {
         const key = k as keyof Partial<T>;
         if (_.isEqual(trimmedNewSession[key], this.defaultSession()[key])) {
           delete trimmedNewSession[key];
         }
       }
-      if (!_.isEqual(lastSession(), this.sessionData())) {
+      if (!_.isEqual(lastSession(), this.state())) {
         this.toUrlParams.set(trimmedNewSession);
       }
     });
@@ -67,13 +67,13 @@ export class Session<T> {
 
   // Support functional, or in-place editing.
   edit(f: (session: T) => T | void): void {
-    const curSession = this.sessionData();
+    const curSession = this.state();
     let newSession = { ...curSession };
     const maybeFreshSession = f(newSession);
     if (maybeFreshSession) {
       newSession = { ...maybeFreshSession };
     }
-    this.sessionData.set(newSession);
+    this.state.set(newSession);
   }
 }
 

@@ -9,9 +9,27 @@
 export interface GenericExpStage<T> {
   kind: string;
   name: string;
-  complete: boolean;
   config: T;
 }
+
+// -------------------------------------------------------------------------------------
+export interface UserProfile {
+  pronouns: string;
+  avatarUrl: string;
+  name: string;
+}
+
+export const STAGE_KIND_PROFILE = 'set-profile';
+
+export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
+  kind: typeof STAGE_KIND_PROFILE;
+}
+
+export const fakeEmptyProfile: UserProfile = {
+  pronouns: 'fake pronouns',
+  avatarUrl: 'fake avatar url',
+  name: 'fake name',
+};
 
 // -------------------------------------------------------------------------------------
 export interface Item {
@@ -44,6 +62,7 @@ export interface UserMessage {
   messageType: 'userMessage';
   timestamp: number;
   userId: string;
+  profile: UserProfile;
   text: string;
 }
 
@@ -53,6 +72,7 @@ export const fakeEmptyMessage: UserMessage = {
   messageType: 'userMessage',
   timestamp: 0,
   userId: FAKE_EMPTY_USERID,
+  profile: fakeEmptyProfile,
   text: 'fakeMessage',
 };
 
@@ -85,7 +105,6 @@ export interface ExpStageChatAboutItems extends GenericExpStage<ChatAboutItems> 
 export const fakeChat: ExpStageChatAboutItems = {
   kind: STAGE_KIND_CHAT,
   name: 'dummy-chat',
-  complete: false,
   config: {
     ratingsToDiscuss: [],
     messages: [],
@@ -108,25 +127,6 @@ export const STAGE_KIND_VOTES = 'leader-vote';
 export interface ExpStageVotes extends GenericExpStage<Votes> {
   kind: typeof STAGE_KIND_VOTES;
 }
-
-// -------------------------------------------------------------------------------------
-export interface UserProfile {
-  pronouns: string;
-  avatarUrl: string;
-  name: string;
-}
-
-export const STAGE_KIND_PROFILE = 'set-profile';
-
-export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
-  kind: typeof STAGE_KIND_PROFILE;
-}
-
-export const fakeEmptyProfile: UserProfile = {
-  pronouns: 'fake pronouns',
-  avatarUrl: 'fake avatar url',
-  name: 'fake name',
-};
 
 // -------------------------------------------------------------------------------------
 export interface TosAndUserProfile {
@@ -175,6 +175,7 @@ export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
 }
 
 export interface LeaderReveal {
+  pendingVoteStageName: string;
   revealTimestamp: Date | null;
 }
 
@@ -205,6 +206,26 @@ export type ExpStage =
   // | ExpStageItemRatings
   | ExpStageLeaderReveal;
 
+// type SelfMap<T extends ExpStage> = Map<T['kind'], T>;
+
+// type KindToStageMap<K, T extends ExpStage> = T extends { kind: K } ?
+
+//   ? { [Key in T['kind']]: T['config'] }
+//   : never;
+
+// type KindToStageMap<T extends ExpStage> = T extends any
+//   ? { [Key in T['kind']]: T['config'] }
+//   : never;
+
+// type Bar = ExpStageTosAndUserProfile & ExpStageSurvey;
+
+// type Foo = KindToStageMap<ExpStageTosAndUserProfile> & ;
+
+// {
+//   ExpStageTosAcceptance['kind']: ExpStageTosAcceptance,
+//   // [ExpStageTosAcceptance['kind']]: ExpStageTosAcceptance,
+// }
+
 export type ExpStageKind = ExpStage['kind'];
 
 // -------------------------------------------------------------------------------------
@@ -220,22 +241,23 @@ export const stageKinds = {
   STAGE_KIND_LEADER_REVEAL: STAGE_KIND_LEADER_REVEAL as typeof STAGE_KIND_LEADER_REVEAL,
 };
 
-export enum ExpStageNames {
-  '1. Agree to the experiment and set your profile' = '1. Agree to the experiment and set your profile',
-  '2. Initial leadership survey' = '2. Initial leadership survey',
-  '3. Group discussion' = '3. Group discussion',
-  '4. Post-chat survey' = '4. Post-chat survey',
-  '5. Post-discussion leadership survey' = '5. Post-discussion leadership survey',
-  '6. Vote for the leader' = '6. Vote for the leader',
-  '7. Post-discussion work' = '7. Post-discussion work',
-  '8. Leader reveal' = '8. Leader reveal',
-  '9. final satisfaction survey' = '9. final satisfaction survey',
-}
+// export enum ExpStageNames {
+//   '1. Agree to the experiment and set your profile' = '1. Agree to the experiment and set your profile',
+//   '2. Initial leadership survey' = '2. Initial leadership survey',
+//   '3. Group discussion' = '3. Group discussion',
+//   '4. Post-chat survey' = '4. Post-chat survey',
+//   '5. Post-discussion leadership survey' = '5. Post-discussion leadership survey',
+//   '6. Vote for the leader' = '6. Vote for the leader',
+//   '7. Post-discussion work' = '7. Post-discussion work',
+//   '8. Leader reveal' = '8. Leader reveal',
+//   '9. final satisfaction survey' = '9. final satisfaction survey',
+// }
 
 // -------------------------------------------------------------------------------------
 export interface UserData {
-  accessCode: string;
-  userId: string;
+  // immutale properties.
+  readonly accessCode: string;
+  readonly userId: string;
   // Their appearance.
   profile: UserProfile;
   stageMap: { [stageName: string]: ExpStage };

@@ -1,7 +1,7 @@
 <!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
 <!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
 <div class="main">
-  @for (question of stageData().questions; track question; let questionIdx = $index) {
+  @for (question of this.stageData.questions; track question; let questionIdx = $index) {
     @if (question.itemRatings) {
       <!-- Rating Items -->
       @for (itemPair of question.itemRatings.ratings; track $index) {
@@ -23,7 +23,7 @@
               <span class="item-pair-item-name">{{ itemPair.item2.name }}</span>
             </div>
           </div>
-    
+
           @if (itemPair.choice !== null) {
             <div class="item-pair-confidence">
               <div class="confidence-value">
@@ -35,7 +35,11 @@
               <div class="slider-container">
                 <span class="slider-end-label">50/50</span>
                 <mat-slider min="0" max="1" step="0.1" discrete>
-                  <input matSliderThumb (valueChange)="setConfidence(questionIdx, $event, $index)" value="{{ itemPair.confidence }}" />
+                  <input
+                    matSliderThumb
+                    (valueChange)="setConfidence(questionIdx, $event, $index)"
+                    value="{{ itemPair.confidence }}"
+                  />
                 </mat-slider>
                 <span class="slider-end-label">Full <br />confidence</span>
               </div>
@@ -43,8 +47,7 @@
           }
         </div>
       }
-    }
-    @else{  
+    } @else {
       <!-- Survey -->
       <div>
         <h2 style="white-space: pre-wrap">
@@ -67,7 +70,11 @@
         <form class="settings-form">
           <mat-form-field class="full-width">
             <mat-label>Answer</mat-label>
-            <input matInput placeholder="Write your response" [formControl]="responseControl[questionIdx]" />
+            <input
+              matInput
+              placeholder="Write your response"
+              [formControl]="responseControl[questionIdx]"
+            />
           </mat-form-field>
         </form>
       }

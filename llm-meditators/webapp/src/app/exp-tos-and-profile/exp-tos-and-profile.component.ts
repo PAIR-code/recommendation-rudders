@@ -15,7 +15,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 
 import { STAGE_KIND_TOS_AND_PROFILE, TosAndUserProfile } from '../../lib/staged-exp/data-model';
-import { SavedDataService } from '../services/saved-data.service';
+import { AppStateService } from '../services/app-state.service';
+import { Participant } from 'src/lib/participant';
+import { APPSTATE_PARTICIPANT } from 'src/lib/app';
 
 @Component({
   selector: 'app-exp-tos-and-profile',
@@ -33,21 +35,26 @@ import { SavedDataService } from '../services/saved-data.service';
   styleUrl: './exp-tos-and-profile.component.scss',
 })
 export class ExpTosAndProfileComponent {
+  public participant: Participant;
+
   public responseControl: FormControl<string | null>;
-  public config: TosAndUserProfile;
+  public stageData: TosAndUserProfile;
 
-  constructor(private dataService: SavedDataService) {
-    const stage = this.dataService.currentStage();
-    if (stage.kind !== STAGE_KIND_TOS_AND_PROFILE) {
-      throw new Error(`incorrect stage: ${stage.kind}.`);
-    }
-    this.config = stage.config;
+  constructor(stateService: AppStateService) {
+    const { participant, stageData } = stateService.getParticipantAndStage(
+      STAGE_KIND_TOS_AND_PROFILE,
+    );
+    this.stageData = stageData();
+    this.participant = participant;
 
-    this.responseControl = new FormControl<string>('');
+    this.responseControl = new FormControl<string>(this.stageData.name);
     this.responseControl.valueChanges.forEach((n) => {
       if (n) {
-        this.config.name = n;
-        this.updateStageAndUser();
+        this.stageData.name = n;
+        this.participant.editStageData(() => this.stageData);
+        this.participant.edit((user) => {
+          user.profile.name = this.stageData.name;
+        });
       }
     });
   }
@@ -57,33 +64,33 @@ export class ExpTosAndProfileComponent {
     if (checked) {
       console.log('checked');
       const date = new Date();
-      this.config.acceptedTosTimestamp = date;
-      this.updateStageAndUser();
+      this.stageData.acceptedTosTimestamp = date;
+      this.participant.editStageData(() => this.stageData);
     }
   }
 
-  isComplete(): boolean {
-    return (
-      this.config.avatarUrl !== '' &&
-      this.config.name !== '' &&
-      this.config.pronouns !== '' &&
-      this.config.acceptedTosTimestamp !== null
-    );
-  }
+  // isComplete(): boolean {
+  //   return (
+  //     this.config.avatarUrl !== '' &&
+  //     this.config.name !== '' &&
+  //     this.config.pronouns !== '' &&
+  //     this.config.acceptedTosTimestamp !== null
+  //   );
+  // }
 
   updatePronouns(updatedValue: MatRadioChange) {
-    this.config.pronouns = updatedValue.value;
-    this.updateStageAndUser();
+    this.stageData.pronouns = updatedValue.value;
+    this.participant.editStageData(() => this.stageData);
+    this.participant.edit((user) => {
+      user.profile.pronouns = this.stageData.pronouns;
+    });
   }
 
   updateAvatarUrl(updatedValue: MatRadioChange) {
-    this.config.avatarUrl = updatedValue.value;
-    this.updateStageAndUser();
-  }
-
-  updateStageAndUser() {
-    this.dataService.editWorkingOnExpStageData(() => this.config);
-    this.dataService.updateUserProfile(this.config);
-    this.dataService.setStageComplete(this.isComplete());
+    this.stageData.avatarUrl = updatedValue.value;
+    this.participant.editStageData(() => this.stageData);
+    this.participant.edit((user) => {
+      user.profile.pronouns = this.stageData.avatarUrl;
+    });
   }
 }

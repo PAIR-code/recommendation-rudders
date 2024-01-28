@@ -6,7 +6,7 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { ExpStageNames, stageKinds } from 'src/lib/staged-exp/data-model';
+import { stageKinds } from 'src/lib/staged-exp/data-model';
 
 import { Component, computed, Signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,7 +19,9 @@ import { ExpProfileComponent } from '../exp-profile/exp-profile.component';
 import { ExpSurveyComponent } from '../exp-survey/exp-survey.component';
 import { ExpTosAndProfileComponent } from '../exp-tos-and-profile/exp-tos-and-profile.component';
 import { ExpTosComponent } from '../exp-tos/exp-tos.component';
-import { SavedDataService } from '../services/saved-data.service';
+import { AppStateService } from '../services/app-state.service';
+import { APPSTATE_PARTICIPANT } from 'src/lib/app';
+import { Participant } from 'src/lib/participant';
 
 @Component({
   selector: 'app-participant-stage-view',
@@ -38,26 +40,33 @@ import { SavedDataService } from '../services/saved-data.service';
   styleUrl: './participant-stage-view.component.scss',
 })
 export class ParticipantStageViewComponent {
-  public everyoneReachedTheEnd: Signal<boolean>;
-  public currentStageName: Signal<string>;
-  public workingOnStageName: Signal<string>;
-  public holdingForLeaderReveal: boolean = false;
+  public participant: Participant;
+
+  // public everyoneReachedTheEnd: Signal<boolean>;
+  // public currentStageName: Signal<string>;
+  // public workingOnStageName: Signal<string>;
+  // public holdingForLeaderReveal: boolean = false;
 
   public waiting: boolean = false;
   public errorMessage?: string;
   readonly stageKinds = stageKinds;
 
-  constructor(public dataService: SavedDataService) {
-    this.everyoneReachedTheEnd = computed(() => {
-      const users = Object.values(this.dataService.data().experiment.participants);
-      return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
-    });
+  constructor(stateService: AppStateService) {
+    // this.everyoneReachedTheEnd = computed(() => {
+    //   const users = Object.values(this.stateService.data().experiment.participants);
+    //   return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
+    // });
+    const appState = stateService.state();
+    if (appState.kind !== APPSTATE_PARTICIPANT) {
+      throw new Error(`ParticipantStageViewComponent participant state`);
+    }
+    this.participant = appState.particpant;
+    // this.currentStageName = computed(() => this.stateService.currentStage().name);
+    // this.workingOnStageName = computed(() => this.stateService.user().workingOnStageName);
 
-    this.currentStageName = computed(() => this.dataService.currentStage().name);
-    this.workingOnStageName = computed(() => this.dataService.user().workingOnStageName);
-
-    this.holdingForLeaderReveal =
-      this.currentStageName() === ExpStageNames['8. Leader reveal'] && !this.everyoneReachedTheEnd();
+    // this.holdingForLeaderReveal =
+    //   this.currentStageName() === ExpStageNames['8. Leader reveal'] &&
+    //   !this.everyoneReachedTheEnd();
   }
 
   dismissError() {
@@ -65,6 +74,6 @@ export class ParticipantStageViewComponent {
   }
 
   nextStep() {
-    this.dataService.nextStep();
+    this.participant.nextStep();
   }
 }

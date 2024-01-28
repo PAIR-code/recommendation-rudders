@@ -6,9 +6,17 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { AfterViewInit, Component, ElementRef, Signal, ViewChild, computed, effect } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Signal,
+  ViewChild,
+  computed,
+  effect,
+} from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { SavedDataService } from './services/saved-data.service';
+import { AppStateService } from './services/app-state.service';
 import { GoogleAuthService } from './services/google-auth.service';
 import { Experiment } from 'src/lib/staged-exp/data-model';
 
@@ -36,11 +44,13 @@ export class AppComponent implements AfterViewInit {
   constructor(
     private route: ActivatedRoute,
     public router: Router,
-    public dataService: SavedDataService,
+    public dataService: AppStateService,
     public authService: GoogleAuthService,
   ) {
     this.experiments = computed(() =>
-      Object.values(this.dataService.data().experiments).sort((a, b) => a.name.localeCompare(b.name)),
+      Object.values(this.dataService.data().experiments).sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
     );
 
     effect(() => {

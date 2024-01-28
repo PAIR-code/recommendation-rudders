@@ -19,7 +19,7 @@ import { ExpProfileComponent } from '../exp-profile/exp-profile.component';
 import { ExpSurveyComponent } from '../exp-survey/exp-survey.component';
 import { ExpTosAndProfileComponent } from '../exp-tos-and-profile/exp-tos-and-profile.component';
 import { ExpTosComponent } from '../exp-tos/exp-tos.component';
-import { SavedDataService } from '../services/saved-data.service';
+import { AppStateService } from '../services/app-state.service';
 
 @Component({
   selector: 'app-home',
@@ -48,7 +48,7 @@ export class AppHomeComponent {
   public errorMessage?: string;
   readonly stageKinds = stageKinds;
 
-  constructor(public dataService: SavedDataService) {
+  constructor(public dataService: AppStateService) {
     this.everyoneReachedTheEnd = computed(() => {
       const users = Object.values(this.dataService.data().experiment.participants);
       return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
@@ -58,7 +58,8 @@ export class AppHomeComponent {
     this.workingOnStageName = computed(() => this.dataService.user().workingOnStageName);
 
     this.holdingForLeaderReveal =
-      this.currentStageName() === ExpStageNames['8. Leader reveal'] && !this.everyoneReachedTheEnd();
+      this.currentStageName() === ExpStageNames['8. Leader reveal'] &&
+      !this.everyoneReachedTheEnd();
   }
 
   dismissError() {

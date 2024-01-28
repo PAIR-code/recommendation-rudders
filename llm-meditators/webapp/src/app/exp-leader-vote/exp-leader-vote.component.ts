@@ -10,8 +10,15 @@ import { Component, computed, Signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRadioModule } from '@angular/material/radio';
 
-import { ExpStageVotes, LeaderVote, UserData, Votes } from '../../lib/staged-exp/data-model';
-import { SavedDataService } from '../services/saved-data.service';
+import {
+  ExpStageVotes,
+  LeaderVote,
+  STAGE_KIND_VOTES,
+  UserData,
+  Votes,
+} from '../../lib/staged-exp/data-model';
+import { AppStateService } from '../services/app-state.service';
+import { Participant } from 'src/lib/participant';
 
 @Component({
   selector: 'app-exp-leader-vote',
@@ -21,29 +28,26 @@ import { SavedDataService } from '../services/saved-data.service';
   imports: [MatRadioModule, MatButtonModule],
 })
 export class ExpLeaderVoteComponent {
-  public currStage: Signal<ExpStageVotes>;
   public otherParticipants: Signal<UserData[]>;
 
   readonly LeaderVote = LeaderVote;
+
+  public participant: Participant;
   public votes: Votes;
 
-  constructor(private dataService: SavedDataService) {
-    this.currStage = computed(() => {
-      const currStage = this.dataService.currentStage();
-      if (currStage.kind !== 'leader-vote') {
-        throw new Error(`Bad stage kind for group-chat component: ${currStage.kind}`);
-      }
-      return currStage;
-    });
+  constructor(private stateService: AppStateService) {
+    const { participant, stageData } = stateService.getParticipantAndStage(STAGE_KIND_VOTES);
+    this.votes = stageData();
+    this.participant = participant;
 
     this.otherParticipants = computed(() => {
-      const thisUserId = this.dataService.user().userId;
-      const allUsers = Object.values(this.dataService.data().experiment.participants);
+      const thisUserId = this.participant.userData().userId;
+      const allUsers = Object.values(this.participant.experiment().participants);
       return allUsers.filter((u) => u.userId !== thisUserId);
     });
 
-    // Make sure that votes has all other participants, and only them.
-    this.votes = this.currStage().config;
+    // Make sure that votes has all other participants, and only them... if things
+    // are configured fully in an experiment definition this is not needed.
     const otherParticipantsMap: { [userId: string]: UserData } = {};
     for (const p of this.otherParticipants()) {
       otherParticipantsMap[p.userId] = p;
@@ -71,15 +75,15 @@ export class ExpLeaderVoteComponent {
 
   setVote(event: unknown, userId: string) {
     const { value } = event as { value: LeaderVote };
-    if (this.isComplete()) {
-      this.dataService.setStageComplete(true);
-    }
+    // if (this.isComplete()) {
+    //   this.stateService.setStageComplete(true);
+    // }
     this.votes[userId] = value;
-    this.dataService.editWorkingOnExpStageData<Votes>(() => this.votes);
+    this.participant.editStageData(() => this.votes);
   }
 
   resetVote(userId: string) {
     this.votes[userId] = LeaderVote.NOT_RATED;
-    this.dataService.editWorkingOnExpStageData<Votes>(() => this.votes);
+    this.participant.editStageData(() => this.votes);
   }
 }

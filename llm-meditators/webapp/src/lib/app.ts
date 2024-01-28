@@ -49,7 +49,7 @@ export const APPSTATE_EXPERIMENTER = 'experimenter';
 // Idea to handle different state kinds of classes...
 //
 // Combines routeParams and queryParams into a single Session, and sets them appropriately.
-export class GenericAppState<RouteParamData, QueryParamData> {
+export class RouteSessionBinding<RouteParamData, QueryParamData> {
   // type Session = RouteParamData & QueryParamData;
   public session: Session<RouteParamData & QueryParamData>;
   private paramsSubscription: Subscription;
@@ -87,7 +87,7 @@ export class GenericAppState<RouteParamData, QueryParamData> {
       const urlParams = this.session.toUrlParams();
       Object.keys(urlParams).forEach((k) => {
         // const key = k as keyof (RouteParamData & QueryParamData);
-        if (routeParamNames.has(k as keyof RouteParamData)) {
+        if (this.routeParamNames.has(k as keyof RouteParamData)) {
           const routeKey = k as keyof RouteParamData;
           routeParams[routeKey] = urlParams[routeKey] as RouteParamData[keyof RouteParamData];
         } else {
@@ -96,55 +96,65 @@ export class GenericAppState<RouteParamData, QueryParamData> {
         }
       });
       // TODO: set navigate route params too...
+      console.log(this.route.routeConfig);
       this.router.navigate([], { relativeTo: this.route, queryParams });
     });
   }
 
-  destroy() {
+  public destroy() {
     this.paramsSubscription.unsubscribe();
     this.queryParamsSubscription.unsubscribe();
     this.sessionToRouterEffectRef.destroy();
   }
 }
 
-export class AppStateLandingPage {}
+// export class AppStateParticipant extends GenericAppState<
+//   ParticipantRouteParams,
+//   ParticipantSession
+// > {
+//   participant: Participant;
 
-// export interface AppStateLandingPage {
-//   kind: typeof APPSTATE_LANDING_PAGE;
+//   constructor(
+//     router: Router,
+//     route: ActivatedRoute,
+//     private appData: WritableSignal<SavedAppData>,
+//   ) {
+//     super(router, route, participantRouteParams, DEFAULT_PARTICIPANT_SESSION);
+//     this.participant = new Participant(this.appData, this.session, () => );
+//   }
 // }
 
-const participantRouteParams = new Set<keyof ParticipantRouteParams>(['experiment', 'user']);
-export class AppStateParticipant extends GenericAppState<
-  ParticipantRouteParams,
-  ParticipantSession
-> {
-  participant: Participant;
+export function makeRouteLinkedParticipant(
+  router: Router,
+  route: ActivatedRoute,
+  appData: WritableSignal<SavedAppData>,
+): Participant {
+  const participantRouteParams = new Set<keyof ParticipantRouteParams>(['experiment', 'user']);
 
-  constructor(
-    router: Router,
-    route: ActivatedRoute,
-    private appData: WritableSignal<SavedAppData>,
-    participant: { experiment: string; id: string },
-  ) {
-    super(router, route, participantRouteParams, DEFAULT_PARTICIPANT_SESSION);
-    this.participant = new Participant(this.appData, this.session, participant);
-  }
+  const routeSessionBinding = new RouteSessionBinding<ParticipantRouteParams, ParticipantSession>(
+    router,
+    route,
+    participantRouteParams,
+    DEFAULT_PARTICIPANT_SESSION,
+  );
+
+  return new Participant(appData, routeSessionBinding.session, () => routeSessionBinding.destroy());
 }
 
-// export interface AppStateParticipant {
-//   kind: typeof APPSTATE_PARTICIPANT;
-//   particpant: Participant;
-//   session: Session<ParticipantSession>;
-// }
-// export interface AppStateExperimenter {
-//   kind: typeof APPSTATE_EXPERIMENTER;
-// }
-export class AppStateExperimenter {}
+export interface AppStateLandingPage {
+  kind: typeof APPSTATE_LANDING_PAGE;
+}
+export interface AppStateParticipant {
+  kind: typeof APPSTATE_PARTICIPANT;
+  particpant: Participant;
+}
+export interface AppStateExperimenter {
+  kind: typeof APPSTATE_EXPERIMENTER;
+}
 
-// export type AppState = AppStateLandingPage | AppStateParticipant | AppStateExperimenter;
+export type AppState = AppStateLandingPage | AppStateParticipant | AppStateExperimenter;
 
-// export const initAppState: AppState =
-// { kind: APPSTATE_LANDING_PAGE };
+export const initAppState: AppState = { kind: APPSTATE_LANDING_PAGE };
 
 // class AppController {
 //   state: AppState;
@@ -246,6 +256,8 @@ export function sendParticipantMessage(
   options?: { withoutSetting: boolean },
 ): void {
   const experiment = appData().experiments[fromParticipant.experiment];
+  const fromProfile =
+    appData().experiments[fromParticipant.experiment].participants[fromParticipant.id].profile;
 
   for (const u of Object.values(experiment.participants)) {
     editParticipantStage<ChatAboutItems>(
@@ -258,6 +270,7 @@ export function sendParticipantMessage(
           userId: fromParticipant.id,
           messageType: 'userMessage',
           text: to.message,
+          profile: fromProfile,
           timestamp: new Date().valueOf(),
         });
       },

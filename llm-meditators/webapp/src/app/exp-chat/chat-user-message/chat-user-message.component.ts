@@ -1,5 +1,5 @@
 import { Component, Input, Signal, WritableSignal, computed, signal } from '@angular/core';
-import { SavedDataService } from 'src/app/services/saved-data.service';
+import { AppStateService } from 'src/app/services/app-state.service';
 import {
   FAKE_EMPTY_USERID,
   UserMessage,
@@ -19,18 +19,9 @@ import { ChatUserProfileComponent } from '../chat-user-profile/chat-user-profile
 export class ChatUserMessageComponent {
   @Input()
   set message(m: UserMessage) {
-    this.userMessage.set(m);
+    this.userMessage = m;
   }
-  public profile: Signal<UserProfile>;
-  public userMessage: WritableSignal<UserMessage> = signal(fakeEmptyMessage);
+  public userMessage!: UserMessage;
 
-  constructor(private dataService: SavedDataService) {
-    this.profile = computed(() => {
-      const m = this.userMessage();
-      if (m.userId === FAKE_EMPTY_USERID) {
-        return fakeEmptyProfile;
-      }
-      return this.dataService.data().experiment.participants[m.userId].profile;
-    });
-  }
+  constructor() {}
 }

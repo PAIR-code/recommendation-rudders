@@ -14,7 +14,7 @@ import { GoogleAuthService } from '../services/google-auth.service';
 import { GoogleDriveAppdataService } from '../services/google-drive-appdata.service';
 import { GoogleSheetsService } from '../services/google-sheets.service';
 import { LmApiService } from '../services/lm-api.service';
-import { AppData, initialAppData, SavedDataService } from '../services/saved-data.service';
+import { AppData, initialAppData, AppStateService } from '../services/app-state.service';
 
 @Component({
   selector: 'app-app-settings',
@@ -38,7 +38,7 @@ export class AppSettingsComponent implements OnInit {
   @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
 
   constructor(
-    private dataService: SavedDataService,
+    private dataService: AppStateService,
     private lmApiService: LmApiService,
     private sheetsService: GoogleSheetsService,
     private driveService: GoogleDriveAppdataService,
@@ -51,7 +51,9 @@ export class AppSettingsComponent implements OnInit {
       }
     });
 
-    this.currentUserIdControl = new FormControl<string | null>(this.dataService.data().currentUserId);
+    this.currentUserIdControl = new FormControl<string | null>(
+      this.dataService.data().currentUserId,
+    );
     this.currentUserIdControl.valueChanges.forEach((n) => {
       if (n) {
         this.dataService.setCurrentUserId(n);
@@ -70,7 +72,9 @@ export class AppSettingsComponent implements OnInit {
       this.currentDataStr = JSON.stringify(this.dataService.data(), null, 2);
     });
 
-    this.usersList = Object.values(this.dataService.data().experiment.participants).map(({ userId }) => userId);
+    this.usersList = Object.values(this.dataService.data().experiment.participants).map(
+      ({ userId }) => userId,
+    );
   }
 
   ngOnInit(): void {}
@@ -91,7 +95,12 @@ export class AppSettingsComponent implements OnInit {
       'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file',
     );
 
-    const response = await this.driveService.saveData(json, `${this.dataService.appName()}.json`, '', token);
+    const response = await this.driveService.saveData(
+      json,
+      `${this.dataService.appName()}.json`,
+      '',
+      token,
+    );
 
     console.log('saveToGoogleDrive:response', response);
   }

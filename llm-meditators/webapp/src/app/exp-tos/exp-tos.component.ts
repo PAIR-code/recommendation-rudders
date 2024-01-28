@@ -9,8 +9,10 @@
 import { Component, computed, Signal } from '@angular/core';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 
-import { TosAcceptance } from '../../lib/staged-exp/data-model';
-import { SavedDataService } from '../services/saved-data.service';
+import { STAGE_KIND_ACCEPT_TOS, TosAcceptance } from '../../lib/staged-exp/data-model';
+import { AppStateService } from '../services/app-state.service';
+import { APPSTATE_PARTICIPANT } from 'src/lib/app';
+import { Participant } from 'src/lib/participant';
 
 @Component({
   selector: 'app-exp-tos',
@@ -20,29 +22,22 @@ import { SavedDataService } from '../services/saved-data.service';
   styleUrl: './exp-tos.component.scss',
 })
 export class ExpTosComponent {
-  public stageData: Signal<TosAcceptance>;
+  public participant: Participant;
+  public stageData: TosAcceptance;
 
-  constructor(private dataService: SavedDataService) {
-    // Assumption: this is only ever constructed when
-    // `this.dataService.data().experiment.currentStage` references a
-    // ExpStageTosAcceptance.
-
-    this.stageData = computed(() => {
-      const currentStage = this.dataService.currentStage();
-      if (currentStage.kind !== 'accept-tos') {
-        throw new Error(`currentStage is kind is not right: ${JSON.stringify(currentStage, null, 2)}`);
-      }
-      return currentStage.config;
-    });
+  constructor(stateService: AppStateService) {
+    const { participant, stageData } = stateService.getParticipantAndStage(STAGE_KIND_ACCEPT_TOS);
+    this.stageData = stageData();
+    this.participant = participant;
   }
 
   updateCheckboxValue(updatedValue: MatCheckboxChange) {
     const checked = updatedValue.checked;
     if (checked) {
-      const date = new Date();
-      this.dataService.editWorkingOnExpStageData<TosAcceptance>((d) => {
-        d.acceptedTosTimestamp = date;
-      });
+      this.stageData.acceptedTosTimestamp = new Date();
+    } else {
+      this.stageData.acceptedTosTimestamp = null;
     }
+    this.participant.editStageData(() => this.stageData);
   }
 }
