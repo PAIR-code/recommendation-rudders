@@ -1,1 +1,16 @@
-<p>experimenter-view works!</p>
+<div>
+  <p>You are signed in with: {{ credential.email }}</p>
+  <p>This account is an admin account, and can create and modify experiments.</p>
+  <p>
+    Experiments ({{ experiments().length }}):
+    @for (e of experiments(); track e.name) {
+      <li>
+        <div>Name: {{ e.name }}</div>
+        <div>
+          <!-- Participants: -->
+          <!-- @for (p of Object.values(e.participants); track p.) {} -->
+        </div>
+      </li>
+    }
+  </p>
+</div>

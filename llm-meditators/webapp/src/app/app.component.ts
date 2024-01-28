@@ -44,32 +44,38 @@ export class AppComponent implements AfterViewInit {
   constructor(
     private route: ActivatedRoute,
     public router: Router,
-    public dataService: AppStateService,
+    public stateService: AppStateService,
     public authService: GoogleAuthService,
   ) {
-    this.experiments = computed(() =>
-      Object.values(this.dataService.data().experiments).sort((a, b) =>
-        a.name.localeCompare(b.name),
-      ),
-    );
+    this.experiments = computed(() => {
+      console.log(this.stateService.data());
+      return Object.values(this.stateService.data().experiments).sort((a, b) => {
+        console.log(a);
+        console.log(b);
+        return a.name.localeCompare(b.name);
+      });
+    });
 
     effect(() => {
-      document.title = `Experiment: ${this.dataService.appName()}`;
+      document.title = `Experiment: ${this.stateService.appName()}`;
     });
   }
 
   joinExperiment() {
+    this.error = '';
     const parts = this.accessCode.split(':');
+    console.log(parts);
     if (parts.length !== 3) {
       this.error = 'Bad access code';
     }
+
     const [experimentId, userId, accessCode] = parts;
   }
 
   ngAfterViewInit() {
     // TODO: enable this to login automatically when app starts.
     // also uncomment stuff in html.
-    this.authService.prompt();
+    // this.authService.prompt();
     this.authService.renderLoginButton(this.googleButton.nativeElement);
   }
 }

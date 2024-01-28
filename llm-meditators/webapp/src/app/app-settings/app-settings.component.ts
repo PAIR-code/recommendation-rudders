@@ -14,7 +14,8 @@ import { GoogleAuthService } from '../services/google-auth.service';
 import { GoogleDriveAppdataService } from '../services/google-drive-appdata.service';
 import { GoogleSheetsService } from '../services/google-sheets.service';
 import { LmApiService } from '../services/lm-api.service';
-import { AppData, initialAppData, AppStateService } from '../services/app-state.service';
+import { AppStateService } from '../services/app-state.service';
+import { initialAppData, SavedAppData } from 'src/lib/app';
 
 @Component({
   selector: 'app-app-settings',
@@ -23,7 +24,6 @@ import { AppData, initialAppData, AppStateService } from '../services/app-state.
 })
 export class AppSettingsComponent implements OnInit {
   public appNameControl: FormControl<string | null>;
-  public currentUserIdControl: FormControl<string | null>;
 
   public defaultDataStr: string = JSON.stringify(initialAppData(), null, 2);
   public currentDataStr: string = this.defaultDataStr.slice();
@@ -51,15 +51,6 @@ export class AppSettingsComponent implements OnInit {
       }
     });
 
-    this.currentUserIdControl = new FormControl<string | null>(
-      this.dataService.data().currentUserId,
-    );
-    this.currentUserIdControl.valueChanges.forEach((n) => {
-      if (n) {
-        this.dataService.setCurrentUserId(n);
-      }
-    });
-
     // When app data changes, update the fields in this UI.
     effect(() => {
       const newName = this.dataService.appName();
@@ -71,17 +62,9 @@ export class AppSettingsComponent implements OnInit {
     effect(() => {
       this.currentDataStr = JSON.stringify(this.dataService.data(), null, 2);
     });
-
-    this.usersList = Object.values(this.dataService.data().experiment.participants).map(
-      ({ userId }) => userId,
-    );
   }
 
   ngOnInit(): void {}
-
-  setCurrentUser(event: { value: string }) {
-    this.dataService.setCurrentUserId(event.value);
-  }
 
   reset() {
     this.dataService.reset();
@@ -128,7 +111,7 @@ export class AppSettingsComponent implements OnInit {
     // needed is valid JSON/JSON5, but if you provide valid JSON missing needed
     // values (e.g. encoderConfig is null), it should complain here, but
     // currently does not.
-    const configUpdate = update as ConfigUpdate<AppData>;
+    const configUpdate = update as ConfigUpdate<SavedAppData>;
 
     if (configUpdate.error || !configUpdate.obj || !configUpdate.json) {
       console.log(`configUpdated with no update: ${configUpdate}`);

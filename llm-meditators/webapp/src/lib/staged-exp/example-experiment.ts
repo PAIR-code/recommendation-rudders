@@ -6,7 +6,11 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 import { v4 as uuidv4 } from 'uuid';
-import { uniqueNamesGenerator, Config as UniqueNamesGenConfig, starWars } from 'unique-names-generator';
+import {
+  uniqueNamesGenerator,
+  Config as UniqueNamesGenConfig,
+  starWars,
+} from 'unique-names-generator';
 import {
   Experiment,
   ExpStage,
@@ -19,7 +23,6 @@ import {
   stageKinds,
   ExpStageLeaderReveal,
   Question,
-  ExpStageNames,
 } from './data-model';
 
 import * as items from './items';
@@ -27,6 +30,19 @@ import * as items from './items';
 const fakeNameGenConfig: UniqueNamesGenConfig = {
   dictionaries: [starWars],
 };
+
+// TODO: not sure this does anything for us...
+export enum ExpStageNames {
+  '1. Agree to the experiment and set your profile' = '1. Agree to the experiment and set your profile',
+  '2. Initial leadership survey' = '2. Initial leadership survey',
+  '3. Group discussion' = '3. Group discussion',
+  '4. Post-chat survey' = '4. Post-chat survey',
+  '5. Post-discussion leadership survey' = '5. Post-discussion leadership survey',
+  '6. Vote for the leader' = '6. Vote for the leader',
+  '7. Post-discussion work' = '7. Post-discussion work',
+  '8. Leader reveal' = '8. Leader reveal',
+  '9. final satisfaction survey' = '9. final satisfaction survey',
+}
 
 // -------------------------------------------------------------------------------------
 //  Initial Experiment Setup
@@ -36,7 +52,6 @@ function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
   return {
     kind: stageKinds.STAGE_KIND_TOS_AND_PROFILE,
     name: ExpStageNames['1. Agree to the experiment and set your profile'],
-    complete: false,
     config: {
       pronouns: '',
       avatarUrl: '',
@@ -81,7 +96,6 @@ function initialWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: ExpStageNames['2. Initial leadership survey'],
-    complete: false,
     config: {
       questions: [initialItemRatingsQuestion, initialWantToLeadQuestion],
     },
@@ -92,7 +106,6 @@ function groupChat(): ExpStageChatAboutItems {
   return {
     kind: stageKinds.STAGE_KIND_CHAT,
     name: ExpStageNames['3. Group discussion'],
-    complete: false,
     config: {
       ratingsToDiscuss: [],
       messages: [],
@@ -114,7 +127,6 @@ function chatDiscussionSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: ExpStageNames['4. Post-chat survey'],
-    complete: false,
     config: {
       questions: [chatDiscussionQuestion],
     },
@@ -134,7 +146,6 @@ function postChatWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: ExpStageNames['5. Post-discussion leadership survey'],
-    complete: false,
     config: {
       questions: [postChatWantToLeadQuestion],
     },
@@ -145,7 +156,6 @@ function leaderVoting(): ExpStageVotes {
   return {
     kind: stageKinds.STAGE_KIND_VOTES,
     name: ExpStageNames['6. Vote for the leader'],
-    complete: false,
     config: {},
     // userAcceptance: Date,
   };
@@ -165,7 +175,6 @@ function postChatWork(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: '7. Post-discussion work',
-    complete: false,
     config: {
       questions: [finalItemRatingsQuestion],
     },
@@ -177,8 +186,8 @@ function leaderReveal(): ExpStageLeaderReveal {
   return {
     kind: stageKinds.STAGE_KIND_LEADER_REVEAL,
     name: ExpStageNames['8. Leader reveal'],
-    complete: false,
     config: {
+      pendingVoteStageName: ExpStageNames['6. Vote for the leader'],
       revealTimestamp: null,
     },
   };
@@ -198,7 +207,6 @@ function finalSatisfactionSurvey(): ExpStageSurvey {
   return {
     kind: stageKinds.STAGE_KIND_SURVEY,
     name: '9. final satisfaction survey',
-    complete: false,
     config: {
       questions: [finalSatisfactionQuestion],
     },

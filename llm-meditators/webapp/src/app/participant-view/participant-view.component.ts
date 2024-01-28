@@ -43,6 +43,7 @@ import { ParticipantStageViewComponent } from '../participant-stage-view/partici
 })
 export class ParticipantViewComponent implements OnDestroy {
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
+  // public currentUserIdControl: FormControl<string | null>;
 
   participant: Participant;
 
@@ -59,7 +60,24 @@ export class ParticipantViewComponent implements OnDestroy {
       //   this.dataService.appName();
       document.title = `Experiment: ${this.stateService.appName()}`;
     });
+
+    // this.usersList = Object.values(this.dataService.data().experiment.participants).map(
+    //   ({ userId }) => userId,
+    // );
+
+    // this.currentUserIdControl = new FormControl<string | null>(
+    //   this.dataService.data().currentUserId,
+    // );
+    // this.currentUserIdControl.valueChanges.forEach((n) => {
+    //   if (n) {
+    //     this.dataService.setCurrentUserId(n);
+    //   }
+    // });
   }
+
+  // setCurrentUser(event: { value: string }) {
+  //   this.dataService.setCurrentUserId(event.value);
+  // }
 
   updateCurrentStageName(stageName: string) {
     this.participant.setViewingStage(stageName);

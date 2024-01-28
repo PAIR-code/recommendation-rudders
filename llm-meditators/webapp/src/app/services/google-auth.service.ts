@@ -14,7 +14,7 @@ interface LoginJWT {
   credential: string;
 }
 
-interface Credential {
+export interface Credential {
   aud: string; // Your server's client ID
   email: string; // The user's email address
   email_verified: boolean; // true, if Google has verified the email address

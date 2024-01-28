@@ -1,5 +1,5 @@
 <div class="toolbar" role="banner">
-  <span class="title">Experiment: {{ dataService.appName() }}</span>
+  <span class="title">Experiment: {{ stateService.appName() }}</span>
   <div class="spacer"></div>
   @if (authService.credential(); as creds) {
     <div>
@@ -18,21 +18,13 @@
     <div class="error">{{ error }}</div>
   }
   @if (authService.credential(); as creds) {
-    <div>
-      <p>You are signed in with: {{ creds.email }}</p>
-      <p>This account is an admin account, and can create and modify experiments.</p>
-      @for (e of experiments(); track e.name) {
-        <div>
-          {{ e.name }}
-        </div>
-      }
-    </div>
+    <app-experimenter-view [credential]="creds"></app-experimenter-view>
   } @else {
     <div>
       Enter your access code to start working on an expriment:
       <mat-form-field class="full-width">
         <mat-label>Access code</mat-label>
-        <input matInput placeholder="Write your response" [ngModel]="accessCodeValue" />
+        <input matInput placeholder="Write your response" [(ngModel)]="accessCodeValue" />
       </mat-form-field>
       <button color="primary" mat-button (click)="joinExperiment()">
         <!-- [disabled]="!this.dataService.stageComplete()"  -->

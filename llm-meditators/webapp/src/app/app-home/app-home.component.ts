@@ -6,8 +6,6 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { ExpStageNames, stageKinds } from 'src/lib/staged-exp/data-model';
-
 import { Component, computed, Signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -39,34 +37,5 @@ import { AppStateService } from '../services/app-state.service';
   styleUrls: ['./app-home.component.scss'],
 })
 export class AppHomeComponent {
-  public everyoneReachedTheEnd: Signal<boolean>;
-  public currentStageName: Signal<string>;
-  public workingOnStageName: Signal<string>;
-  public holdingForLeaderReveal: boolean = false;
-
-  public waiting: boolean = false;
-  public errorMessage?: string;
-  readonly stageKinds = stageKinds;
-
-  constructor(public dataService: AppStateService) {
-    this.everyoneReachedTheEnd = computed(() => {
-      const users = Object.values(this.dataService.data().experiment.participants);
-      return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
-    });
-
-    this.currentStageName = computed(() => this.dataService.currentStage().name);
-    this.workingOnStageName = computed(() => this.dataService.user().workingOnStageName);
-
-    this.holdingForLeaderReveal =
-      this.currentStageName() === ExpStageNames['8. Leader reveal'] &&
-      !this.everyoneReachedTheEnd();
-  }
-
-  dismissError() {
-    delete this.errorMessage;
-  }
-
-  nextStep() {
-    this.dataService.nextStep();
-  }
+  constructor(public dataService: AppStateService) {}
 }

@@ -43,6 +43,7 @@ import { PageNotFoundComponent } from './page-not-found/page-not-found.component
 import { AppStateService } from './services/app-state.service';
 import { VertexApiService } from './services/vertex-api.service';
 import { RouterModule } from '@angular/router';
+import { ExperimenterViewComponent } from './experimenter-view/experimenter-view.component';
 
 @NgModule({
   declarations: [AppComponent, AppSettingsComponent, PageNotFoundComponent],
@@ -83,6 +84,7 @@ import { RouterModule } from '@angular/router';
     ExpTosComponent,
     ExpTosAndProfileComponent,
     ExpLeaderRevealComponent,
+    ExperimenterViewComponent,
   ],
 })
 export class AppModule {}
