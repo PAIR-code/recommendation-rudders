@@ -9,14 +9,14 @@
 import { Component, computed, Signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 
-import { ExpChatComponent } from '../exp-chat/exp-chat.component';
-import { ExpLeaderRevealComponent } from '../exp-leader-reveal/exp-leader-reveal.component';
-import { ExpLeaderVoteComponent } from '../exp-leader-vote/exp-leader-vote.component';
-import { ExpProfileComponent } from '../exp-profile/exp-profile.component';
+import { ExpChatComponent } from '../participant-stage-view/exp-chat/exp-chat.component';
+import { ExpLeaderRevealComponent } from '../participant-stage-view/exp-leader-reveal/exp-leader-reveal.component';
+import { ExpLeaderVoteComponent } from '../participant-stage-view/exp-leader-vote/exp-leader-vote.component';
+import { ExpProfileComponent } from '../participant-stage-view/exp-profile/exp-profile.component';
 //import { ExpRatingComponent } from '../exp-rating/exp-rating.component';
-import { ExpSurveyComponent } from '../exp-survey/exp-survey.component';
-import { ExpTosAndProfileComponent } from '../exp-tos-and-profile/exp-tos-and-profile.component';
-import { ExpTosComponent } from '../exp-tos/exp-tos.component';
+import { ExpSurveyComponent } from '../participant-stage-view/exp-survey/exp-survey.component';
+import { ExpTosAndProfileComponent } from '../participant-stage-view/exp-tos-and-profile/exp-tos-and-profile.component';
+import { ExpTosComponent } from '../participant-stage-view/exp-tos/exp-tos.component';
 import { AppStateService } from '../services/app-state.service';
 
 @Component({

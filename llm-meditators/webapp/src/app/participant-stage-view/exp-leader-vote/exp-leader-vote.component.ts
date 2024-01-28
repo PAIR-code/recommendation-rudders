@@ -16,8 +16,8 @@ import {
   STAGE_KIND_VOTES,
   UserData,
   Votes,
-} from '../../lib/staged-exp/data-model';
-import { AppStateService } from '../services/app-state.service';
+} from '../../../lib/staged-exp/data-model';
+import { AppStateService } from '../../services/app-state.service';
 import { Participant } from 'src/lib/participant';
 
 @Component({

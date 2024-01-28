@@ -3,7 +3,7 @@ import { LeaderReveal, STAGE_KIND_LEADER_REVEAL, Votes } from 'src/lib/staged-ex
 
 import { Component, computed, Signal } from '@angular/core';
 
-import { AppStateService } from '../services/app-state.service';
+import { AppStateService } from '../../services/app-state.service';
 import { Participant } from 'src/lib/participant';
 
 @Component({

@@ -12,8 +12,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
 
-import { ItemRatings, Question, STAGE_KIND_SURVEY, Survey } from '../../lib/staged-exp/data-model';
-import { AppStateService } from '../services/app-state.service';
+import {
+  ItemRatings,
+  Question,
+  STAGE_KIND_SURVEY,
+  Survey,
+} from '../../../lib/staged-exp/data-model';
+import { AppStateService } from '../../services/app-state.service';
 import { APPSTATE_PARTICIPANT } from 'src/lib/app';
 import { Participant } from 'src/lib/participant';
 

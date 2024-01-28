@@ -9,8 +9,8 @@
 import { Component, computed, Signal } from '@angular/core';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 
-import { STAGE_KIND_ACCEPT_TOS, TosAcceptance } from '../../lib/staged-exp/data-model';
-import { AppStateService } from '../services/app-state.service';
+import { STAGE_KIND_ACCEPT_TOS, TosAcceptance } from '../../../lib/staged-exp/data-model';
+import { AppStateService } from '../../services/app-state.service';
 import { APPSTATE_PARTICIPANT } from 'src/lib/app';
 import { Participant } from 'src/lib/participant';
 
