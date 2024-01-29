@@ -80,8 +80,9 @@ const initialItemRatingsQuestion: Question = {
 
 const initialWantToLeadQuestion: Question = {
   questionText: `Rate the how much you would like to be the group leader.`,
-  lowerBound: 'I would most definitely not like to be the leader (0/10)',
-  upperBound: 'I will fight to be the leader (10/10)',
+  //lowerBound: 'I would most definitely not like to be the leader (0/10)',
+  lowerBound: '0/10: I would definitely prefer that someone else be the leader 🙅',
+  upperBound: '10/10: I will fight to be the leader 👍',
   openFeedback: false,
   score: null,
 };
