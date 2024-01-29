@@ -16,53 +16,61 @@ export class Session<T> {
     // The current URL params data.
     // Update this to have default data if/as needed.
     this.defaultSession = signal(this.defaultSessionData);
+    const initSessionData: T = { ...this.defaultSessionData };
+    Object.assign(initSessionData as Partial<T>, fromUrlParams()) as T;
     // Object.assign({ ...DEFAULT_SESSION }, { stage: this.user().workingOnStageName }));
-    this.state = signal(this.defaultSession(), { equal: _.isEqual });
+    this.state = signal(initSessionData, { equal: _.isEqual });
 
     // This is a rather delicate bit of logic that corelates session parameters to URL parameters.
     // It ensures that all and only non-default session parameters are always
     // represented in the URL.
-    const lastSession = signal<T>(this.defaultSession());
-    this.toUrlParams = signal<Partial<T>>({});
+    const lastSession = signal<T>(initSessionData);
+    this.toUrlParams = signal<Partial<T>>(fromUrlParams());
 
-    let firstEmptyParams = true;
-    effect(() => {
-      const urlParams = this.fromUrlParams();
-      // Don't update on the very first value, which is always {} even if URL params are provided.
-      if (firstEmptyParams) {
-        firstEmptyParams = false;
-        return;
-      }
-      const oldSession = untracked(this.state);
-      const fullUrlSession: T = Object.assign(
-        { ...this.defaultSession() } as object,
-        urlParams,
-      ) as T;
-      lastSession.set(fullUrlSession);
-      if (!_.isEqual(oldSession, fullUrlSession)) {
-        this.state.set(fullUrlSession);
-      }
-    });
-
-    let firstSessionUpdate = true;
-    effect(() => {
-      // Don't update on the very first value, which is restored from user saved default session.
-      if (firstSessionUpdate) {
-        firstSessionUpdate = false;
-        return;
-      }
-      // Remove any entries that are the default value: keep the URL minimal.
-      const trimmedNewSession: Partial<T> = { ...this.state() };
-      for (const k of Object.keys(trimmedNewSession)) {
-        const key = k as keyof Partial<T>;
-        if (_.isEqual(trimmedNewSession[key], this.defaultSession()[key])) {
-          delete trimmedNewSession[key];
+    // let firstEmptyParams = true;
+    effect(
+      () => {
+        const urlParams = this.fromUrlParams();
+        // Don't update on the very first value, which is always {} even if URL params are provided.
+        // if (firstEmptyParams) {
+        //   firstEmptyParams = false;
+        //   return;
+        // }
+        const oldSession = untracked(this.state);
+        const fullUrlSession: T = Object.assign(
+          { ...this.defaultSession() } as object,
+          urlParams,
+        ) as T;
+        lastSession.set(fullUrlSession);
+        if (!_.isEqual(oldSession, fullUrlSession)) {
+          this.state.set(fullUrlSession);
         }
-      }
-      if (!_.isEqual(lastSession(), this.state())) {
-        this.toUrlParams.set(trimmedNewSession);
-      }
-    });
+      },
+      { allowSignalWrites: true },
+    );
+
+    // let firstSessionUpdate = true;
+    effect(
+      () => {
+        // Don't update on the very first value, which is restored from user saved default session.
+        // if (firstSessionUpdate) {
+        //   firstSessionUpdate = false;
+        //   return;
+        // }
+        // Remove any entries that are the default value: keep the URL minimal.
+        const trimmedNewSession: Partial<T> = { ...this.state() };
+        for (const k of Object.keys(trimmedNewSession)) {
+          const key = k as keyof Partial<T>;
+          if (_.isEqual(trimmedNewSession[key], this.defaultSession()[key])) {
+            delete trimmedNewSession[key];
+          }
+        }
+        if (!_.isEqual(untracked(lastSession), this.state())) {
+          this.toUrlParams.set(trimmedNewSession);
+        }
+      },
+      { allowSignalWrites: true },
+    );
   }
 
   // Support functional, or in-place editing.

@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { Component, effect, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { ConfigUpdate } from '../codemirror-config-editor/codemirror-config-editor.component';
 import { GoogleAuthService } from '../services/google-auth.service';
@@ -16,9 +16,30 @@ import { GoogleSheetsService } from '../services/google-sheets.service';
 import { LmApiService } from '../services/lm-api.service';
 import { AppStateService } from '../services/app-state.service';
 import { initialAppData, SavedAppData } from 'src/lib/app';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { CodemirrorConfigEditorModule } from '../codemirror-config-editor/codemirror-config-editor.module';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-app-settings',
+  standalone: true,
+  imports: [
+    MatFormFieldModule,
+    FormsModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatChipsModule,
+    MatMenuModule,
+    MatProgressBarModule,
+    CodemirrorConfigEditorModule,
+    MatIconModule,
+  ],
   templateUrl: './app-settings.component.html',
   styleUrls: ['./app-settings.component.scss'],
 })

@@ -118,6 +118,17 @@ export class AppStateService {
     return { stageData, participant };
   }
 
+  validParticipant(experiment: string, user: string, stage: string): boolean {
+    return (
+      experiment in this.data().experiments &&
+      user in this.data().experiments[experiment].participants &&
+      stage in this.data().experiments[experiment].participants[user].stageMap
+    );
+    //  TODO add this to make it more secure...
+    //  &&
+    // this.data().experiments[experiment].participants[user].accessCode === accessCode;
+  }
+
   setSetting(settingKey: keyof AppSettings, settingValue: string) {
     const data = this.data();
     if (data.settings[settingKey] !== settingValue) {

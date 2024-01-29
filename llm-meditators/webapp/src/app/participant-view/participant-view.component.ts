@@ -26,6 +26,7 @@ import { RouterModule } from '@angular/router';
 import { APPSTATE_PARTICIPANT, makeRouteLinkedParticipant } from 'src/lib/app';
 import { Participant } from 'src/lib/participant';
 import { ParticipantStageViewComponent } from '../participant-stage-view/participant-stage-view.component';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-participant-view',
@@ -35,6 +36,7 @@ import { ParticipantStageViewComponent } from '../participant-stage-view/partici
     MatSidenavModule,
     MatMenuModule,
     MatListModule,
+    MatButtonModule,
     RouterModule,
     ParticipantStageViewComponent,
   ],
@@ -52,15 +54,11 @@ export class ParticipantViewComponent implements OnDestroy {
     public router: Router,
     public stateService: AppStateService,
   ) {
+    console.log('route.snapshot.params', route.snapshot.params);
     this.participant = makeRouteLinkedParticipant(router, route, stateService.data);
-    stateService.state.set({ kind: APPSTATE_PARTICIPANT, particpant: this.participant });
-
-    effect(() => {
-      // document.querySelector('title')!.textContent =
-      //   this.dataService.appName();
-      document.title = `Experiment: ${this.stateService.appName()}`;
-    });
-
+    if (this.participant) {
+      stateService.state.set({ kind: APPSTATE_PARTICIPANT, particpant: this.participant });
+    }
     // this.usersList = Object.values(this.dataService.data().experiment.participants).map(
     //   ({ userId }) => userId,
     // );
@@ -80,13 +78,15 @@ export class ParticipantViewComponent implements OnDestroy {
   // }
 
   updateCurrentStageName(stageName: string) {
-    this.participant.setViewingStage(stageName);
+    if (this.participant) {
+      this.participant.setViewingStage(stageName);
+    }
     // console.log('updateViewingStageName', stageName);
     // this.dataService.setCurrentExpStageName(stageName);
   }
 
   ngOnDestroy(): void {
-    if (this.participant.destory) {
+    if (this.participant && this.participant.destory) {
       this.participant.destory();
     }
   }

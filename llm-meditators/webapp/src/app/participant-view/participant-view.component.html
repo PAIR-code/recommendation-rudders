@@ -1,6 +1,6 @@
 <div class="toolbar" role="banner">
   <button mat-icon-button (click)="sidenav.toggle()"><mat-icon>menu</mat-icon></button>
-  <span class="title">Experiment: {{ stateService.appName() }}</span>
+  <span class="title">Participant: {{ participant.experiment().name }}</span>
   <div class="spacer"></div>
   <div class="current-user">Current user: {{ participant.userData().userId }}</div>
   <a class="small-logo" aria-label="PAIR" href="https://pair.withgoogle.com/" title="Home">
@@ -15,7 +15,7 @@
         @for (stageName of participant.userData().completedStageNames; track stageName) {
           <mat-list-item
             matListItemTitle
-            [routerLink]="['/']"
+            [routerLink]="['./']"
             [queryParams]="{ stage: stageName }"
             [class.highlighted]="participant.viewingStage().name === stageName"
             ariaCurrentWhenActive="page"
@@ -30,7 +30,8 @@
         }
         <mat-list-item
           matListItemTitle
-          [routerLink]="['/']"
+          [routerLink]="['./']"
+          [queryParams]="{ stage: participant.workingOnStage().name }"
           ariaCurrentWhenActive="page"
           #rla="routerLinkActive"
           [routerLinkActiveOptions]="{ exact: true }"

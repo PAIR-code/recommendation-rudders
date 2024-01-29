@@ -1,0 +1,27 @@
+<div>
+  <p>Number of participants ({{ participants().length }})</p>
+  @for (p of participants(); track p.userId) {
+    <li>
+      id: {{ p.userId }}<br />
+      Name: {{ p.profile.name }}<br />
+      Preffered pronouns: {{ p.profile.pronouns }}<br />
+      Avatar:
+      @if (p.profile.avatarUrl) {
+        <img [src]="p.profile.avatarUrl" alt="avatar" />
+      } @else {
+        no avatar set
+      }
+      <br />
+      Working on stage: {{ p.workingOnStageName }}<br />
+      <a
+        [routerLink]="['/participant', this.experimentName(), p.userId]"
+        [queryParams]="{ stage: p.workingOnStageName }"
+        >Go to participant view</a
+      >
+      <!-- <div>
+          Participants:
+          @for (p of Object.values(e.participants); track p.) {}
+        </div> -->
+    </li>
+  }
+</div>

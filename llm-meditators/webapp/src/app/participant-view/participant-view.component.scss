@@ -157,4 +157,11 @@ $toolbar-height: 60px;
 
 .error {
   color: #f00;
+  background-color: #fEE;
+  border-radius: 5px;
+  border: 1px solid #AAA;
+}
+
+.content {
+  padding: 1em;
 }

@@ -46,7 +46,7 @@ import { RouterModule } from '@angular/router';
 import { ExperimenterViewComponent } from './experimenter-view/experimenter-view.component';
 
 @NgModule({
-  declarations: [AppComponent, AppSettingsComponent, PageNotFoundComponent],
+  declarations: [AppComponent],
   providers: [
     VertexApiService,
     AppStateService,
@@ -57,10 +57,9 @@ import { ExperimenterViewComponent } from './experimenter-view/experimenter-view
   bootstrap: [AppComponent],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     RouterModule,
     AppRoutingModule,
-    BrowserAnimationsModule,
-    MatButtonModule,
     MatSelectModule,
     MatSidenavModule,
     MatButtonToggleModule,
@@ -69,6 +68,7 @@ import { ExperimenterViewComponent } from './experimenter-view/experimenter-view
     MatBadgeModule,
     FormsModule,
     ReactiveFormsModule,
+    MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatChipsModule,
@@ -76,6 +76,7 @@ import { ExperimenterViewComponent } from './experimenter-view/experimenter-view
     MatProgressBarModule,
     CodemirrorConfigEditorModule,
     AppHomeComponent,
+    AppSettingsComponent,
     ExpSurveyComponent,
     ExpLeaderVoteComponent,
     ExpProfileComponent,
@@ -85,6 +86,7 @@ import { ExperimenterViewComponent } from './experimenter-view/experimenter-view
     ExpTosAndProfileComponent,
     ExpLeaderRevealComponent,
     ExperimenterViewComponent,
+    PageNotFoundComponent,
   ],
 })
 export class AppModule {}

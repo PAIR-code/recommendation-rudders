@@ -18,9 +18,11 @@ export class Participant {
     public destory?: () => void,
     // public participant: { experiment: string; id: string },
   ) {
-    const experimentId = this.session.state().experiment;
-    const participantId = this.session.state().user;
+    // console.log('------------new Participant ');
+    // console.log(this.session.state());
+    // console.log(JSON.stringify(this.session.state()));
     this.experiment = computed(() => {
+      const experimentId = this.session.state().experiment;
       const experiment = this.appData().experiments[experimentId];
       if (!experiment) {
         throw new Error(`No such experiment name: ${experimentId}`);
@@ -28,13 +30,28 @@ export class Participant {
       return experiment;
     });
     this.userData = computed(() => {
+      const participantId = this.session.state().user;
       const user = this.experiment().participants[participantId];
       if (!user) {
         throw new Error(`No such user id: ${participantId}`);
       }
       return user;
     });
-    this.viewingStage = computed(() => this.userData().stageMap[this.session.state().stage]);
+    console.log('userData:', this.userData());
+    console.log('state:', JSON.stringify(this.session.state()));
+    console.log('state2:', JSON.stringify(this.session.state()));
+
+    this.viewingStage = computed(() => {
+      return this.userData().stageMap[this.session.state().stage];
+
+      // TODO: Maybe make this part of the router: if stage is not known, redirect to workingOnStageName.
+      //
+      // if (!(this.session.state().stage in this.userData().stageMap)) {
+      //   return this.userData().stageMap[this.userData().workingOnStageName];
+      // } else {
+      //   return this.userData().stageMap[this.session.state().stage];
+      // }
+    });
     this.workingOnStage = computed(
       () => this.userData().stageMap[this.userData().workingOnStageName],
     );

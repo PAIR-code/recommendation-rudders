@@ -6,7 +6,15 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, computed, Signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  Signal,
+  ViewChild,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 
 import { ExpChatComponent } from '../participant-stage-view/exp-chat/exp-chat.component';
@@ -18,11 +26,19 @@ import { ExpSurveyComponent } from '../participant-stage-view/exp-survey/exp-sur
 import { ExpTosAndProfileComponent } from '../participant-stage-view/exp-tos-and-profile/exp-tos-and-profile.component';
 import { ExpTosComponent } from '../participant-stage-view/exp-tos/exp-tos.component';
 import { AppStateService } from '../services/app-state.service';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { GoogleAuthService } from '../services/google-auth.service';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { Experiment } from 'src/lib/staged-exp/data-model';
+import { ExperimenterViewComponent } from '../experimenter-view/experimenter-view.component';
+import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
+    MatFormFieldModule,
     ExpChatComponent,
     ExpLeaderVoteComponent,
     ExpProfileComponent,
@@ -32,10 +48,70 @@ import { AppStateService } from '../services/app-state.service';
     ExpLeaderRevealComponent,
     ExpTosComponent,
     MatButtonModule,
+    ExperimenterViewComponent,
+    FormsModule,
+    MatInputModule,
+    RouterModule,
   ],
   templateUrl: './app-home.component.html',
   styleUrls: ['./app-home.component.scss'],
 })
-export class AppHomeComponent {
-  constructor(public dataService: AppStateService) {}
+export class AppHomeComponent implements AfterViewInit {
+  @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
+
+  public error: string = '';
+
+  public accessCode: string = '';
+  public get accessCodeValue() {
+    return this.accessCode;
+  }
+  public set accessCodeValue(s: string) {
+    this.error = '';
+    this.accessCode = s;
+  }
+
+  public experiments: Signal<Experiment[]>;
+
+  constructor(
+    private route: ActivatedRoute,
+    public router: Router,
+    public stateService: AppStateService,
+    public authService: GoogleAuthService,
+  ) {
+    this.experiments = computed(() => {
+      console.log(this.stateService.data());
+      return Object.values(this.stateService.data().experiments).sort((a, b) => {
+        console.log(a);
+        console.log(b);
+        return a.name.localeCompare(b.name);
+      });
+    });
+
+    effect(() => {
+      document.title = `Experiment: ${this.stateService.appName()}`;
+    });
+  }
+
+  joinExperiment() {
+    this.error = '';
+    const parts = this.accessCode.split(':');
+    console.log(parts);
+    if (parts.length !== 3) {
+      this.error = 'Bad access code';
+    }
+
+    const [experimentId, userId, accessCode] = parts;
+  }
+
+  ngAfterViewInit() {
+    // TODO: enable this to login automatically when app starts.
+    // also uncomment stuff in html.
+    // this.authService.prompt();
+
+    // If already authenticated, this does not exist.
+    console.log(this.googleButton);
+    if (this.googleButton) {
+      this.authService.renderLoginButton(this.googleButton.nativeElement);
+    }
+  }
 }

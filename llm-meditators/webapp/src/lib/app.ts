@@ -63,13 +63,19 @@ export class RouteSessionBinding<RouteParamData, QueryParamData> {
     private routeParamNames: Set<keyof RouteParamData>,
     private defaultSessionData: RouteParamData & QueryParamData,
   ) {
-    const routeParamsSignal = signal<Partial<RouteParamData>>({}, { equal: _.isEqual });
+    const routeParamsSignal = signal<Partial<RouteParamData>>(
+      route.snapshot.params as RouteParamData,
+      { equal: _.isEqual },
+    );
     this.paramsSubscription = this.route.params.subscribe((params) => {
-      console.log(JSON.stringify(params));
+      // console.log(JSON.stringify(params));
       routeParamsSignal.set(params as Partial<RouteParamData>);
     });
 
-    const queryParamsSignal = signal<Partial<QueryParamData>>({}, { equal: _.isEqual });
+    const queryParamsSignal = signal<Partial<QueryParamData>>(
+      route.snapshot.queryParams as QueryParamData,
+      { equal: _.isEqual },
+    );
     this.queryParamsSubscription = this.route.queryParams.subscribe((params) =>
       queryParamsSignal.set(params as Partial<QueryParamData>),
     );
@@ -138,7 +144,11 @@ export function makeRouteLinkedParticipant(
     DEFAULT_PARTICIPANT_SESSION,
   );
 
-  return new Participant(appData, routeSessionBinding.session, () => routeSessionBinding.destroy());
+  const participant = new Participant(appData, routeSessionBinding.session, () =>
+    routeSessionBinding!.destroy(),
+  );
+
+  return participant;
 }
 
 export interface AppStateLandingPage {

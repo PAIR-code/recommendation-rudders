@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes, withComponentInputBinding } from '@angular/router';
 import { AppHomeComponent as AppHomeComponent } from './app-home/app-home.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
@@ -16,20 +16,54 @@ import { ExpLeaderVoteComponent } from './participant-stage-view/exp-leader-vote
 import { ExpTosComponent } from './participant-stage-view/exp-tos/exp-tos.component';
 import { ParticipantViewComponent } from './participant-view/participant-view.component';
 import { ExperimenterViewComponent } from './experimenter-view/experimenter-view.component';
+import { ExperimentMonitorComponent } from './experimenter-view/experiment-monitor/experiment-monitor.component';
+import { ExperimentSettingsComponent } from './experimenter-view/experiment-settings/experiment-settings.component';
+import { experimenterAuthGuard } from './experimenter-auth.guard';
+import { validParticipantGuard } from './valid-participant.guard';
 
 const routes: Routes = [
-  { path: '', component: AppHomeComponent, pathMatch: 'full' },
   {
-    path: 'participant/:experiment;user=:user',
+    path: 'participant/:experiment/:user/:stage',
     component: ParticipantViewComponent,
+    canActivate: [validParticipantGuard],
     pathMatch: 'full',
   },
-  { path: 'experimenter', component: AppHomeComponent, pathMatch: 'full' },
+  {
+    path: 'experimenter',
+    component: ExperimenterViewComponent,
+    canActivate: [experimenterAuthGuard],
+    children: [
+      {
+        path: 'experiment/:experiment/settings',
+        component: ExperimentSettingsComponent,
+        pathMatch: 'full',
+      },
+      {
+        path: 'experiment/:experiment',
+        component: ExperimentMonitorComponent,
+        pathMatch: 'full',
+      },
+      {
+        path: 'settings',
+        component: AppSettingsComponent,
+        pathMatch: 'full',
+      },
+    ],
+  },
+  { path: '', component: AppHomeComponent, pathMatch: 'full' },
   { path: '**', component: PageNotFoundComponent },
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, { useHash: true })],
+  imports: [
+    RouterModule.forRoot(routes, {
+      useHash: true,
+      bindToComponentInputs: true,
+      // enableTracing: true,
+    }),
+  ],
   exports: [RouterModule],
 })
 export class AppRoutingModule {}
+
+// provideRouter(appRoutes, withComponentInputBinding()),
