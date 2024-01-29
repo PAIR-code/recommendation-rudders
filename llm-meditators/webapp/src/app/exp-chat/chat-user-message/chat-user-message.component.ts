@@ -23,6 +23,7 @@ export class ChatUserMessageComponent {
   }
   public profile: Signal<UserProfile>;
   public userMessage: WritableSignal<UserMessage> = signal(fakeEmptyMessage);
+  public dateMessage: Signal<Date>;
 
   constructor(private dataService: SavedDataService) {
     this.profile = computed(() => {
@@ -32,5 +33,9 @@ export class ChatUserMessageComponent {
       }
       return this.dataService.data().experiment.participants[m.userId].profile;
     });
+    this.dateMessage = computed(() => {
+      const m = this.userMessage();
+      return new Date(m.timestamp);
+    }); 
   }
 }

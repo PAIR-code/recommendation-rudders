@@ -1,5 +1,6 @@
-<div>
+<div class="profile">
   <img class="avatar" [src]="profile.avatarUrl" alt="Avatar image" />
-  <div>Preferred pronouns: {{ profile.pronouns }}</div>
-  <div>Name: {{ profile.name }}</div>
+  <!-- <div>Preferred pronouns: {{ profile.pronouns }}</div>
+  <div>Name: {{ profile.name }}</div> -->
+  <div><u><b>{{ profile.name }}</b> ({{ profile.pronouns }})</u>:</div>
 </div>

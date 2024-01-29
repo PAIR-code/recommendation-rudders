@@ -3,6 +3,7 @@
 <div class="main">
   @for (question of stageData().questions; track question; let questionIdx = $index) {
     @if (question.itemRatings) {
+      <h2>Item rating</h2>
       <!-- Rating Items -->
       @for (itemPair of question.itemRatings.ratings; track $index) {
         <div class="item-pair">
@@ -33,18 +34,29 @@
                 </span>
               </div>
               <div class="slider-container">
-                <span class="slider-end-label">50/50</span>
+                @if (itemPair.confidence === 0 || itemPair.confidence === null) {
+                  <span class="slider-end-label"><b> 50/50 🤷</b></span>
+                }
+                @else {
+                  <span class="slider-end-label">50/50 🤷</span>}
                 <mat-slider min="0" max="1" step="0.1" discrete>
                   <input matSliderThumb (valueChange)="setConfidence(questionIdx, $event, $index)" value="{{ itemPair.confidence }}" />
                 </mat-slider>
-                <span class="slider-end-label">Full <br />confidence</span>
+                @if (itemPair.confidence === 1) {
+                  <span class="slider-end-label">👍<b> Full <br />confidence</b></span>
+                }
+                @else {
+                  <span class="slider-end-label">👍 Full <br />confidence</span>}
               </div>
             </div>
           }
         </div>
       }
+      <p>
+        <br />
+      </p>  
     }
-    @else{  
+    @else{
       <!-- Survey -->
       <div>
         <h2 style="white-space: pre-wrap">

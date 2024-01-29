@@ -1,3 +1,7 @@
-<app-chat-mediator-profile></app-chat-mediator-profile>
-<div>{{ mediatorMessage().timestamp }}</div>
-<div>{{ mediatorMessage().text }}</div>
+<div class="flex-container">
+    <div class="date">{{ dateMessage() }}</div>
+    <div class="profile_and_message">
+        <app-chat-mediator-profile></app-chat-mediator-profile>
+        <div class="message">{{ mediatorMessage().text }}</div>
+    </div>
+</div>
