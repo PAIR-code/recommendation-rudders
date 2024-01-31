@@ -56,6 +56,7 @@ function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
       pronouns: '',
       avatarUrl: '',
       name: '',
+      tosLines: [],
       acceptedTosTimestamp: null,
     },
   };
@@ -258,20 +259,27 @@ function makeStages() {
   ];
 }
 
-function initParticipants(count: number): { [userId: string]: UserData } {
+export function initParticipants(
+  count: number,
+  stages: ExpStage[],
+): { [userId: string]: UserData } {
   const participants: { [userId: string]: UserData } = {};
   for (let i = 0; i < count; i++) {
-    const p = initUserData(makeStages());
+    const p = initUserData(stages);
     participants[p.userId] = p;
   }
   return participants;
 }
 
-export function initialExperimentSetup(count: number): Experiment {
-  const participants = initParticipants(count);
+export function initialExperimentSetup(
+  name: string,
+  participantCount: number,
+  stages: ExpStage[],
+): Experiment {
+  const participants = initParticipants(participantCount, stages);
 
   const experiment: Experiment = {
-    name: 'initial version of llm-meditators experiment',
+    name,
     date: new Date(),
     numberOfParticipants: Object.keys(participants).length,
     participants,

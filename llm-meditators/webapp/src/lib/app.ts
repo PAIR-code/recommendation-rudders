@@ -4,7 +4,14 @@
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { Participant } from './participant';
 import { Session } from './session';
-import { ChatAboutItems, ExpDataKinds, Experiment, UserData } from './staged-exp/data-model';
+import {
+  ChatAboutItems,
+  ExpDataKinds,
+  ExpStage,
+  Experiment,
+  MediatorMessage,
+  UserData,
+} from './staged-exp/data-model';
 import { initialExperimentSetup } from './staged-exp/example-experiment';
 import { EffectRef, Signal, WritableSignal, computed, effect, signal } from '@angular/core';
 import * as _ from 'underscore';
@@ -190,19 +197,35 @@ export interface SavedAppData {
 }
 
 export function initialAppData(): SavedAppData {
-  const experiment = initialExperimentSetup(3);
-  const experiments: { [name: string]: Experiment } = {};
-  experiments[experiment.name] = experiment;
-
   return {
     settings: {
-      name: 'LLM-Mediators',
+      name: 'LLM-Experimenter',
       sheetsId: '',
       sheetsRange: '', // e.g.
     },
-    experiments,
+    experiments: {},
   };
 }
+
+export function addExperiment(name: string, stages: ExpStage[], appData: SavedAppData) {
+  const experiment = initialExperimentSetup(name, 3, stages);
+  appData.experiments[experiment.name] = experiment;
+}
+
+// export function initialAppData(): SavedAppData {
+//   const experiment = initialExperimentSetup(3);
+//   const experiments: { [name: string]: Experiment } = {};
+//   experiments[experiment.name] = experiment;
+
+//   return {
+//     settings: {
+//       name: 'LLM-Mediators',
+//       sheetsId: '',
+//       sheetsRange: '', // e.g.
+//     },
+//     experiments,
+//   };
+// }
 
 export function editParticipant(
   appData: WritableSignal<SavedAppData>,
@@ -277,12 +300,42 @@ export function sendParticipantMessage(
       (config) => {
         console.log(u.userId, config);
         config.messages.push({
-          userId: fromParticipant.id,
+          fromUserId: fromParticipant.id,
           messageType: 'userMessage',
           text: to.message,
-          profile: fromProfile,
+          fromProfile: fromProfile,
           timestamp: new Date().valueOf(),
         });
+      },
+      { skipSetting: true },
+    );
+  }
+  if (options && options.withoutSetting) {
+    return;
+  }
+  appData.set({ ...appData() });
+}
+
+export function sendMediatorGroupMessage(
+  appData: WritableSignal<SavedAppData>,
+  experimentName: string,
+  to: { stageName: string; message: string },
+  options?: { withoutSetting: boolean },
+): void {
+  const experiment = appData().experiments[experimentName];
+
+  for (const u of Object.values(experiment.participants)) {
+    editParticipantStage<ChatAboutItems>(
+      appData,
+      { experiment: experimentName, id: u.userId },
+      to.stageName,
+      (stageData) => {
+        const mediatorMessage: MediatorMessage = {
+          messageType: 'mediatorMessage',
+          text: to.message,
+          timestamp: new Date().valueOf(),
+        };
+        stageData.messages.push(mediatorMessage);
       },
       { skipSetting: true },
     );

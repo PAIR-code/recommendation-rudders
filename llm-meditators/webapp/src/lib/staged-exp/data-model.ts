@@ -47,6 +47,21 @@ export interface ItemRating extends ItemPair {
   confidence: number | null; // 0 = 50/50, 1 = most confident
 }
 
+export const getDefaultItemRating = (): ItemRating => {
+  return {
+    item1: {
+      name: '',
+      imageUrl: '',
+    },
+    item2: {
+      name: '',
+      imageUrl: '',
+    },
+    choice: null,
+    confidence: null,
+  };
+};
+
 export interface ItemRatings {
   ratings: ItemRating[];
 }
@@ -61,8 +76,8 @@ export interface ItemRatings {
 export interface UserMessage {
   messageType: 'userMessage';
   timestamp: number;
-  userId: string;
-  profile: UserProfile;
+  fromUserId: string;
+  fromProfile: UserProfile;
   text: string;
 }
 
@@ -71,8 +86,8 @@ export const FAKE_EMPTY_USERID = '';
 export const fakeEmptyMessage: UserMessage = {
   messageType: 'userMessage',
   timestamp: 0,
-  userId: FAKE_EMPTY_USERID,
-  profile: fakeEmptyProfile,
+  fromUserId: FAKE_EMPTY_USERID,
+  fromProfile: fakeEmptyProfile,
   text: 'fakeMessage',
 };
 
@@ -89,12 +104,25 @@ export interface MediatorMessage {
   text: string;
 }
 
+export const fakeEmptyMediatorMessage: MediatorMessage = {
+  messageType: 'mediatorMessage',
+  timestamp: 0,
+  text: 'fakeMessage',
+};
+
 export type Message = UserMessage | DiscussItemsMessage | MediatorMessage;
 
 export interface ChatAboutItems {
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
 }
+
+export const getDefaultChatAboutItemsConfig = (): ChatAboutItems => {
+  return {
+    ratingsToDiscuss: [],
+    messages: [],
+  };
+};
 
 export const STAGE_KIND_CHAT = 'group-chat';
 
@@ -122,6 +150,10 @@ export interface Votes {
   [otherUserId: string]: LeaderVote;
 }
 
+export const getDefaultVotesConfig = (): Votes => {
+  return {};
+};
+
 export const STAGE_KIND_VOTES = 'leader-vote';
 
 export interface ExpStageVotes extends GenericExpStage<Votes> {
@@ -133,8 +165,19 @@ export interface TosAndUserProfile {
   pronouns: string;
   avatarUrl: string;
   name: string;
+  tosLines: string[];
   acceptedTosTimestamp: Date | null;
 }
+
+export const getDefaultTosAndUserProfileConfig = (): TosAndUserProfile => {
+  return {
+    pronouns: '',
+    avatarUrl: '',
+    name: '',
+    tosLines: [''],
+    acceptedTosTimestamp: null,
+  };
+};
 
 export const STAGE_KIND_TOS_AND_PROFILE = 'accept-tos-and-set-profile';
 
@@ -153,9 +196,35 @@ export interface Question {
   itemRatings?: ItemRatings;
 }
 
+export const getDefaultItemRatingsQuestion = (): Question => {
+  return {
+    questionText: '',
+    itemRatings: {
+      ratings: [],
+    },
+  };
+};
+
+export const getDefaultScaleQuestion = (): Question => {
+  return {
+    questionText: ``,
+    answerText: '',
+    lowerBound: '',
+    upperBound: '',
+    openFeedback: false,
+    score: null,
+  };
+};
+
 export interface Survey {
   questions: Question[];
 }
+
+export const getDefaultSurveyConfig = (): Survey => {
+  return {
+    questions: [],
+  };
+};
 
 export const STAGE_KIND_SURVEY = 'survey';
 
@@ -174,10 +243,17 @@ export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
   kind: typeof STAGE_KIND_ACCEPT_TOS;
 }
 
+// -------------------------------------------------------------------------------------
 export interface LeaderReveal {
   pendingVoteStageName: string;
   revealTimestamp: Date | null;
 }
+export const getDefaultLeaderRevealConfig = (): LeaderReveal => {
+  return {
+    pendingVoteStageName: '',
+    revealTimestamp: null,
+  };
+};
 
 export const STAGE_KIND_LEADER_REVEAL = 'leader-reveal';
 

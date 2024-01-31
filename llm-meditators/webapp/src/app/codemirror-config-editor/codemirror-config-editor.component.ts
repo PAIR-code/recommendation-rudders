@@ -13,14 +13,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-
-import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit, AfterContentInit, ViewChild, ElementRef, NgZone } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  Output,
+  EventEmitter,
+  AfterViewInit,
+  AfterContentInit,
+  ViewChild,
+  ElementRef,
+  NgZone,
+} from '@angular/core';
 import * as json5 from 'json5';
 import * as codemirror from 'codemirror';
-import { EditorState, Compartment } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
-import { json as jsonlang } from "@codemirror/lang-json"
-import { firstValueFrom, Observable, tap, of, EMPTY, OperatorFunction, combineLatest, BehaviorSubject, ReplaySubject, Subscription } from 'rxjs';
+import { EditorState, Compartment } from '@codemirror/state';
+import { EditorView, keymap } from '@codemirror/view';
+import { json as jsonlang } from '@codemirror/lang-json';
+import {
+  firstValueFrom,
+  Observable,
+  tap,
+  of,
+  EMPTY,
+  OperatorFunction,
+  combineLatest,
+  BehaviorSubject,
+  ReplaySubject,
+  Subscription,
+} from 'rxjs';
 
 export interface ConfigUpdate<T> {
   json?: string;
@@ -32,7 +53,7 @@ export interface ConfigUpdate<T> {
 @Component({
   selector: 'app-codemirror-config-editor',
   templateUrl: './codemirror-config-editor.component.html',
-  styleUrls: ['./codemirror-config-editor.component.scss']
+  styleUrls: ['./codemirror-config-editor.component.scss'],
 })
 export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit {
   @Input() whatIsBeingEditedName: string = '';
@@ -79,13 +100,12 @@ export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit
     this.changed$ = new BehaviorSubject(this.changed);
   }
 
-
   getCodeMirrorValue(): string {
     if (!this.codeMirror) {
       return '{}';
     }
     // this.editorState.sliceDoc
-    return this.codeMirror?.state.doc.toString()
+    return this.codeMirror?.state.doc.toString();
     // return this.editorState.doc.toString();
     // sliceDoc();
   }
@@ -100,38 +120,35 @@ export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit
       changes: {
         from: 0,
         to: this.codeMirror.state.doc.length,
-        insert: s
-      }
+        insert: s,
+      },
     });
     this.codeMirror.dispatch(transaction);
   }
 
   ngOnInit() {
     const language = new Compartment();
-    console.log('this.editorState.create...')
-    this.editorState = EditorState.create(
-      {
-        doc: this.lastValidConfig,
-        extensions: [
-          codemirror.basicSetup,
-          language.of(jsonlang()),
-          EditorView.updateListener.of(updateEvent => {
-            // Unclear if this ngZone is needed...
-            this.ngZone.run(() => {
-              let changedNow =
-                this.lastValidConfig !== updateEvent.state.doc.toString();
-              if (this.changed !== changedNow) {
-                this.changed = changedNow;
-                this.changed$.next(this.changed);
-              }
-            });
-          })
-        ],
-      });
+    console.log('this.editorState.create...');
+    this.editorState = EditorState.create({
+      doc: this.lastValidConfig,
+      extensions: [
+        codemirror.basicSetup,
+        language.of(jsonlang()),
+        EditorView.updateListener.of((updateEvent) => {
+          // Unclear if this ngZone is needed...
+          this.ngZone.run(() => {
+            const changedNow = this.lastValidConfig !== updateEvent.state.doc.toString();
+            if (this.changed !== changedNow) {
+              this.changed = changedNow;
+              this.changed$.next(this.changed);
+            }
+          });
+        }),
+      ],
+    });
   }
 
-  ngAfterContentInit() {
-  }
+  ngAfterContentInit() {}
 
   ngAfterViewInit() {
     if (!this.codemirrorElementRef) {
@@ -168,7 +185,7 @@ export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit
       // setup this.codeMirror.
       return this.defaultConfig === this.lastValidConfig;
     }
-    return (this.defaultConfig == this.getCodeMirrorValue());
+    return this.defaultConfig == this.getCodeMirrorValue();
   }
 
   public get canReDoChanges() {
@@ -182,7 +199,7 @@ export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit
     if (this.changed) {
       return false;
     }
-    return (this.tmpConfigString != this.getCodeMirrorValue());
+    return this.tmpConfigString != this.getCodeMirrorValue();
   }
 
   redoChanges() {
@@ -204,7 +221,7 @@ export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit
       console.warn('Missing codeMirror object.');
       return {
         json: '{}',
-        error: 'Missing codeMirror object.'
+        error: 'Missing codeMirror object.',
       };
     }
 
@@ -253,7 +270,7 @@ export class CodemirrorConfigEditorComponent implements OnInit, AfterContentInit
 
   justClose() {
     const configUpdate = {
-      close: true
+      close: true,
     }; // this.makeConfigUpdate();
     // this.configError = configUpdate.error;
     this.update.emit(configUpdate);

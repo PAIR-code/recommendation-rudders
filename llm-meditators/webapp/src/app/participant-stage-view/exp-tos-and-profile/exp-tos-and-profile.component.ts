@@ -37,8 +37,12 @@ import { APPSTATE_PARTICIPANT } from 'src/lib/app';
 export class ExpTosAndProfileComponent {
   public participant: Participant;
 
-  public responseControl: FormControl<string | null>;
+  public responseControlName: FormControl<string | null>;
+  public responseControlPronouns: FormControl<string | null>;
+
   public stageData: TosAndUserProfile;
+
+  public pronounOtherSelected = false;
 
   constructor(stateService: AppStateService) {
     const { participant, stageData } = stateService.getParticipantAndStage(
@@ -47,14 +51,19 @@ export class ExpTosAndProfileComponent {
     this.stageData = stageData();
     this.participant = participant;
 
-    this.responseControl = new FormControl<string>(this.stageData.name);
-    this.responseControl.valueChanges.forEach((n) => {
+    this.responseControlName = new FormControl<string>('');
+    this.responseControlName.valueChanges.forEach((n) => {
       if (n) {
         this.stageData.name = n;
-        this.participant.editStageData(() => this.stageData);
-        this.participant.edit((user) => {
-          user.profile.name = this.stageData.name;
-        });
+        this.updateStageAndUser();
+      }
+    });
+
+    this.responseControlPronouns = new FormControl<string>('');
+    this.responseControlPronouns.valueChanges.forEach((n) => {
+      if (n) {
+        this.stageData.pronouns = n;
+        this.updateStageAndUser();
       }
     });
   }
@@ -65,7 +74,7 @@ export class ExpTosAndProfileComponent {
       console.log('checked');
       const date = new Date();
       this.stageData.acceptedTosTimestamp = date;
-      this.participant.editStageData(() => this.stageData);
+      this.updateStageAndUser();
     }
   }
 
@@ -79,18 +88,26 @@ export class ExpTosAndProfileComponent {
   // }
 
   updatePronouns(updatedValue: MatRadioChange) {
-    this.stageData.pronouns = updatedValue.value;
-    this.participant.editStageData(() => this.stageData);
-    this.participant.edit((user) => {
-      user.profile.pronouns = this.stageData.pronouns;
-    });
+    if (updatedValue.value === 'Other') {
+      this.pronounOtherSelected = true;
+      this.responseControlPronouns.setValue('');
+    } else {
+      this.pronounOtherSelected = false;
+    }
+    this.updateStageAndUser();
   }
 
   updateAvatarUrl(updatedValue: MatRadioChange) {
     this.stageData.avatarUrl = updatedValue.value;
-    this.participant.editStageData(() => this.stageData);
+    this.updateStageAndUser();
+  }
+
+  updateStageAndUser() {
     this.participant.edit((user) => {
-      user.profile.pronouns = this.stageData.avatarUrl;
+      user.profile.avatarUrl = this.stageData.avatarUrl;
+      user.profile.name = this.stageData.name;
+      user.profile.pronouns = this.stageData.pronouns;
     });
+    this.participant.editStageData(() => this.stageData);
   }
 }

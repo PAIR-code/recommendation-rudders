@@ -31,7 +31,7 @@ import { initialExperimentSetup } from '../../lib/staged-exp/example-experiment'
 import { ActivatedRoute, Params, Router, UrlSegment } from '@angular/router';
 import * as _ from 'underscore';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Observable } from 'rxjs';
+import { Observable, timeInterval } from 'rxjs';
 import { Session } from 'src/lib/session';
 import {
   AppSettings,
@@ -42,6 +42,7 @@ import {
   SavedAppData,
 } from 'src/lib/app';
 import { Participant } from 'src/lib/participant';
+import { editSignalFn } from 'src/lib/signal-tricks';
 
 // function urlPathVarMatcher(segments: UrlSegment[]);
 
@@ -64,6 +65,8 @@ export class AppStateService {
   // Any errors.
   public errors: WritableSignal<string[]>;
 
+  editData: (f: (x: SavedAppData) => SavedAppData | void) => SavedAppData;
+
   constructor(
     private lmApiService: LmApiService,
     private router: Router,
@@ -82,6 +85,13 @@ export class AppStateService {
     this.data = signal(
       JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())),
     );
+
+    this.editData = editSignalFn(this.data);
+
+    // Update data every 3 seconds.
+    setTimeout(() => {
+      this.data.set(JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())));
+    }, 3000);
 
     // Convenience signal for the appName.
     this.appName = computed(() => this.data().settings.name);
@@ -139,5 +149,21 @@ export class AppStateService {
 
   reset() {
     this.data.set(initialAppData());
+  }
+
+  addExperiment(name: string, stages: ExpStage[]) {
+    if (name in this.data().experiments) {
+      throw new Error(`experiment with that name already exists: ${name}`);
+    }
+    this.editData((data) => {
+      const experiment = initialExperimentSetup(name, 3, stages);
+      data.experiments[experiment.name] = experiment;
+    });
+  }
+
+  deleteExperiment(name: string) {
+    this.editData((data) => {
+      delete data.experiments[name];
+    });
   }
 }

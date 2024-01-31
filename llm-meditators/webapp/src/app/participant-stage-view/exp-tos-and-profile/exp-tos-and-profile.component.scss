@@ -21,11 +21,20 @@ label {
 
 .avatar-radio-group {
   display: flex;
-  flex-direction: column;
-  margin: 15px 0;
-  align-items: flex-start;
+  flex-flow: row wrap;
+  margin: 15px 15px;
+  column-gap: 20px;
+ //align-content: space-between;
+  //justify-content: space-around;
+  //gap: 100px 100px;
 }
 
 .avatar-radio-button {
   margin: 5px;
 }
+
+.avatar-container {
+  display: flex;
+  flex-flow: column wrap;
+}
+

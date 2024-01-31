@@ -1,5 +1,6 @@
 .main {
   padding: 2rem 1rem;
+  width: 540px;
 }
 
 label {
@@ -23,9 +24,9 @@ mat-slider {
   width: 300px;
 }
 
-.bound{
+.bound {
   word-wrap: break-word;
-  width: 100px;
+  width: 150px;
 }
 
 // rating component
@@ -130,4 +131,3 @@ mat-slider {
     width: 100px;
   }
 }
-

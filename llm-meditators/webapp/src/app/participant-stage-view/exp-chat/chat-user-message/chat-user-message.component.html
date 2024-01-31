@@ -1,3 +1,7 @@
-<app-chat-user-profile [profile]="userMessage.profile"></app-chat-user-profile>
-<div>{{ userMessage.timestamp }}</div>
-<div>{{ userMessage.text }}</div>
+<div class="flex-container">
+  <div class="date">{{ dateStrOfTimestamp(message.timestamp) }}</div>
+  <div class="profile_and_message">
+    <app-chat-user-profile [profile]="message.fromProfile"></app-chat-user-profile>
+    <div class="message">{{ message.text }}</div>
+  </div>
+</div>
