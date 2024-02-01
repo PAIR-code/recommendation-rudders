@@ -244,7 +244,7 @@ export function initUserData(stages: ExpStage[]): UserData {
   };
 }
 
-function makeStages() {
+export function makeStages() {
   return [
     acceptTosAndSetProfile(),
     //initialWork(),

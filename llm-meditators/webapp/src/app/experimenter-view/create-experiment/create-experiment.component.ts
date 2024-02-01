@@ -29,6 +29,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { LocalService } from 'src/app/services/local.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AppStateService } from 'src/app/services/app-state.service';
+import { addExperiment } from 'src/lib/app';
+import { makeStages } from 'src/lib/staged-exp/example-experiment';
 
 const EXISTING_STAGES_KEY = 'existing-stages';
 
@@ -55,10 +57,11 @@ const getInitStageData = (): Partial<ExpStage> => {
   templateUrl: './create-experiment.component.html',
   styleUrl: './create-experiment.component.scss',
 })
-export class ExpCreationComponent {
+export class CreateExperimentComponent {
   // new stuff
   public existingStages: Partial<ExpStage>[] = [];
   public currentEditingStageIndex = -1;
+  public newExperimentName = '';
 
   readonly stageKinds = stageKinds;
 
@@ -79,7 +82,7 @@ export class ExpCreationComponent {
     if (existingStages) {
       this.existingStages = existingStages;
     } else {
-      this.existingStages = [getInitStageData()];
+      this.existingStages = makeStages();
     }
     this.currentEditingStageIndex = 0;
   }
@@ -176,10 +179,10 @@ export class ExpCreationComponent {
     const _stageData = stageData || this.currentEditingStage;
 
     if (!_stageData.kind) return true;
-    if (!_stageData.name || _stageData.name.length === 0) return true;
+    if (!_stageData.name || _stageData.name.trim().length === 0) return true;
 
     if (_stageData.kind === stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
-      if (_stageData.config?.tosLines.length === 0) return true;
+      // if (_stageData.config?.tosLines.length === 0) return true;
     } else if (_stageData.kind === stageKinds.STAGE_KIND_SURVEY) {
       if (_stageData.config?.questions.length === 0) return true;
     }
@@ -188,6 +191,9 @@ export class ExpCreationComponent {
   }
 
   experimentSetupIncomplete() {
+    if (this.newExperimentName.trim().length === 0) {
+      return true;
+    }
     return this.existingStages.some((stage) => this.stageSetupIncomplete(stage));
   }
 
@@ -228,7 +234,7 @@ export class ExpCreationComponent {
   resetExistingStages() {
     this.localStore.removeData(EXISTING_STAGES_KEY);
 
-    this.existingStages = [getInitStageData()];
+    this.existingStages = makeStages();
     this.persistExistingStages();
 
     this.currentEditingStageIndex = 0;
@@ -265,7 +271,10 @@ export class ExpCreationComponent {
     this.persistExistingStages();
   }
 
-  makeExperimentWithExistingStages() {
+  addExperiment() {
+    this.appStateService.editData((data) =>
+      addExperiment(this.newExperimentName, this.existingStages as ExpStage[], data),
+    );
     // console.log(this.localStore.getData(EXISTING_STAGES_KEY));
     // this.appStateService.addExperiment()
     // this.appStateService.reset(this.localStore.getData(EXISTING_STAGES_KEY) as ExpStage[]);

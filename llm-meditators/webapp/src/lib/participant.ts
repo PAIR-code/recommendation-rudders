@@ -1,3 +1,10 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
 import { computed, effect, Signal, signal, untracked, WritableSignal } from '@angular/core';
 import { Experiment, ExpStage, UserData, ExpDataKinds, UserProfile } from './staged-exp/data-model';
 import { Session } from './session';

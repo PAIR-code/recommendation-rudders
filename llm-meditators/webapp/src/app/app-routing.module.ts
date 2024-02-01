@@ -20,10 +20,11 @@ import { ExperimentMonitorComponent } from './experimenter-view/experiment-monit
 import { ExperimentSettingsComponent } from './experimenter-view/experiment-settings/experiment-settings.component';
 import { experimenterAuthGuard } from './experimenter-auth.guard';
 import { validParticipantGuard } from './valid-participant.guard';
+import { CreateExperimentComponent } from './experimenter-view/create-experiment/create-experiment.component';
 
 const routes: Routes = [
   {
-    path: 'participant/:experiment/:user/:stage',
+    path: 'participant/:experiment/:user',
     component: ParticipantViewComponent,
     canActivate: [validParticipantGuard],
     pathMatch: 'full',
@@ -33,6 +34,11 @@ const routes: Routes = [
     component: ExperimenterViewComponent,
     canActivate: [experimenterAuthGuard],
     children: [
+      {
+        path: 'create-experiment',
+        component: CreateExperimentComponent,
+        pathMatch: 'full',
+      },
       {
         path: 'experiment/:experiment/settings',
         component: ExperimentSettingsComponent,

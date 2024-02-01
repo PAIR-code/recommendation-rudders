@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an Apache2 license that can be
+ * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
+==============================================================================*/
+
 // -------------------------------------------------------------------------------------
 //  Session management: stored in the URL
 
@@ -12,11 +20,12 @@ import {
   MediatorMessage,
   UserData,
 } from './staged-exp/data-model';
-import { initialExperimentSetup } from './staged-exp/example-experiment';
+import { initialExperimentSetup, makeStages } from './staged-exp/example-experiment';
 import { EffectRef, Signal, WritableSignal, computed, effect, signal } from '@angular/core';
 import * as _ from 'underscore';
 import { Subscription } from 'rxjs';
 import { option } from 'yargs';
+import { RouteSessionBinding } from './route-session-binding';
 
 // function getPathArray(route: ActivatedRouteSnapshot) {
 //   let array = [];
@@ -52,74 +61,6 @@ export const DEFAULT_PARTICIPANT_SESSION: ParticipantSession = {
 export const APPSTATE_LANDING_PAGE = 'landing-page';
 export const APPSTATE_PARTICIPANT = 'participant';
 export const APPSTATE_EXPERIMENTER = 'experimenter';
-
-// Idea to handle different state kinds of classes...
-//
-// Combines routeParams and queryParams into a single Session, and sets them appropriately.
-export class RouteSessionBinding<RouteParamData, QueryParamData> {
-  // type Session = RouteParamData & QueryParamData;
-  public session: Session<RouteParamData & QueryParamData>;
-  private paramsSubscription: Subscription;
-  private queryParamsSubscription: Subscription;
-  private sessionToRouterEffectRef: EffectRef;
-
-  constructor(
-    private router: Router,
-    private route: ActivatedRoute,
-    // The subset of top level session variables
-    private routeParamNames: Set<keyof RouteParamData>,
-    private defaultSessionData: RouteParamData & QueryParamData,
-  ) {
-    const routeParamsSignal = signal<Partial<RouteParamData>>(
-      route.snapshot.params as RouteParamData,
-      { equal: _.isEqual },
-    );
-    this.paramsSubscription = this.route.params.subscribe((params) => {
-      // console.log(JSON.stringify(params));
-      routeParamsSignal.set(params as Partial<RouteParamData>);
-    });
-
-    const queryParamsSignal = signal<Partial<QueryParamData>>(
-      route.snapshot.queryParams as QueryParamData,
-      { equal: _.isEqual },
-    );
-    this.queryParamsSubscription = this.route.queryParams.subscribe((params) =>
-      queryParamsSignal.set(params as Partial<QueryParamData>),
-    );
-
-    const allParamsSignal = computed(() => {
-      return { ...routeParamsSignal(), ...queryParamsSignal() } as Partial<
-        RouteParamData & QueryParamData
-      >;
-    });
-
-    this.session = new Session(allParamsSignal, this.defaultSessionData);
-    this.sessionToRouterEffectRef = effect(() => {
-      const routeParams = {} as RouteParamData;
-      const queryParams = {} as Params;
-      const urlParams = this.session.toUrlParams();
-      Object.keys(urlParams).forEach((k) => {
-        // const key = k as keyof (RouteParamData & QueryParamData);
-        if (this.routeParamNames.has(k as keyof RouteParamData)) {
-          const routeKey = k as keyof RouteParamData;
-          routeParams[routeKey] = urlParams[routeKey] as RouteParamData[keyof RouteParamData];
-        } else {
-          const queryKey = k as keyof QueryParamData;
-          queryParams[k] = urlParams[queryKey] as Params[keyof Params];
-        }
-      });
-      // TODO: set navigate route params too...
-      console.log(this.route.routeConfig);
-      this.router.navigate([], { relativeTo: this.route, queryParams });
-    });
-  }
-
-  public destroy() {
-    this.paramsSubscription.unsubscribe();
-    this.queryParamsSubscription.unsubscribe();
-    this.sessionToRouterEffectRef.destroy();
-  }
-}
 
 // export class AppStateParticipant extends GenericAppState<
 //   ParticipantRouteParams,
@@ -197,7 +138,7 @@ export interface SavedAppData {
 }
 
 export function initialAppData(): SavedAppData {
-  return {
+  const initAppData: SavedAppData = {
     settings: {
       name: 'LLM-Experimenter',
       sheetsId: '',
@@ -205,6 +146,8 @@ export function initialAppData(): SavedAppData {
     },
     experiments: {},
   };
+  addExperiment('initial experiment', makeStages(), initAppData);
+  return initAppData;
 }
 
 export function addExperiment(name: string, stages: ExpStage[], appData: SavedAppData) {
@@ -295,10 +238,10 @@ export function sendParticipantMessage(
   for (const u of Object.values(experiment.participants)) {
     editParticipantStage<ChatAboutItems>(
       appData,
-      fromParticipant,
+      { experiment: experiment.name, id: u.userId },
       to.stageName,
       (config) => {
-        console.log(u.userId, config);
+        // console.log(u.userId, config);
         config.messages.push({
           fromUserId: fromParticipant.id,
           messageType: 'userMessage',

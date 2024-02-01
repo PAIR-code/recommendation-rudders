@@ -17,6 +17,9 @@
       <mat-icon>download</mat-icon> Download a snapshot
       <a hidden #downloadLink [download]="downloadName()" target="_top"></a>
     </button>
+    <!-- <button mat-button aria-label="Upload" (click)="upload(downloadLink)">
+      <mat-icon>upload</mat-icon> Upload from a snapshot
+    </button> -->
     <button mat-button aria-label="Save to Google Drive" (click)="saveToGoogleDrive()">
       <mat-icon>save</mat-icon> Save to Google Drive
     </button>
@@ -24,7 +27,9 @@
       <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
     }
     @if (errorMessage && errorCount > 1) {
-      <div class="error">There are {{ errorCount }} errors. The first error is: {{ errorMessage }}</div>
+      <div class="error">
+        There are {{ errorCount }} errors. The first error is: {{ errorMessage }}
+      </div>
     } @else if (errorMessage) {
       <div class="error">
         {{ errorMessage }}

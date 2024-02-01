@@ -59,49 +59,47 @@ export class AppSettingsComponent implements OnInit {
   @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
 
   constructor(
-    private dataService: AppStateService,
-    private lmApiService: LmApiService,
-    private sheetsService: GoogleSheetsService,
+    private appStateService: AppStateService,
     private driveService: GoogleDriveAppdataService,
     private authService: GoogleAuthService,
   ) {
-    this.appNameControl = new FormControl<string | null>(this.dataService.appName());
+    this.appNameControl = new FormControl<string | null>(this.appStateService.appName());
     this.appNameControl.valueChanges.forEach((n) => {
       if (n) {
-        this.dataService.setSetting('name', n);
+        this.appStateService.setSetting('name', n);
       }
     });
 
     // When app data changes, update the fields in this UI.
     effect(() => {
-      const newName = this.dataService.appName();
+      const newName = this.appStateService.appName();
       if (this.appNameControl.value !== null && this.appNameControl.value !== newName) {
         this.appNameControl.setValue(newName, { emitEvent: false });
       }
     });
 
     effect(() => {
-      this.currentDataStr = JSON.stringify(this.dataService.data(), null, 2);
+      this.currentDataStr = JSON.stringify(this.appStateService.data(), null, 2);
     });
   }
 
   ngOnInit(): void {}
 
   reset() {
-    this.dataService.reset();
-    this.appNameControl.setValue(this.dataService.appName());
-    this.currentDataStr = JSON.stringify(this.dataService.data(), null, 2);
+    this.appStateService.reset();
+    this.appNameControl.setValue(this.appStateService.appName());
+    this.currentDataStr = JSON.stringify(this.appStateService.data(), null, 2);
   }
 
   async saveToGoogleDrive() {
-    const json = JSON.stringify(this.dataService.data());
+    const json = JSON.stringify(this.appStateService.data());
     const token = await this.authService.getToken(
       'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file',
     );
 
     const response = await this.driveService.saveData(
       json,
-      `${this.dataService.appName()}.json`,
+      `${this.appStateService.appName()}.json`,
       '',
       token,
     );
@@ -110,7 +108,7 @@ export class AppSettingsComponent implements OnInit {
   }
 
   download(anchorLink: HTMLAnchorElement) {
-    const json = JSON.stringify(this.dataService.data());
+    const json = JSON.stringify(this.appStateService.data());
     const blob = new Blob([json], { type: 'data:application/json;charset=utf-8' });
     if (this.downloadUrl) {
       URL.revokeObjectURL(this.downloadUrl);
@@ -139,12 +137,12 @@ export class AppSettingsComponent implements OnInit {
       return;
     }
 
-    this.dataService.data.set(configUpdate.obj);
+    this.appStateService.data.set(configUpdate.obj);
     this.currentDataStr = configUpdate.json;
   }
 
   sizeString() {
-    const bytes = this.dataService.dataSize();
+    const bytes = this.appStateService.dataSize();
     if (bytes >= 1073741824) {
       return (bytes / 1073741824).toFixed(2) + ' GB';
     } else if (bytes >= 1048576) {
