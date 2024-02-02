@@ -15,7 +15,7 @@ import { GoogleDriveAppdataService } from '../services/google-drive-appdata.serv
 import { GoogleSheetsService } from '../services/google-sheets.service';
 import { LmApiService } from '../services/lm-api.service';
 import { AppStateService } from '../services/app-state.service';
-import { initialAppData, SavedAppData } from 'src/lib/app';
+import { initialAppData, SavedAppData } from 'src/lib/staged-exp/app';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';

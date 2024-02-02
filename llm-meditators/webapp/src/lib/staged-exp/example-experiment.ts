@@ -22,10 +22,16 @@ import {
   ExpStageTosAndUserProfile,
   stageKinds,
   ExpStageLeaderReveal,
-  Question,
+  QuestionData,
+  RatingQuestion,
+  SURVEY_QUESTION_RATING,
+  SURVEY_QUESTION_SCALE,
+  ScaleQuestion,
+  SurveyQuestionKind,
 } from './data-model';
 
 import * as items from './items';
+import { uniqueId } from 'underscore';
 
 const fakeNameGenConfig: UniqueNamesGenConfig = {
   dictionaries: [starWars],
@@ -76,21 +82,23 @@ function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
 //     // userAcceptance: Date,
 //   };
 // }
-const initialItemRatingsQuestion: Question = {
-  questionText: '',
-  itemRatings: {
-    ratings: [
-      { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
-      { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
-    ],
-  },
+const initialItemRatingsQuestion: RatingQuestion = {
+  kind: SurveyQuestionKind.RATING,
+  id: uniqueId(),
+  questionText: 'Rate the items by how helpful they would be for survival.',
+  rating: { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+  // ratings: [
+  //   { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+  //   { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
+  // ],
 };
 
-const initialWantToLeadQuestion: Question = {
+const initialWantToLeadQuestion: ScaleQuestion = {
+  kind: SurveyQuestionKind.SCALE,
+  id: uniqueId(),
   questionText: `Rate the how much you would like to be the group leader.`,
   lowerBound: 'I would most definitely not like to be the leader (0/10)',
   upperBound: 'I will fight to be the leader (10/10)',
-  openFeedback: false,
   score: null,
 };
 function initialWantToLeadSurvey(): ExpStageSurvey {
@@ -114,13 +122,13 @@ function groupChat(): ExpStageChatAboutItems {
   };
 }
 
-const chatDiscussionQuestion: Question = {
+const chatDiscussionQuestion: ScaleQuestion = {
+  kind: SurveyQuestionKind.SCALE,
+  id: uniqueId(),
   questionText: `Rate the chat dicussion on a 1-10 scale.
 Also indicate your overall feeling about the chat.`,
-  answerText: '',
   lowerBound: 'I did not enjoy the discussion at all (0/10)',
   upperBound: 'The dicussion was a perfect experience to me (10/10)',
-  openFeedback: true,
   score: null,
 };
 
@@ -134,12 +142,12 @@ function chatDiscussionSurvey(): ExpStageSurvey {
   };
 }
 
-const postChatWantToLeadQuestion: Question = {
+const postChatWantToLeadQuestion: ScaleQuestion = {
+  kind: SurveyQuestionKind.SCALE,
+  id: uniqueId(),
   questionText: `Rate the how much you would like to be the group leader.`,
-  answerText: '',
   lowerBound: 'I would most definitely not like to be the leader (0/10)',
   upperBound: 'I will fight to be the leader (10/10)',
-  openFeedback: false,
   score: null,
 };
 
@@ -162,14 +170,15 @@ function leaderVoting(): ExpStageVotes {
   };
 }
 
-const finalItemRatingsQuestion: Question = {
-  questionText: '',
-  itemRatings: {
-    ratings: [
-      { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
-      { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
-    ],
-  },
+const finalItemRatingsQuestion: RatingQuestion = {
+  kind: SurveyQuestionKind.RATING,
+  id: uniqueId(),
+  questionText: 'Please rating the following accoring to which is best for survival',
+  rating: { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+  // ratings: [
+  //   { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+  //   { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
+  // ],
 };
 
 function postChatWork(): ExpStageSurvey {
@@ -194,13 +203,13 @@ function leaderReveal(): ExpStageLeaderReveal {
   };
 }
 
-const finalSatisfactionQuestion: Question = {
+const finalSatisfactionQuestion: ScaleQuestion = {
+  kind: SurveyQuestionKind.SCALE,
+  id: uniqueId(),
   questionText: `Rate how happy you were with the final outcome.
 Also indicate your overall feeling about the experience.`,
-  answerText: '',
   lowerBound: 'I was most definitely disappointed (0/10)',
   upperBound: 'I was very happy (10/10)',
-  openFeedback: true,
   score: null,
 };
 

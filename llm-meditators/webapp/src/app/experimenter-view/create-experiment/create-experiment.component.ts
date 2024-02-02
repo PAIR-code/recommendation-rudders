@@ -9,7 +9,7 @@ import {
   stageKinds,
   ExpStageTosAndUserProfile,
   getDefaultItemRatingsQuestion,
-  Question,
+  QuestionData,
   getDefaultScaleQuestion,
   ExpStageSurvey,
   getDefaultItemRating,
@@ -29,7 +29,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { LocalService } from 'src/app/services/local.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AppStateService } from 'src/app/services/app-state.service';
-import { addExperiment } from 'src/lib/app';
+import { addExperiment } from 'src/lib/staged-exp/app';
 import { makeStages } from 'src/lib/staged-exp/example-experiment';
 
 const EXISTING_STAGES_KEY = 'existing-stages';
@@ -119,13 +119,13 @@ export class CreateExperimentComponent {
 
   // survey questions
   addNewSurveyQuestion(event: Event, type: 'rating' | 'scale') {
-    let question: Question | null = null;
+    let question: QuestionData | null = null;
     if (type === 'rating') {
       question = getDefaultItemRatingsQuestion();
     } else if (type === 'scale') {
       question = getDefaultScaleQuestion();
     }
-    (this.currentEditingStage as ExpStageSurvey).config.questions.push(question as Question);
+    (this.currentEditingStage as ExpStageSurvey).config.questions.push(question as QuestionData);
     this.persistExistingStages();
   }
 

@@ -11,7 +11,7 @@
 
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { Participant } from './participant';
-import { Session } from './session';
+import { Session } from '../session';
 import {
   ChatAboutItems,
   ExpDataKinds,
@@ -19,13 +19,13 @@ import {
   Experiment,
   MediatorMessage,
   UserData,
-} from './staged-exp/data-model';
-import { initialExperimentSetup, makeStages } from './staged-exp/example-experiment';
+} from './data-model';
+import { initialExperimentSetup, makeStages } from './example-experiment';
 import { EffectRef, Signal, WritableSignal, computed, effect, signal } from '@angular/core';
 import * as _ from 'underscore';
 import { Subscription } from 'rxjs';
 import { option } from 'yargs';
-import { RouteSessionBinding } from './route-session-binding';
+import { RouteSessionBinding } from '../route-session-binding';
 
 // function getPathArray(route: ActivatedRouteSnapshot) {
 //   let array = [];

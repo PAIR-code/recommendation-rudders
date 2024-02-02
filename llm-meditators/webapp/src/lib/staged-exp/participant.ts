@@ -6,8 +6,8 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 import { computed, effect, Signal, signal, untracked, WritableSignal } from '@angular/core';
-import { Experiment, ExpStage, UserData, ExpDataKinds, UserProfile } from './staged-exp/data-model';
-import { Session } from './session';
+import { Experiment, ExpStage, UserData, ExpDataKinds, UserProfile } from './data-model';
+import { Session } from '../session';
 import { SavedAppData, ParticipantSession, editParticipant, sendParticipantMessage } from './app';
 
 // TODO:

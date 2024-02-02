@@ -18,7 +18,7 @@ import {
   Votes,
 } from '../../../lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
-import { Participant } from 'src/lib/participant';
+import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({
   selector: 'app-exp-leader-vote',

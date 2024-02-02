@@ -40,8 +40,8 @@ import {
   initAppState,
   initialAppData,
   SavedAppData,
-} from 'src/lib/app';
-import { Participant } from 'src/lib/participant';
+} from 'src/lib/staged-exp/app';
+import { Participant } from 'src/lib/staged-exp/participant';
 import { editSignalFn } from 'src/lib/signal-tricks';
 
 // function urlPathVarMatcher(segments: UrlSegment[]);

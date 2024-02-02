@@ -20,8 +20,8 @@ import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
 import { ExpTosAndProfileComponent } from './exp-tos-and-profile/exp-tos-and-profile.component';
 import { ExpTosComponent } from './exp-tos/exp-tos.component';
 import { AppStateService } from '../services/app-state.service';
-import { APPSTATE_PARTICIPANT } from 'src/lib/app';
-import { Participant } from 'src/lib/participant';
+import { APPSTATE_PARTICIPANT } from 'src/lib/staged-exp/app';
+import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({
   selector: 'app-participant-stage-view',

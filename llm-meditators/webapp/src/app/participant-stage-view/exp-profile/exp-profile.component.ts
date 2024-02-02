@@ -15,7 +15,7 @@ import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 
 import { STAGE_KIND_PROFILE, UserProfile } from '../../../lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
-import { Participant } from 'src/lib/participant';
+import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({
   selector: 'app-exp-profile',

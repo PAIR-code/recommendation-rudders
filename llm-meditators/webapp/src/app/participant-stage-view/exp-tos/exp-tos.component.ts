@@ -11,8 +11,8 @@ import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox
 
 import { STAGE_KIND_ACCEPT_TOS, TosAcceptance } from '../../../lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
-import { APPSTATE_PARTICIPANT } from 'src/lib/app';
-import { Participant } from 'src/lib/participant';
+import { APPSTATE_PARTICIPANT } from 'src/lib/staged-exp/app';
+import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({
   selector: 'app-exp-tos',

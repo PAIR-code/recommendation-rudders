@@ -6,6 +6,8 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
+import { uniqueId } from 'lodash';
+
 export interface GenericExpStage<T> {
   kind: string;
   name: string;
@@ -186,38 +188,100 @@ export interface ExpStageTosAndUserProfile extends GenericExpStage<TosAndUserPro
 }
 
 // -------------------------------------------------------------------------------------
-export interface Question {
-  questionText: string;
-  answerText?: string;
-  upperBound?: string;
-  lowerBound?: string;
-  score?: number | null; //  10 point scale.
-  openFeedback?: boolean;
-  itemRatings?: ItemRatings;
+export interface AbstractQuestion<K extends string> {
+  kind: K;
+  id: string;
 }
 
-export const getDefaultItemRatingsQuestion = (): Question => {
+// -------------------------------------------------------------------------------------
+export enum SurveyQuestionKind {
+  TEXT = 'TextQuestion',
+  CHECK = 'CheckQuestion',
+  RATING = 'RatingQuestion',
+  SCALE = 'ScaleQuestion',
+}
+
+export const SURVEY_QUESTION_TEXT = 'TextQuestion';
+export interface TextQuestion {
+  kind: SurveyQuestionKind.TEXT;
+  id: string;
+  questionText: string;
+  answerText: string;
+}
+
+export const SURVEY_QUESTION_CHECK = 'CheckQuestion';
+export interface CheckQuestion {
+  kind: SurveyQuestionKind.CHECK;
+  id: string;
+  questionText: string;
+  checkMark: boolean | null;
+}
+
+export const SURVEY_QUESTION_RATING = 'RatingQuestion';
+export interface RatingQuestion {
+  kind: SurveyQuestionKind.RATING;
+  id: string;
+  questionText: string;
+  rating: ItemRating;
+}
+
+export const SURVEY_QUESTION_SCALE = 'ScaleQuestion';
+export interface ScaleQuestion {
+  kind: SurveyQuestionKind.SCALE;
+  id: string;
+  questionText: string;
+  upperBound: string;
+  lowerBound: string;
+  score: number | null; //  10 point scale.
+}
+
+export type QuestionData = TextQuestion | RatingQuestion | ScaleQuestion | CheckQuestion;
+
+export const getDefaultTextQuestion = (): TextQuestion => {
   return {
+    kind: SurveyQuestionKind.TEXT,
+    id: uniqueId(),
     questionText: '',
-    itemRatings: {
-      ratings: [],
+    answerText: '',
+  };
+};
+
+export const getDefaultCheckQuestion = (): CheckQuestion => {
+  return {
+    kind: SurveyQuestionKind.CHECK,
+    id: uniqueId(),
+    questionText: '',
+    checkMark: null,
+  };
+};
+
+export const getDefaultItemRatingsQuestion = (): RatingQuestion => {
+  return {
+    kind: SurveyQuestionKind.RATING,
+    id: uniqueId(),
+    questionText: '',
+    rating: {
+      item1: { name: '', imageUrl: '' },
+      item2: { name: '', imageUrl: '' },
+      choice: null,
+      confidence: null,
     },
   };
 };
 
-export const getDefaultScaleQuestion = (): Question => {
+export const getDefaultScaleQuestion = (): ScaleQuestion => {
   return {
-    questionText: ``,
-    answerText: '',
-    lowerBound: '',
+    kind: SurveyQuestionKind.SCALE,
+    id: uniqueId(),
+    questionText: '',
     upperBound: '',
-    openFeedback: false,
+    lowerBound: '',
     score: null,
   };
 };
 
 export interface Survey {
-  questions: Question[];
+  questions: QuestionData[];
 }
 
 export const getDefaultSurveyConfig = (): Survey => {

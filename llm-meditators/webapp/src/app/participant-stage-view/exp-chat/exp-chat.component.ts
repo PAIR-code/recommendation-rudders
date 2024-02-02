@@ -24,7 +24,7 @@ import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { Participant } from 'src/lib/participant';
+import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({
   selector: 'app-exp-chat',

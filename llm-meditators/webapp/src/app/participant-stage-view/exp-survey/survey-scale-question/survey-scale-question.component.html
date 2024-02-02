@@ -1,0 +1,33 @@
+<div>
+  <h2 style="white-space: pre-wrap">
+    {{ question.questionText }}
+  </h2>
+</div>
+<!-- create a slider -->
+<table>
+  <tr>
+    <td class="bound">{{ question.lowerBound }}</td>
+    <td>
+      <mat-slider min="0" max="10" step="1" showTickMarks discrete>
+        <input
+          matSliderThumb
+          (valueChange)="updateSliderValue($event, questionIdx)"
+          [value]="question.score"
+        />
+      </mat-slider>
+    </td>
+    <td class="bound">{{ question.upperBound }}</td>
+  </tr>
+</table>
+@if (question.openFeedback) {
+  <form class="settings-form">
+    <mat-form-field class="full-width">
+      <mat-label>Answer</mat-label>
+      <input
+        matInput
+        placeholder="Write your response"
+        [formControl]="responseControl[questionIdx]"
+      />
+    </mat-form-field>
+  </form>
+}

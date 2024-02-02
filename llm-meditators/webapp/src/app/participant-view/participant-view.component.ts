@@ -23,8 +23,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
-import { APPSTATE_PARTICIPANT, makeRouteLinkedParticipant } from 'src/lib/app';
-import { Participant } from 'src/lib/participant';
+import { APPSTATE_PARTICIPANT, makeRouteLinkedParticipant } from 'src/lib/staged-exp/app';
+import { Participant } from 'src/lib/staged-exp/participant';
 import { ParticipantStageViewComponent } from '../participant-stage-view/participant-stage-view.component';
 import { MatButtonModule } from '@angular/material/button';
 

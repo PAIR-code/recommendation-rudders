@@ -1,4 +1,5 @@
 <div class="main">
+  <h2>{{ this.participant.viewingStage().name }} ({{ this.participant.viewingStage().kind }})</h2>
   <div class="exp-stage-content">
     @if (this.participant.viewingStage().kind === stageKinds.STAGE_KIND_ACCEPT_TOS) {
       <app-exp-tos></app-exp-tos>
