@@ -1,1 +1,9 @@
-<p>survey-text-question works!</p>
+<mat-form-field class="full-width">
+  <mat-label>{{ question.data.questionText }}</mat-label>
+  <input
+    matInput
+    placeholder="Write your response"
+    [ngModel]="question.data.answerText"
+    (ngModelChange)="updateAnswerText($event)"
+  />
+</mat-form-field>

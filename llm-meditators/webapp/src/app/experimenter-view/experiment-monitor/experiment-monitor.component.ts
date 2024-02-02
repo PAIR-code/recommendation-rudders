@@ -3,20 +3,14 @@ import { RouterLink, RouterLinkActive, RouterModule } from '@angular/router';
 import { AppStateService } from 'src/app/services/app-state.service';
 import { MatExpansionModule } from '@angular/material/expansion';
 
-import {
-  ExpStageKind,
-  Experiment,
-  STAGE_KIND_CHAT,
-  UserData,
-  UserProfile,
-} from 'src/lib/staged-exp/data-model';
+import { StageKinds, UserData, UserProfile } from 'src/lib/staged-exp/data-model';
 import { MediatorChatComponent } from '../mediator-chat/mediator-chat.component';
 
 // TODO: generalise into a senisble class for viewing all relevant info on
 // where participants are at w.r.t. this stage.
 export interface StageState {
   name: string;
-  kind: ExpStageKind;
+  kind: StageKinds;
   participants: UserProfile[];
 }
 
@@ -38,7 +32,7 @@ export class ExperimentMonitorComponent {
 
   public stageStates: Signal<StageState[]>;
 
-  readonly STAGE_KIND_CHAT = STAGE_KIND_CHAT;
+  readonly StageKinds = StageKinds;
 
   constructor(public stateService: AppStateService) {
     this.participants = computed(() => {

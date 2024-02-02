@@ -30,7 +30,7 @@
   <div>
     {{ stageState.name }}: {{ stageState.participants.length }}
 
-    @if (stageState.kind === STAGE_KIND_CHAT) {
+    @if (stageState.kind === StageKinds.groupChat) {
       <mat-accordion>
         <mat-expansion-panel>
           <mat-expansion-panel-header>

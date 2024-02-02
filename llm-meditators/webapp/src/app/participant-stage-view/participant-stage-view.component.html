@@ -1,21 +1,21 @@
 <div class="main">
   <h2>{{ this.participant.viewingStage().name }} ({{ this.participant.viewingStage().kind }})</h2>
   <div class="exp-stage-content">
-    @if (this.participant.viewingStage().kind === stageKinds.STAGE_KIND_ACCEPT_TOS) {
+    @if (this.participant.viewingStage().kind === StageKinds.acceptTos) {
       <app-exp-tos></app-exp-tos>
-    } @else if (this.participant.viewingStage().kind === stageKinds.STAGE_KIND_PROFILE) {
+    } @else if (this.participant.viewingStage().kind === StageKinds.setProfile) {
       <app-exp-profile></app-exp-profile>
-    } @else if (this.participant.viewingStage().kind === stageKinds.STAGE_KIND_CHAT) {
+    } @else if (this.participant.viewingStage().kind === StageKinds.groupChat) {
       <app-exp-chat></app-exp-chat>
       <!-- } @else if (this.dataService.currentStage().kind === stageKinds.STAGE_KIND_RANKED_ITEMS) {
       <app-exp-rating></app-exp-rating> -->
-    } @else if (this.participant.viewingStage().kind === stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
+    } @else if (this.participant.viewingStage().kind === StageKinds.acceptTosAndSetProfile) {
       <app-exp-tos-and-profile></app-exp-tos-and-profile>
-    } @else if (this.participant.viewingStage().kind === stageKinds.STAGE_KIND_SURVEY) {
+    } @else if (this.participant.viewingStage().kind === StageKinds.takeSurvey) {
       <app-exp-survey></app-exp-survey>
-    } @else if (this.participant.viewingStage().kind === stageKinds.STAGE_KIND_VOTES) {
+    } @else if (this.participant.viewingStage().kind === StageKinds.voteForLeader) {
       <app-exp-leader-vote></app-exp-leader-vote>
-    } @else if (this.participant.viewingStage().kind === stageKinds.STAGE_KIND_LEADER_REVEAL) {
+    } @else if (this.participant.viewingStage().kind === StageKinds.revealVoted) {
       <app-exp-leader-reveal></app-exp-leader-reveal>
     } @else {
       <div>

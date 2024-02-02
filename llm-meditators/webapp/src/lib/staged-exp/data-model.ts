@@ -8,8 +8,19 @@
 
 import { uniqueId } from 'lodash';
 
+// -------------------------------------------------------------------------------------
+export enum StageKinds {
+  acceptTos = 'acceptTos',
+  setProfile = 'setProfile',
+  acceptTosAndSetProfile = 'acceptTodAndSetProfile',
+  groupChat = 'groupChat',
+  voteForLeader = 'voteForLeader',
+  revealVoted = 'leaderReveal',
+  takeSurvey = 'takeSurvey',
+}
+
 export interface GenericExpStage<T> {
-  kind: string;
+  kind: StageKinds;
   name: string;
   config: T;
 }
@@ -21,10 +32,8 @@ export interface UserProfile {
   name: string;
 }
 
-export const STAGE_KIND_PROFILE = 'set-profile';
-
 export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
-  kind: typeof STAGE_KIND_PROFILE;
+  kind: StageKinds.setProfile;
 }
 
 export const fakeEmptyProfile: UserProfile = {
@@ -126,14 +135,12 @@ export const getDefaultChatAboutItemsConfig = (): ChatAboutItems => {
   };
 };
 
-export const STAGE_KIND_CHAT = 'group-chat';
-
 export interface ExpStageChatAboutItems extends GenericExpStage<ChatAboutItems> {
-  kind: typeof STAGE_KIND_CHAT;
+  kind: StageKinds.groupChat;
 }
 
 export const fakeChat: ExpStageChatAboutItems = {
-  kind: STAGE_KIND_CHAT,
+  kind: StageKinds.groupChat,
   name: 'dummy-chat',
   config: {
     ratingsToDiscuss: [],
@@ -156,10 +163,8 @@ export const getDefaultVotesConfig = (): Votes => {
   return {};
 };
 
-export const STAGE_KIND_VOTES = 'leader-vote';
-
 export interface ExpStageVotes extends GenericExpStage<Votes> {
-  kind: typeof STAGE_KIND_VOTES;
+  kind: StageKinds.voteForLeader;
 }
 
 // -------------------------------------------------------------------------------------
@@ -181,10 +186,8 @@ export const getDefaultTosAndUserProfileConfig = (): TosAndUserProfile => {
   };
 };
 
-export const STAGE_KIND_TOS_AND_PROFILE = 'accept-tos-and-set-profile';
-
 export interface ExpStageTosAndUserProfile extends GenericExpStage<TosAndUserProfile> {
-  kind: typeof STAGE_KIND_TOS_AND_PROFILE;
+  kind: StageKinds.acceptTosAndSetProfile;
 }
 
 // -------------------------------------------------------------------------------------
@@ -201,7 +204,6 @@ export enum SurveyQuestionKind {
   SCALE = 'ScaleQuestion',
 }
 
-export const SURVEY_QUESTION_TEXT = 'TextQuestion';
 export interface TextQuestion {
   kind: SurveyQuestionKind.TEXT;
   id: string;
@@ -209,7 +211,6 @@ export interface TextQuestion {
   answerText: string;
 }
 
-export const SURVEY_QUESTION_CHECK = 'CheckQuestion';
 export interface CheckQuestion {
   kind: SurveyQuestionKind.CHECK;
   id: string;
@@ -217,7 +218,6 @@ export interface CheckQuestion {
   checkMark: boolean | null;
 }
 
-export const SURVEY_QUESTION_RATING = 'RatingQuestion';
 export interface RatingQuestion {
   kind: SurveyQuestionKind.RATING;
   id: string;
@@ -225,7 +225,6 @@ export interface RatingQuestion {
   rating: ItemRating;
 }
 
-export const SURVEY_QUESTION_SCALE = 'ScaleQuestion';
 export interface ScaleQuestion {
   kind: SurveyQuestionKind.SCALE;
   id: string;
@@ -290,10 +289,8 @@ export const getDefaultSurveyConfig = (): Survey => {
   };
 };
 
-export const STAGE_KIND_SURVEY = 'survey';
-
 export interface ExpStageSurvey extends GenericExpStage<Survey> {
-  kind: typeof STAGE_KIND_SURVEY;
+  kind: StageKinds.takeSurvey;
 }
 
 // -------------------------------------------------------------------------------------
@@ -301,28 +298,24 @@ export interface TosAcceptance {
   acceptedTosTimestamp: Date | null;
 }
 
-export const STAGE_KIND_ACCEPT_TOS = 'accept-tos';
-
 export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
-  kind: typeof STAGE_KIND_ACCEPT_TOS;
+  kind: StageKinds.acceptTos;
 }
 
 // -------------------------------------------------------------------------------------
-export interface LeaderReveal {
+export interface VoteReveal {
   pendingVoteStageName: string;
   revealTimestamp: Date | null;
 }
-export const getDefaultLeaderRevealConfig = (): LeaderReveal => {
+export const getDefaultLeaderRevealConfig = (): VoteReveal => {
   return {
     pendingVoteStageName: '',
     revealTimestamp: null,
   };
 };
 
-export const STAGE_KIND_LEADER_REVEAL = 'leader-reveal';
-
-export interface ExpStageLeaderReveal extends GenericExpStage<LeaderReveal> {
-  kind: typeof STAGE_KIND_LEADER_REVEAL;
+export interface ExpStageVoteReveal extends GenericExpStage<VoteReveal> {
+  kind: StageKinds.revealVoted;
 }
 
 // -------------------------------------------------------------------------------------
@@ -334,7 +327,7 @@ export type ExpDataKinds =
   | Votes
   | ChatAboutItems
   //| ItemRatings
-  | LeaderReveal;
+  | VoteReveal;
 
 export type ExpStage =
   | ExpStageTosAcceptance
@@ -344,42 +337,7 @@ export type ExpStage =
   | ExpStageVotes
   | ExpStageChatAboutItems
   // | ExpStageItemRatings
-  | ExpStageLeaderReveal;
-
-// type SelfMap<T extends ExpStage> = Map<T['kind'], T>;
-
-// type KindToStageMap<K, T extends ExpStage> = T extends { kind: K } ?
-
-//   ? { [Key in T['kind']]: T['config'] }
-//   : never;
-
-// type KindToStageMap<T extends ExpStage> = T extends any
-//   ? { [Key in T['kind']]: T['config'] }
-//   : never;
-
-// type Bar = ExpStageTosAndUserProfile & ExpStageSurvey;
-
-// type Foo = KindToStageMap<ExpStageTosAndUserProfile> & ;
-
-// {
-//   ExpStageTosAcceptance['kind']: ExpStageTosAcceptance,
-//   // [ExpStageTosAcceptance['kind']]: ExpStageTosAcceptance,
-// }
-
-export type ExpStageKind = ExpStage['kind'];
-
-// -------------------------------------------------------------------------------------
-// TODO: probably an enum does this for us better...?
-export const stageKinds = {
-  STAGE_KIND_ACCEPT_TOS: STAGE_KIND_ACCEPT_TOS as typeof STAGE_KIND_ACCEPT_TOS,
-  STAGE_KIND_TOS_AND_PROFILE: STAGE_KIND_TOS_AND_PROFILE as typeof STAGE_KIND_TOS_AND_PROFILE,
-  STAGE_KIND_SURVEY: STAGE_KIND_SURVEY as typeof STAGE_KIND_SURVEY,
-  STAGE_KIND_PROFILE: STAGE_KIND_PROFILE as typeof STAGE_KIND_PROFILE,
-  STAGE_KIND_VOTES: STAGE_KIND_VOTES as typeof STAGE_KIND_VOTES,
-  // STAGE_KIND_RANKED_ITEMS: STAGE_KIND_RANKED_ITEMS as typeof STAGE_KIND_RANKED_ITEMS,
-  STAGE_KIND_CHAT: STAGE_KIND_CHAT as typeof STAGE_KIND_CHAT,
-  STAGE_KIND_LEADER_REVEAL: STAGE_KIND_LEADER_REVEAL as typeof STAGE_KIND_LEADER_REVEAL,
-};
+  | ExpStageVoteReveal;
 
 // -------------------------------------------------------------------------------------
 export interface UserData {

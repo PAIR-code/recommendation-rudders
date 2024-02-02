@@ -5,19 +5,9 @@
  * Use of this source code is governed by an Apache2 license that can be
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnDestroy,
-  Signal,
-  ViewChild,
-  computed,
-  effect,
-} from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AppStateService } from '../services/app-state.service';
-import { ExpStageKind } from '../../lib/staged-exp/data-model';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatMenuModule } from '@angular/material/menu';

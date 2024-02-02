@@ -6,7 +6,7 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { stageKinds } from 'src/lib/staged-exp/data-model';
+import { StageKinds } from 'src/lib/staged-exp/data-model';
 
 import { Component, computed, Signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -49,7 +49,7 @@ export class ParticipantStageViewComponent {
 
   public waiting: boolean = false;
   public errorMessage?: string;
-  readonly stageKinds = stageKinds;
+  readonly StageKinds = StageKinds;
 
   constructor(stateService: AppStateService) {
     // this.everyoneReachedTheEnd = computed(() => {

@@ -6,33 +6,12 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import {
-  computed,
-  effect,
-  Injectable,
-  Signal,
-  signal,
-  untracked,
-  WritableSignal,
-} from '@angular/core';
+import { computed, effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { LmApiService } from './lm-api.service';
-import {
-  Experiment,
-  ExpStage,
-  UserData,
-  ExpDataKinds,
-  UserProfile,
-  ChatAboutItems,
-  STAGE_KIND_SURVEY,
-  ExpStageKind,
-  GenericExpStage,
-} from '../../lib/staged-exp/data-model';
+import { ExpStage, GenericExpStage } from '../../lib/staged-exp/data-model';
 import { initialExperimentSetup } from '../../lib/staged-exp/example-experiment';
-import { ActivatedRoute, Params, Router, UrlSegment } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'underscore';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { Observable, timeInterval } from 'rxjs';
-import { Session } from 'src/lib/session';
 import {
   AppSettings,
   AppState,
@@ -43,8 +22,6 @@ import {
 } from 'src/lib/staged-exp/app';
 import { Participant } from 'src/lib/staged-exp/participant';
 import { editSignalFn } from 'src/lib/signal-tricks';
-
-// function urlPathVarMatcher(segments: UrlSegment[]);
 
 // -------------------------------------------------------------------------------------
 //  The App State Service...
@@ -89,9 +66,7 @@ export class AppStateService {
     this.editData = editSignalFn(this.data);
 
     // Update data every 3 seconds.
-    setTimeout(() => {
-      this.data.set(JSON.parse(localStorage.getItem('data') || JSON.stringify(initialAppData())));
-    }, 3000);
+    this.updaterLoop();
 
     // Convenience signal for the appName.
     this.appName = computed(() => this.data().settings.name);
@@ -103,6 +78,17 @@ export class AppStateService {
     effect(() => {
       localStorage.setItem('data', this.dataJson());
     });
+  }
+
+  // Fake updates from the server every 3 second.
+  updaterLoop() {
+    const newDataValue = JSON.parse(
+      localStorage.getItem('data') || JSON.stringify(initialAppData()),
+    );
+    if (!_.isEqual(newDataValue, this.data())) {
+      this.data.set(newDataValue);
+    }
+    setTimeout(() => this.updaterLoop(), 3000);
   }
 
   // TODO: do some magic to make the type T get inferred from stageKind.

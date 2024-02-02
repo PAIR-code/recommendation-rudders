@@ -39,19 +39,19 @@
             matTooltip="{{ stageData.kind || 'Please select a stage kind!' }}"
           >
             @switch (stageData.kind) {
-              @case (stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
+              @case (StageKinds.acceptTos) {
                 <mat-icon>portrait</mat-icon>
               }
-              @case (stageKinds.STAGE_KIND_CHAT) {
+              @case (StageKinds.groupChat) {
                 <mat-icon>forum</mat-icon>
               }
-              @case (stageKinds.STAGE_KIND_SURVEY) {
+              @case (StageKinds.takeSurvey) {
                 <mat-icon>poll</mat-icon>
               }
-              @case (stageKinds.STAGE_KIND_VOTES) {
+              @case (StageKinds.voteForLeader) {
                 <mat-icon>how_to_vote</mat-icon>
               }
-              @case (stageKinds.STAGE_KIND_LEADER_REVEAL) {
+              @case (StageKinds.revealVoted) {
                 <mat-icon>emoji_events</mat-icon>
               }
               @default {
@@ -122,23 +122,25 @@
           </div>
         </div>
 
-        @if (currentEditingStage.kind === stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
+        @if (tryCast(StageKinds.acceptTosAndSetProfile, currentEditingStage); as stage) {
           <div class="config-title">
             <h3>Terms of Service (ToS) lines:</h3>
             <div class="fill"></div>
-            <button mat-button (click)="addNewTosLine()"><mat-icon>add</mat-icon>ToS Line</button>
+            <button mat-button (click)="addNewTosLine(stage)">
+              <mat-icon>add</mat-icon>ToS Line
+            </button>
           </div>
 
           <div class="config-wrapper">
-            <div cdkDropList class="tos-lines" (cdkDropListDropped)="dropTosLine($event)">
-              @for (line of currentEditingStage.config!.tosLines; track $index) {
+            <div cdkDropList class="tos-lines" (cdkDropListDropped)="dropTosLine(stage, $event)">
+              @for (line of stage.config.tosLines; track $index) {
                 <div class="tos-line">
                   <mat-form-field cdkDrag class="mat-form-field">
                     <textarea
                       matInput
                       type="text"
                       placeholder="In vel diam malesuada nibh vehicula rutrum eget vel lectus."
-                      [(ngModel)]="currentEditingStage.config!.tosLines[$index]"
+                      [(ngModel)]="stage.config.tosLines[$index]"
                       (input)="onChange($event)"
                     >
                     </textarea>
@@ -147,7 +149,7 @@
                   <button
                     mat-icon-button
                     matTooltip="Delelte this line"
-                    (click)="deleteTosLine($event, $index)"
+                    (click)="deleteTosLine(stage, $index)"
                   >
                     <mat-icon>close</mat-icon>
                   </button>
@@ -156,8 +158,7 @@
             </div>
           </div>
         }
-
-        @if (currentEditingStage.kind === stageKinds.STAGE_KIND_SURVEY) {
+        @if (tryCast(StageKinds.takeSurvey, currentEditingStage); as surveyStage) {
           <div class="config-title">
             <h3>Survey questions:</h3>
             <div class="fill"></div>
@@ -169,7 +170,7 @@
             </button>
           </div>
           <div class="config-wrapper">
-            @if (currentEditingStage.config!.questions.length === 0) {
+            @if (surveyStage.config.questions.length === 0) {
               <div class="warning">Please add a question to this survey</div>
             }
             <div
@@ -178,7 +179,7 @@
               (cdkDropListDropped)="dropSurveyQuestion($event)"
             >
               @for (
-                question of currentEditingStage.config!.questions;
+                question of surveyStage.config.questions;
                 let questionIdx = $index;
                 track questionIdx
               ) {
@@ -194,7 +195,7 @@
                       </div>
                     }
                     <div class="idx">Q{{ questionIdx + 1 }}</div>
-                    @if (questionIdx < currentEditingStage.config!.questions.length - 1) {
+                    @if (questionIdx < surveyStage.config.questions.length - 1) {
                       <div
                         matTooltip="move down"
                         class="move-button"
@@ -204,159 +205,135 @@
                       </div>
                     }
                   </div>
-                  @if (!question.itemRatings) {
+
+                  @if (tryCast(SurveyQuestionKind.CHECK, question); as question) {
+                    <mat-form-field cdkDrag class="mat-form-field">
+                      <mat-label>Checkbox question text:</mat-label>
+                      <input
+                        matInput
+                        type="text"
+                        placeholder="In vel diam malesuada nibh vehicula rutrum eget vel lectus."
+                        [(ngModel)]="question.questionText"
+                        (input)="onChange($event)"
+                      />
+                    </mat-form-field>
+                  }
+                  @if (tryCast(SurveyQuestionKind.TEXT, question); as question) {
+                    <mat-form-field cdkDrag class="mat-form-field">
+                      <mat-label>Freeform question text:</mat-label>
+                      <input
+                        matInput
+                        type="text"
+                        placeholder="In vel diam malesuada nibh vehicula rutrum eget vel lectus."
+                        [(ngModel)]="question.questionText"
+                        (input)="onChange($event)"
+                      />
+                    </mat-form-field>
+                  }
+                  @if (tryCast(SurveyQuestionKind.SCALE, question); as question) {
+                    <!-- @if (!question.itemRatings) { -->
                     <!-- scale question -->
                     <div class="question-fields">
                       <mat-form-field cdkDrag class="mat-form-field">
-                        <mat-label>Question text:</mat-label>
+                        <mat-label>Scale question text:</mat-label>
                         <input
                           matInput
                           type="text"
                           placeholder="In vel diam malesuada nibh vehicula rutrum eget vel lectus."
-                          [(ngModel)]="
-                            currentEditingStage.config!.questions[questionIdx].questionText
-                          "
+                          [(ngModel)]="question.questionText"
                           (input)="onChange($event)"
                         />
                       </mat-form-field>
                       <mat-form-field cdkDrag class="mat-form-field">
-                        <mat-label>LowerBound label:</mat-label>
+                        <mat-label>Lowerbound label:</mat-label>
                         <input
                           matInput
                           type="text"
                           placeholder="In vel diam malesuada nibh vehicula rutrum eget vel lectus."
-                          [(ngModel)]="
-                            currentEditingStage.config!.questions[questionIdx].lowerBound
-                          "
+                          [(ngModel)]="question.lowerBound"
                           (input)="onChange($event)"
                         />
                       </mat-form-field>
                       <mat-form-field cdkDrag class="mat-form-field">
-                        <mat-label>UpperBound label:</mat-label>
+                        <mat-label>Upperbound label:</mat-label>
                         <input
                           matInput
                           type="text"
                           placeholder="In vel diam malesuada nibh vehicula rutrum eget vel lectus."
-                          [(ngModel)]="
-                            currentEditingStage.config!.questions[questionIdx].upperBound
-                          "
+                          [(ngModel)]="question.upperBound"
                           (input)="onChange($event)"
                         />
                       </mat-form-field>
-                      <mat-checkbox
-                        [(ngModel)]="
-                          currentEditingStage.config!.questions[questionIdx].openFeedback
-                        "
-                        (change)="onChange($event)"
-                      >
-                        Allow open feedback
-                      </mat-checkbox>
                     </div>
-                  } @else {
+                  }
+                  @if (tryCast(SurveyQuestionKind.RATING, question); as question) {
                     <!-- ratings question -->
                     <div class="question-fields">
                       <mat-form-field cdkDrag class="mat-form-field">
-                        <mat-label>Question text:</mat-label>
+                        <mat-label>Rating question text:</mat-label>
                         <input
                           matInput
                           type="text"
                           placeholder="In vel diam malesuada nibh vehicula rutrum eget vel lectus."
-                          [(ngModel)]="
-                            currentEditingStage.config!.questions[questionIdx].questionText
-                          "
+                          [(ngModel)]="question.questionText"
                           (input)="onChange($event)"
                         />
                       </mat-form-field>
-
-                      @for (
-                        itemRating of currentEditingStage.config!.questions[questionIdx].itemRatings
-                          ?.ratings;
-                        let itemRatingIdx = $index;
-                        track itemRatingIdx
-                      ) {
-                        <div class="question-rating-items">
-                          <div class="item-pair">
-                            <div class="question-rating-item">
-                              <div>Item 1</div>
-                              <mat-form-field cdkDrag class="mat-form-field">
-                                <mat-label>Name:</mat-label>
-                                <input
-                                  matInput
-                                  type="text"
-                                  placeholder="compass"
-                                  [(ngModel)]="
-                                    currentEditingStage.config!.questions[questionIdx].itemRatings!
-                                      .ratings[itemRatingIdx].item1.name
-                                  "
-                                  (input)="onChange($event)"
-                                />
-                              </mat-form-field>
-                              <mat-form-field cdkDrag class="mat-form-field">
-                                <mat-label>Image URL:</mat-label>
-                                <input
-                                  matInput
-                                  type="text"
-                                  placeholder="https://m.media-amazon.com/images/I/81NUeKWdiQL._AC_UF1000,1000_QL80_.jpg"
-                                  [(ngModel)]="
-                                    currentEditingStage.config!.questions[questionIdx].itemRatings!
-                                      .ratings[itemRatingIdx].item1.imageUrl
-                                  "
-                                  (input)="onChange($event)"
-                                />
-                              </mat-form-field>
-                            </div>
-                            <div class="question-rating-item">
-                              <div>Item 2</div>
-                              <mat-form-field cdkDrag class="mat-form-field">
-                                <mat-label>Name:</mat-label>
-                                <input
-                                  matInput
-                                  type="text"
-                                  placeholder="compass"
-                                  [(ngModel)]="
-                                    currentEditingStage.config!.questions[questionIdx].itemRatings!
-                                      .ratings[itemRatingIdx].item2.name
-                                  "
-                                  (input)="onChange($event)"
-                                />
-                              </mat-form-field>
-                              <mat-form-field cdkDrag class="mat-form-field">
-                                <mat-label>Image URL:</mat-label>
-                                <input
-                                  matInput
-                                  type="text"
-                                  placeholder="https://m.media-amazon.com/images/I/81NUeKWdiQL._AC_UF1000,1000_QL80_.jpg"
-                                  [(ngModel)]="
-                                    currentEditingStage.config!.questions[questionIdx].itemRatings!
-                                      .ratings[itemRatingIdx].item2.imageUrl
-                                  "
-                                  (input)="onChange($event)"
-                                />
-                              </mat-form-field>
-                            </div>
+                      <div class="question-rating-items">
+                        <div class="item-pair">
+                          <div class="question-rating-item">
+                            <div>Item 1</div>
+                            <mat-form-field cdkDrag class="mat-form-field">
+                              <mat-label>Name:</mat-label>
+                              <input
+                                matInput
+                                type="text"
+                                placeholder="compass"
+                                [(ngModel)]="question.rating.item1.name"
+                                (input)="onChange($event)"
+                              />
+                            </mat-form-field>
+                            <mat-form-field cdkDrag class="mat-form-field">
+                              <mat-label>Image URL:</mat-label>
+                              <input
+                                matInput
+                                type="text"
+                                placeholder="https://m.media-amazon.com/images/I/81NUeKWdiQL._AC_UF1000,1000_QL80_.jpg"
+                                [(ngModel)]="question.rating.item1.imageUrl"
+                                (input)="onChange($event)"
+                              />
+                            </mat-form-field>
                           </div>
-                          <button
-                            mat-icon-button
-                            matTooltip="Delete Item Pair"
-                            (click)="deleteItemRating($event, questionIdx, itemRatingIdx)"
-                          >
-                            <mat-icon>delete</mat-icon>
-                          </button>
+                          <div class="question-rating-item">
+                            <div>Item 2</div>
+                            <mat-form-field cdkDrag class="mat-form-field">
+                              <mat-label>Name:</mat-label>
+                              <input
+                                matInput
+                                type="text"
+                                placeholder="compass"
+                                [(ngModel)]="question.rating.item2.name"
+                                (input)="onChange($event)"
+                              />
+                            </mat-form-field>
+                            <mat-form-field cdkDrag class="mat-form-field">
+                              <mat-label>Image URL:</mat-label>
+                              <input
+                                matInput
+                                type="text"
+                                placeholder="https://m.media-amazon.com/images/I/81NUeKWdiQL._AC_UF1000,1000_QL80_.jpg"
+                                [(ngModel)]="question.rating.item2.imageUrl"
+                                (input)="onChange($event)"
+                              />
+                            </mat-form-field>
+                          </div>
                         </div>
-                      }
-
-                      <button
-                        mat-button
-                        matTooltip="Add Item Pair"
-                        (click)="addNewItemRating(questionIdx)"
-                      >
-                        <mat-icon>add</mat-icon> Add Item Pair
-                      </button>
+                      </div>
                     </div>
                   }
                   <button
                     mat-icon-button
-                    matTooltip="Delelte this question"
+                    matTooltip="Delete this question"
                     (click)="deleteSurveyQuestion($event, questionIdx)"
                   >
                     <mat-icon>close</mat-icon>

@@ -6,13 +6,13 @@ import {
   getDefaultSurveyConfig,
   getDefaultVotesConfig,
   getDefaultTosAndUserProfileConfig,
-  stageKinds,
+  StageKinds,
   ExpStageTosAndUserProfile,
   getDefaultItemRatingsQuestion,
   QuestionData,
   getDefaultScaleQuestion,
   ExpStageSurvey,
-  getDefaultItemRating,
+  SurveyQuestionKind,
 } from 'src/lib/staged-exp/data-model';
 
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -31,6 +31,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AppStateService } from 'src/app/services/app-state.service';
 import { addExperiment } from 'src/lib/staged-exp/app';
 import { makeStages } from 'src/lib/staged-exp/example-experiment';
+import { tryCast } from 'src/lib/albebraic-data';
 
 const EXISTING_STAGES_KEY = 'existing-stages';
 
@@ -63,14 +64,17 @@ export class CreateExperimentComponent {
   public currentEditingStageIndex = -1;
   public newExperimentName = '';
 
-  readonly stageKinds = stageKinds;
+  readonly StageKinds = StageKinds;
+  readonly SurveyQuestionKind = SurveyQuestionKind;
+
+  readonly tryCast = tryCast;
 
   readonly availableStageKinds = [
-    stageKinds.STAGE_KIND_TOS_AND_PROFILE,
-    stageKinds.STAGE_KIND_SURVEY,
-    stageKinds.STAGE_KIND_VOTES,
-    stageKinds.STAGE_KIND_CHAT,
-    stageKinds.STAGE_KIND_LEADER_REVEAL,
+    StageKinds.acceptTosAndSetProfile,
+    StageKinds.takeSurvey,
+    StageKinds.voteForLeader,
+    StageKinds.groupChat,
+    StageKinds.revealVoted,
   ];
 
   constructor(
@@ -88,7 +92,7 @@ export class CreateExperimentComponent {
   }
 
   get currentEditingStage() {
-    return this.existingStages[this.currentEditingStageIndex];
+    return this.existingStages[this.currentEditingStageIndex] as ExpStage;
   }
 
   get hasUnsavedData() {
@@ -97,22 +101,18 @@ export class CreateExperimentComponent {
   }
 
   // tos lines
-  addNewTosLine() {
-    (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines.push('');
+  addNewTosLine(stage: ExpStageTosAndUserProfile) {
+    stage.config.tosLines.push('');
     this.persistExistingStages();
   }
 
-  deleteTosLine(event: Event, index: number) {
-    (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines.splice(index, 1);
+  deleteTosLine(stage: ExpStageTosAndUserProfile, index: number) {
+    stage.config.tosLines.splice(index, 1);
     this.persistExistingStages();
   }
 
-  dropTosLine(event: CdkDragDrop<string[]>) {
-    moveItemInArray(
-      (this.currentEditingStage as ExpStageTosAndUserProfile).config.tosLines,
-      event.previousIndex,
-      event.currentIndex,
-    );
+  dropTosLine(stage: ExpStageTosAndUserProfile, event: CdkDragDrop<string[]>) {
+    moveItemInArray(stage.config.tosLines, event.previousIndex, event.currentIndex);
 
     this.persistExistingStages();
   }
@@ -159,31 +159,16 @@ export class CreateExperimentComponent {
     this.persistExistingStages();
   }
 
-  // item rating
-  addNewItemRating(questionIndex: number) {
-    const rating = getDefaultItemRating();
-    (this.currentEditingStage as ExpStageSurvey).config.questions[
-      questionIndex
-    ].itemRatings?.ratings.push(rating);
-    this.persistExistingStages();
-  }
-
-  deleteItemRating(event: Event, questionIndex: number, ratingIndex: number) {
-    (this.currentEditingStage as ExpStageSurvey).config.questions[
-      questionIndex
-    ].itemRatings?.ratings.splice(ratingIndex, 1);
-    this.persistExistingStages();
-  }
-
   stageSetupIncomplete(stageData?: Partial<ExpStage>) {
     const _stageData = stageData || this.currentEditingStage;
 
     if (!_stageData.kind) return true;
     if (!_stageData.name || _stageData.name.trim().length === 0) return true;
 
-    if (_stageData.kind === stageKinds.STAGE_KIND_TOS_AND_PROFILE) {
+    if (_stageData.kind === StageKinds.acceptTosAndSetProfile) {
+      return false;
       // if (_stageData.config?.tosLines.length === 0) return true;
-    } else if (_stageData.kind === stageKinds.STAGE_KIND_SURVEY) {
+    } else if (_stageData.kind === StageKinds.takeSurvey) {
       if (_stageData.config?.questions.length === 0) return true;
     }
 
@@ -249,19 +234,19 @@ export class CreateExperimentComponent {
       console.log('Switched to:', this.currentEditingStage.kind);
       let newConfig = {};
       switch (this.currentEditingStage.kind) {
-        case stageKinds.STAGE_KIND_TOS_AND_PROFILE:
+        case StageKinds.acceptTosAndSetProfile:
           newConfig = getDefaultTosAndUserProfileConfig();
           break;
-        case stageKinds.STAGE_KIND_SURVEY:
+        case StageKinds.takeSurvey:
           newConfig = getDefaultSurveyConfig();
           break;
-        case stageKinds.STAGE_KIND_VOTES:
+        case StageKinds.voteForLeader:
           newConfig = getDefaultVotesConfig();
           break;
-        case stageKinds.STAGE_KIND_CHAT:
+        case StageKinds.groupChat:
           newConfig = getDefaultChatAboutItemsConfig();
           break;
-        case stageKinds.STAGE_KIND_LEADER_REVEAL:
+        case StageKinds.revealVoted:
           newConfig = getDefaultLeaderRevealConfig();
           break;
       }

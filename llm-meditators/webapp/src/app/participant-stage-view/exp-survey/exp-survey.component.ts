@@ -13,9 +13,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
 
 import {
-  ItemRatings,
   QuestionData,
-  STAGE_KIND_SURVEY,
+  StageKinds,
   Survey,
   SurveyQuestionKind,
 } from '../../../lib/staged-exp/data-model';
@@ -49,65 +48,23 @@ export class ExpSurveyComponent {
   public participant: Participant;
   public stageData: Signal<Survey>;
   public questions: Signal<Question<QuestionData>[]>;
-  // public responseControl: FormControl<string | null>[];
 
   readonly SurveyQuestionKind = SurveyQuestionKind;
 
   constructor(stateService: AppStateService) {
-    const { participant, stageData } = stateService.getParticipantAndStage(STAGE_KIND_SURVEY);
+    const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.takeSurvey);
     this.stageData = stageData;
     this.participant = participant;
 
     this.questions = computed(() => {
       return stageData().questions.map((v, i) => new Question(this.participant, this.stageData, i));
     });
-
-    // // if one of the this.currentStage().question
-    // // has an itemRatings, then we use that one. Assumes max
-    // // one itemRatings question per stage.
-    // this.itemRatings = computed(() => {
-    //   const questions = this.stageData().questions;
-    //   for (let i = 0; i < questions.length; i++) {
-    //     const ratings = questions[i].itemRatings;
-    //     if (ratings) {
-    //       return ratings;
-    //     }
-    //   }
-    //   return null;
-    // });
-
-    // this.responseControl = new Array(this.stageData.questions.length);
-    // for (let i = 0; i < this.stageData.questions.length; i++) {
-    //   if (this.stageData.questions[i].itemRatings) {
-    //     this.responseControl[i] = new FormControl<string>(
-    //       this.stageData.questions[i].answerText || '',
-    //     );
-    //   }
-    // }
-    // for (let i = 0; i < this.stageData.questions.length; i++) {
-    //   this.responseControl[i].valueChanges.forEach((n) => {
-    //     if (n) {
-    //       // const curStageData = this.config;
-    //       this.stageData.questions[i].answerText = n;
-    //       this.participant.editStageData(() => this.stageData);
-    //       // this.stateService.editWorkingOnExpStageData(() => curStageData);
-    //     }
-    //     // console.log(this.stageData());
-    //   });
-    // }
   }
 
-  // updateSliderValue(updatedValue: number, idx: number) {
-  //   // const curStageData = this.stageData();
-  //   this.stageData.questions[idx].score = updatedValue;
-  //   this.participant.editStageData(() => this.stageData);
-  // }
-
-  // setConfidence(questionIdx: number, updatedValue: number, pairIdx: number) {
-  //   if (this.itemRatings) {
-  //     this.itemRatings.ratings[pairIdx].confidence = updatedValue;
-  //     this.stageData.questions[questionIdx].itemRatings = this.itemRatings;
-  //     this.participant.editStageData(() => this.stageData);
-  //   }
-  // }
+  questionAsKind<K extends SurveyQuestionKind>(
+    kind: K,
+    q: Question<QuestionData>,
+  ): Question<QuestionData & { kind: K }> {
+    return q as Question<QuestionData & { kind: K }>;
+  }
 }

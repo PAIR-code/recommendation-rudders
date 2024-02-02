@@ -7,20 +7,13 @@
 ==============================================================================*/
 
 import { Component, Signal, computed } from '@angular/core';
-import {
-  ChatAboutItems,
-  ExpStageChatAboutItems,
-  Message,
-  STAGE_KIND_CHAT,
-  TosAcceptance,
-  fakeChat,
-} from 'src/lib/staged-exp/data-model';
+import { ChatAboutItems, Message, StageKinds } from 'src/lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
 import { ChatUserMessageComponent } from './chat-user-message/chat-user-message.component';
 import { ChatDiscussItemsMessageComponent } from './chat-discuss-items-message/chat-discuss-items-message.component';
 import { ChatMediatorMessageComponent } from './chat-mediator-message/chat-mediator-message.component';
 import { MediatorFeedbackComponent } from './mediator-feedback/mediator-feedback.component';
-import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -50,7 +43,7 @@ export class ExpChatComponent {
   public participant: Participant;
 
   constructor(stateService: AppStateService) {
-    const { participant, stageData } = stateService.getParticipantAndStage(STAGE_KIND_CHAT);
+    const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.groupChat);
     this.stageData = stageData;
     this.participant = participant;
 

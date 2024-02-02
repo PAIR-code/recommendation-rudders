@@ -14,10 +14,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 
-import { STAGE_KIND_TOS_AND_PROFILE, TosAndUserProfile } from '../../../lib/staged-exp/data-model';
+import { StageKinds, TosAndUserProfile } from '../../../lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
 import { Participant } from 'src/lib/staged-exp/participant';
-import { APPSTATE_PARTICIPANT } from 'src/lib/staged-exp/app';
 
 @Component({
   selector: 'app-exp-tos-and-profile',
@@ -46,7 +45,7 @@ export class ExpTosAndProfileComponent {
 
   constructor(stateService: AppStateService) {
     const { participant, stageData } = stateService.getParticipantAndStage(
-      STAGE_KIND_TOS_AND_PROFILE,
+      StageKinds.acceptTosAndSetProfile,
     );
     this.stageData = stageData();
     this.participant = participant;

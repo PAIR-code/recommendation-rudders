@@ -3,13 +3,21 @@
 <div class="main">
   @for (question of questions(); track question; let questionIdx = $index) {
     @if (question.data.kind === SurveyQuestionKind.CHECK) {
-      <app-survey-check-question [question]="question"></app-survey-check-question>
+      <app-survey-check-question
+        [question]="questionAsKind(SurveyQuestionKind.CHECK, question)"
+      ></app-survey-check-question>
     } @else if (question.data.kind === SurveyQuestionKind.TEXT) {
-      <app-survey-text-question [question]="question"></app-survey-text-question>
+      <app-survey-text-question
+        [question]="questionAsKind(SurveyQuestionKind.TEXT, question)"
+      ></app-survey-text-question>
     } @else if (question.data.kind === SurveyQuestionKind.RATING) {
-      <app-survey-rating-question [question]="question"></app-survey-rating-question>
+      <app-survey-rating-question
+        [question]="questionAsKind(SurveyQuestionKind.RATING, question)"
+      ></app-survey-rating-question>
     } @else if (question.data.kind === SurveyQuestionKind.SCALE) {
-      <app-survey-scale-question [question]="question"></app-survey-scale-question>
+      <app-survey-scale-question
+        [question]="questionAsKind(SurveyQuestionKind.SCALE, question)"
+      ></app-survey-scale-question>
     }
   }
 </div>

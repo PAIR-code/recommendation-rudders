@@ -6,12 +6,11 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, computed, Signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 
-import { STAGE_KIND_ACCEPT_TOS, TosAcceptance } from '../../../lib/staged-exp/data-model';
+import { StageKinds, TosAcceptance } from '../../../lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
-import { APPSTATE_PARTICIPANT } from 'src/lib/staged-exp/app';
 import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({
@@ -26,7 +25,7 @@ export class ExpTosComponent {
   public stageData: TosAcceptance;
 
   constructor(stateService: AppStateService) {
-    const { participant, stageData } = stateService.getParticipantAndStage(STAGE_KIND_ACCEPT_TOS);
+    const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.acceptTos);
     this.stageData = stageData();
     this.participant = participant;
   }

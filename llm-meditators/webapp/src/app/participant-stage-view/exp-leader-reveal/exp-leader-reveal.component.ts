@@ -1,5 +1,5 @@
 import { reverse, sortBy } from 'lodash';
-import { LeaderReveal, STAGE_KIND_LEADER_REVEAL, Votes } from 'src/lib/staged-exp/data-model';
+import { VoteReveal, Votes, StageKinds } from 'src/lib/staged-exp/data-model';
 
 import { Component, computed, Signal } from '@angular/core';
 
@@ -15,14 +15,15 @@ import { Participant } from 'src/lib/staged-exp/participant';
 })
 export class ExpLeaderRevealComponent {
   public participant: Participant;
-  public stageData: LeaderReveal;
+  public stageData: VoteReveal;
 
   public everyoneReachedTheEnd: Signal<boolean>;
   public finalLeader: Signal<string>;
 
   constructor(private stateService: AppStateService) {
-    const { participant, stageData } =
-      stateService.getParticipantAndStage(STAGE_KIND_LEADER_REVEAL);
+    const { participant, stageData } = this.stateService.getParticipantAndStage(
+      StageKinds.revealVoted,
+    );
     this.stageData = stageData();
     this.participant = participant;
 

@@ -13,7 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 
-import { STAGE_KIND_PROFILE, UserProfile } from '../../../lib/staged-exp/data-model';
+import { StageKinds, UserProfile } from '../../../lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
 import { Participant } from 'src/lib/staged-exp/participant';
 
@@ -38,7 +38,7 @@ export class ExpProfileComponent {
   public profile: UserProfile;
 
   constructor(private stateService: AppStateService) {
-    const { participant, stageData } = stateService.getParticipantAndStage(STAGE_KIND_PROFILE);
+    const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.setProfile);
     this.profile = stageData();
     this.participant = participant;
 
