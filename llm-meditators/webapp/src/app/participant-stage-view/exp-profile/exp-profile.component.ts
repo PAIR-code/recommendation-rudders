@@ -6,7 +6,7 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component } from '@angular/core';
+import { Component, Signal, computed } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -34,36 +34,50 @@ import { Participant } from 'src/lib/staged-exp/participant';
 export class ExpProfileComponent {
   public participant: Participant;
 
-  public responseControl: FormControl<string | null>;
-  public profile: UserProfile;
+  public profile: Signal<UserProfile>;
 
   constructor(private stateService: AppStateService) {
-    const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.setProfile);
-    this.profile = stageData();
-    this.participant = participant;
-
-    this.responseControl = new FormControl<string>('');
-    this.responseControl.valueChanges.forEach((n) => {
-      if (n) {
-        this.profile.name = n;
-        this.participant.setProfile(this.profile);
-      }
+    const { participant, stageData } = this.stateService.getParticipantAndStage(
+      StageKinds.setProfile,
+    );
+    this.profile = computed(() => {
+      console.log('ExpProfileComponent stage data: ', stageData());
+      return stageData();
     });
+    this.participant = participant;
   }
 
   isComplete(): boolean {
     return (
-      this.profile.avatarUrl !== '' && this.profile.name !== '' && this.profile.pronouns !== ''
+      this.profile().avatarUrl !== '' &&
+      this.profile().name !== '' &&
+      this.profile().pronouns !== ''
     );
   }
 
+  updateName(updatedValue: string) {
+    console.log('updateName', updatedValue);
+    this.participant.editStageData<UserProfile>((p) => {
+      p.name = updatedValue;
+      this.participant.setProfile(p);
+    });
+  }
+
   updatePronouns(updatedValue: MatRadioChange) {
-    this.profile.pronouns = updatedValue.value;
-    this.participant.setProfile(this.profile);
+    console.log('updatePronouns', updatedValue);
+    if (updatedValue.value !== this.participant.userData().profile.pronouns) {
+      this.participant.editStageData<UserProfile>((p) => {
+        p.pronouns = updatedValue.value;
+        this.participant.setProfile(p);
+      });
+    }
   }
 
   updateAvatarUrl(updatedValue: MatRadioChange) {
-    this.profile.avatarUrl = updatedValue.value;
-    this.participant.setProfile(this.profile);
+    console.log('updateAvatarUrl', updatedValue);
+    this.participant.editStageData<UserProfile>((p) => {
+      p.avatarUrl = updatedValue.value;
+      this.participant.setProfile(p);
+    });
   }
 }

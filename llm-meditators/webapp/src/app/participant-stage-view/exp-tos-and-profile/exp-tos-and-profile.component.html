@@ -1,20 +1,5 @@
 <div class="main">
   <h2>Profile Setting</h2>
-  <p>Please select your preferred pronouns. This will be used to refer to you in the app.</p>
-
-  <mat-radio-group class="pronouns-radio-group" (change)="updatePronouns($event)">
-    <mat-radio-button class="pronouns-radio-button" value="She/Her">She/Her</mat-radio-button>
-    <mat-radio-button class="pronouns-radio-button" value="They/Them">They/Them</mat-radio-button>
-    <mat-radio-button class="pronouns-radio-button" value="He/Him">He/Him</mat-radio-button>
-    <mat-radio-button class="pronouns-radio-button" value="Other">Other</mat-radio-button>
-  </mat-radio-group>
-
-  @if (pronounOtherSelected) {
-    <mat-form-field class="full-width">
-      <mat-label>My Pronouns</mat-label>
-      <input matInput placeholder="Write your response" [formControl]="responseControlPronouns" />
-    </mat-form-field>
-  }
 
   <p>
     <br />
@@ -22,12 +7,50 @@
     Please select your username. This will be used to refer to you in the app.
   </p>
 
-  <form class="settings-form">
+  <mat-form-field class="full-width">
+    <mat-label>My Name</mat-label>
+    <input
+      matInput
+      placeholder="Write your response"
+      [ngModel]="this.stageData().name"
+      (ngModelChange)="updateName($event)"
+    />
+  </mat-form-field>
+
+  <p>Please select your preferred pronouns. This will be used to refer to you in the app.</p>
+
+  <mat-radio-group class="pronouns-radio-group" (change)="updatePronouns($event)">
+    <mat-radio-button
+      [checked]="this.stageData().pronouns === Pronouns.SheHer"
+      class="pronouns-radio-button"
+      value="{{ Pronouns.SheHer }}"
+      >{{ Pronouns.SheHer }}</mat-radio-button
+    >
+    <mat-radio-button
+      [checked]="this.stageData().pronouns === Pronouns.TheyThem"
+      class="pronouns-radio-button"
+      value="{{ Pronouns.TheyThem }}"
+      >{{ Pronouns.TheyThem }}</mat-radio-button
+    >
+    <mat-radio-button
+      [checked]="this.stageData().pronouns === Pronouns.HeHim"
+      class="pronouns-radio-button"
+      value="{{ Pronouns.HeHim }}"
+      >{{ Pronouns.HeHim }}</mat-radio-button
+    >
+  </mat-radio-group>
+
+  <span
+    >Other:
     <mat-form-field class="full-width">
-      <mat-label>My username</mat-label>
-      <input matInput placeholder="Write your response" [formControl]="responseControlName" />
-    </mat-form-field>
-  </form>
+      <mat-label>My Pronouns</mat-label>
+      <input
+        matInput
+        placeholder="Write your response"
+        [ngModel]="this.stageData().pronouns"
+        (ngModelChange)="updateOtherPronoun($event)"
+      /> </mat-form-field
+  ></span>
 
   <div class="avatar-container">
     <div>
@@ -36,13 +59,25 @@
       Please select your avatar. This will be used to refer to you in the app.
     </div>
     <mat-radio-group class="avatar-radio-group" (change)="updateAvatarUrl($event)">
-      <mat-radio-button class="avatar-radio-button" value="/assets/avatars/she.png">
+      <mat-radio-button
+        [checked]="this.stageData().avatarUrl === '/assets/avatars/she.png'"
+        class="avatar-radio-button"
+        value="/assets/avatars/she.png"
+      >
         <img src="/assets/avatars/she.png" alt="Avatar Female" width="72" height="77" />
       </mat-radio-button>
-      <mat-radio-button class="avatar-radio-button" value="/assets/avatars/they.png">
+      <mat-radio-button
+        [checked]="this.stageData().avatarUrl === '/assets/avatars/they.png'"
+        class="avatar-radio-button"
+        value="/assets/avatars/they.png"
+      >
         <img src="/assets/avatars/they.png" alt="Avatar Neutral" width="72" height="77" />
       </mat-radio-button>
-      <mat-radio-button class="avatar-radio-button" value="/assets/avatars/he.png">
+      <mat-radio-button
+        [checked]="this.stageData().avatarUrl === '/assets/avatars/he.png'"
+        class="avatar-radio-button"
+        value="/assets/avatars/he.png"
+      >
         <img src="/assets/avatars/he.png" alt="Avatar Male" width="72" height="77" />
       </mat-radio-button>
     </mat-radio-group>
@@ -56,12 +91,16 @@
   <p>Please read and accept the following terms of service before proceeding:</p>
 
   <ul>
-    @for (line of stageData.tosLines; track line) {
+    @for (line of stageData().tosLines; track line) {
       <li>{{ line }}</li>
     }
   </ul>
 
-  <mat-checkbox required (change)="updateCheckboxValue($event)">
+  <mat-checkbox
+    required
+    [checked]="stageData().acceptedTosTimestamp !== null"
+    (change)="updateCheckboxValue($event)"
+  >
     I accept the terms of service
   </mat-checkbox>
 </div>

@@ -6,7 +6,7 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component } from '@angular/core';
+import { Component, Signal } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
@@ -17,6 +17,12 @@ import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 import { StageKinds, TosAndUserProfile } from '../../../lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
 import { Participant } from 'src/lib/staged-exp/participant';
+
+enum Pronouns {
+  HeHim = 'He/Him',
+  SheHer = 'She/Her',
+  TheyThem = 'They/Them',
+}
 
 @Component({
   selector: 'app-exp-tos-and-profile',
@@ -35,78 +41,61 @@ import { Participant } from 'src/lib/staged-exp/participant';
 })
 export class ExpTosAndProfileComponent {
   public participant: Participant;
+  public stageData: Signal<TosAndUserProfile>;
 
-  public responseControlName: FormControl<string | null>;
-  public responseControlPronouns: FormControl<string | null>;
-
-  public stageData: TosAndUserProfile;
-
-  public pronounOtherSelected = false;
+  readonly Pronouns = Pronouns;
 
   constructor(stateService: AppStateService) {
     const { participant, stageData } = stateService.getParticipantAndStage(
       StageKinds.acceptTosAndSetProfile,
     );
-    this.stageData = stageData();
+    this.stageData = stageData;
     this.participant = participant;
+  }
 
-    this.responseControlName = new FormControl<string>('');
-    this.responseControlName.valueChanges.forEach((n) => {
-      if (n) {
-        this.stageData.name = n;
-        this.updateStageAndUser();
-      }
-    });
-
-    this.responseControlPronouns = new FormControl<string>('');
-    this.responseControlPronouns.valueChanges.forEach((n) => {
-      if (n) {
-        this.stageData.pronouns = n;
-        this.updateStageAndUser();
-      }
-    });
+  isOtherPronoun(s: string) {
+    return s !== Pronouns.HeHim && s !== Pronouns.SheHer && s !== Pronouns.TheyThem;
   }
 
   updateCheckboxValue(updatedValue: MatCheckboxChange) {
-    const checked = updatedValue.checked;
-    if (checked) {
-      console.log('checked');
-      const date = new Date();
-      this.stageData.acceptedTosTimestamp = date;
-      this.updateStageAndUser();
-    }
+    this.participant.editStageData<TosAndUserProfile>((d) => {
+      d.acceptedTosTimestamp = updatedValue.checked ? new Date() : null;
+    });
   }
 
-  // isComplete(): boolean {
-  //   return (
-  //     this.config.avatarUrl !== '' &&
-  //     this.config.name !== '' &&
-  //     this.config.pronouns !== '' &&
-  //     this.config.acceptedTosTimestamp !== null
-  //   );
-  // }
+  updateName(name: string) {
+    this.participant.editStageData<TosAndUserProfile>((d) => {
+      d.name = name;
+    });
+    this.updateUserProfile();
+  }
 
   updatePronouns(updatedValue: MatRadioChange) {
-    if (updatedValue.value === 'Other') {
-      this.pronounOtherSelected = true;
-      this.responseControlPronouns.setValue('');
-    } else {
-      this.pronounOtherSelected = false;
-    }
-    this.updateStageAndUser();
+    this.participant.editStageData<TosAndUserProfile>((d) => {
+      d.pronouns = updatedValue.value;
+    });
+    this.updateUserProfile();
+  }
+
+  updateOtherPronoun(pronoun: string) {
+    this.participant.editStageData<TosAndUserProfile>((d) => {
+      d.pronouns = pronoun;
+    });
+    this.updateUserProfile();
   }
 
   updateAvatarUrl(updatedValue: MatRadioChange) {
-    this.stageData.avatarUrl = updatedValue.value;
-    this.updateStageAndUser();
+    this.participant.editStageData<TosAndUserProfile>((d) => {
+      d.avatarUrl = updatedValue.value;
+    });
+    this.updateUserProfile();
   }
 
-  updateStageAndUser() {
+  updateUserProfile() {
     this.participant.edit((user) => {
-      user.profile.avatarUrl = this.stageData.avatarUrl;
-      user.profile.name = this.stageData.name;
-      user.profile.pronouns = this.stageData.pronouns;
+      user.profile.avatarUrl = this.stageData().avatarUrl;
+      user.profile.name = this.stageData().name;
+      user.profile.pronouns = this.stageData().pronouns;
     });
-    this.participant.editStageData(() => this.stageData);
   }
 }

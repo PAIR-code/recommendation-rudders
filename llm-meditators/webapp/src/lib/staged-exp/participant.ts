@@ -44,20 +44,9 @@ export class Participant {
       }
       return user;
     });
-    console.log('userData:', this.userData());
-    console.log('state:', JSON.stringify(this.session.state()));
-    console.log('state2:', JSON.stringify(this.session.state()));
 
     this.viewingStage = computed(() => {
       return this.userData().stageMap[this.session.state().stage];
-
-      // TODO: Maybe make this part of the router: if stage is not known, redirect to workingOnStageName.
-      //
-      // if (!(this.session.state().stage in this.userData().stageMap)) {
-      //   return this.userData().stageMap[this.userData().workingOnStageName];
-      // } else {
-      //   return this.userData().stageMap[this.session.state().stage];
-      // }
     });
     this.workingOnStage = computed(
       () => this.userData().stageMap[this.userData().workingOnStageName],

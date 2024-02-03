@@ -67,7 +67,6 @@ export class RouteSessionBinding<RouteParamData, QueryParamData> {
         }
       });
       // TODO: set navigate route params too...
-      console.log(this.route.routeConfig);
       this.router.navigate([], { relativeTo: this.route, queryParams });
     });
   }

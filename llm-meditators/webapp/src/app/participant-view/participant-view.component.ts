@@ -44,7 +44,6 @@ export class ParticipantViewComponent implements OnDestroy {
     public router: Router,
     public stateService: AppStateService,
   ) {
-    console.log('route.snapshot.params', route.snapshot.params);
     this.participant = makeRouteLinkedParticipant(router, route, stateService.data);
     if (this.participant) {
       stateService.state.set({ kind: APPSTATE_PARTICIPANT, particpant: this.participant });

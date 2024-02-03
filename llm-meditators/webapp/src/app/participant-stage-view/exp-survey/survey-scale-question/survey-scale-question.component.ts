@@ -14,7 +14,6 @@ export class SurveyScaleQuestionComponent {
   @Input() question!: Question<ScaleQuestion>;
 
   setSliderValue(newValue: number) {
-    console.log(newValue);
     this.question.edit(() => {
       this.question.data.score = newValue;
     });

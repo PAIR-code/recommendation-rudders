@@ -20,7 +20,6 @@ export class SurveyRatingQuestionComponent {
   }
 
   setConfidence(confidence: number) {
-    console.log(confidence);
     this.question.edit(() => {
       this.question.data.rating.confidence = confidence;
     });
