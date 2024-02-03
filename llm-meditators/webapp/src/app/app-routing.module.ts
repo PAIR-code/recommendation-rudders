@@ -11,9 +11,9 @@ import { RouterModule, Routes, withComponentInputBinding } from '@angular/router
 import { AppHomeComponent as AppHomeComponent } from './app-home/app-home.component';
 import { AppSettingsComponent } from './app-settings/app-settings.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
-import { ExpSurveyComponent } from './participant-stage-view/exp-survey/exp-survey.component';
-import { ExpLeaderVoteComponent } from './participant-stage-view/exp-leader-vote/exp-leader-vote.component';
-import { ExpTosComponent } from './participant-stage-view/exp-tos/exp-tos.component';
+import { ExpSurveyComponent } from './participant-view/participant-stage-view/exp-survey/exp-survey.component';
+import { ExpLeaderVoteComponent } from './participant-view/participant-stage-view/exp-leader-vote/exp-leader-vote.component';
+import { ExpTosComponent } from './participant-view/participant-stage-view/exp-tos/exp-tos.component';
 import { ParticipantViewComponent } from './participant-view/participant-view.component';
 import { ExperimenterViewComponent } from './experimenter-view/experimenter-view.component';
 import { ExperimentMonitorComponent } from './experimenter-view/experiment-monitor/experiment-monitor.component';

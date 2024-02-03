@@ -14,8 +14,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 
-import { StageKinds, TosAndUserProfile } from '../../../lib/staged-exp/data-model';
-import { AppStateService } from '../../services/app-state.service';
+import { StageKinds, TosAndUserProfile } from '../../../../lib/staged-exp/data-model';
+import { AppStateService } from '../../../services/app-state.service';
 import { Participant } from 'src/lib/staged-exp/participant';
 
 enum Pronouns {

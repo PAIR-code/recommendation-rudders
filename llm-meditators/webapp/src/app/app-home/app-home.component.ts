@@ -17,14 +17,14 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 
-import { ExpChatComponent } from '../participant-stage-view/exp-chat/exp-chat.component';
-import { ExpLeaderRevealComponent } from '../participant-stage-view/exp-leader-reveal/exp-leader-reveal.component';
-import { ExpLeaderVoteComponent } from '../participant-stage-view/exp-leader-vote/exp-leader-vote.component';
-import { ExpProfileComponent } from '../participant-stage-view/exp-profile/exp-profile.component';
+import { ExpChatComponent } from '../participant-view/participant-stage-view/exp-chat/exp-chat.component';
+import { ExpLeaderRevealComponent } from '../participant-view/participant-stage-view/exp-leader-reveal/exp-leader-reveal.component';
+import { ExpLeaderVoteComponent } from '../participant-view/participant-stage-view/exp-leader-vote/exp-leader-vote.component';
+import { ExpProfileComponent } from '../participant-view/participant-stage-view/exp-profile/exp-profile.component';
 //import { ExpRatingComponent } from '../exp-rating/exp-rating.component';
-import { ExpSurveyComponent } from '../participant-stage-view/exp-survey/exp-survey.component';
-import { ExpTosAndProfileComponent } from '../participant-stage-view/exp-tos-and-profile/exp-tos-and-profile.component';
-import { ExpTosComponent } from '../participant-stage-view/exp-tos/exp-tos.component';
+import { ExpSurveyComponent } from '../participant-view/participant-stage-view/exp-survey/exp-survey.component';
+import { ExpTosAndProfileComponent } from '../participant-view/participant-stage-view/exp-tos-and-profile/exp-tos-and-profile.component';
+import { ExpTosComponent } from '../participant-view/participant-stage-view/exp-tos/exp-tos.component';
 import { AppStateService } from '../services/app-state.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { GoogleAuthService } from '../services/google-auth.service';

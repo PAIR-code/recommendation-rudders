@@ -3,7 +3,7 @@ import { VoteReveal, Votes, StageKinds } from 'src/lib/staged-exp/data-model';
 
 import { Component, computed, Signal } from '@angular/core';
 
-import { AppStateService } from '../../services/app-state.service';
+import { AppStateService } from '../../../services/app-state.service';
 import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({

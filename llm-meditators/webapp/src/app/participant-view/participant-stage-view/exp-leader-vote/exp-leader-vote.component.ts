@@ -10,8 +10,8 @@ import { Component, computed, Signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRadioModule } from '@angular/material/radio';
 
-import { LeaderVote, StageKinds, UserData, Votes } from '../../../lib/staged-exp/data-model';
-import { AppStateService } from '../../services/app-state.service';
+import { LeaderVote, StageKinds, UserData, Votes } from '../../../../lib/staged-exp/data-model';
+import { AppStateService } from '../../../services/app-state.service';
 import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({

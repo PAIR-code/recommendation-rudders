@@ -19,7 +19,7 @@ import { ExpProfileComponent } from './exp-profile/exp-profile.component';
 import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
 import { ExpTosAndProfileComponent } from './exp-tos-and-profile/exp-tos-and-profile.component';
 import { ExpTosComponent } from './exp-tos/exp-tos.component';
-import { AppStateService } from '../services/app-state.service';
+import { AppStateService } from '../../services/app-state.service';
 import { APPSTATE_PARTICIPANT } from 'src/lib/staged-exp/app';
 import { Participant } from 'src/lib/staged-exp/participant';
 

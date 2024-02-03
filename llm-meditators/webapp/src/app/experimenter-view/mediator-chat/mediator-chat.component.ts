@@ -7,10 +7,10 @@ import {
   fakeChat,
 } from 'src/lib/staged-exp/data-model';
 import { AppStateService } from '../../services/app-state.service';
-import { ChatUserMessageComponent } from '../../participant-stage-view/exp-chat/chat-user-message/chat-user-message.component';
-import { ChatDiscussItemsMessageComponent } from '../../participant-stage-view/exp-chat/chat-discuss-items-message/chat-discuss-items-message.component';
-import { ChatMediatorMessageComponent } from '../../participant-stage-view/exp-chat/chat-mediator-message/chat-mediator-message.component';
-import { MediatorFeedbackComponent } from '../../participant-stage-view/exp-chat/mediator-feedback/mediator-feedback.component';
+import { ChatUserMessageComponent } from '../../participant-view/participant-stage-view/exp-chat/chat-user-message/chat-user-message.component';
+import { ChatDiscussItemsMessageComponent } from '../../participant-view/participant-stage-view/exp-chat/chat-discuss-items-message/chat-discuss-items-message.component';
+import { ChatMediatorMessageComponent } from '../../participant-view/participant-stage-view/exp-chat/chat-mediator-message/chat-mediator-message.component';
+import { MediatorFeedbackComponent } from '../../participant-view/participant-stage-view/exp-chat/mediator-feedback/mediator-feedback.component';
 import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';

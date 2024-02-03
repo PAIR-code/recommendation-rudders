@@ -8,7 +8,7 @@
 
 import { Component, Signal, computed } from '@angular/core';
 import { ChatAboutItems, Message, StageKinds } from 'src/lib/staged-exp/data-model';
-import { AppStateService } from '../../services/app-state.service';
+import { AppStateService } from '../../../services/app-state.service';
 import { ChatUserMessageComponent } from './chat-user-message/chat-user-message.component';
 import { ChatDiscussItemsMessageComponent } from './chat-discuss-items-message/chat-discuss-items-message.component';
 import { ChatMediatorMessageComponent } from './chat-mediator-message/chat-mediator-message.component';

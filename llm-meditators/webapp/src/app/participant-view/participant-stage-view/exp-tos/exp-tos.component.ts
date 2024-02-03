@@ -9,8 +9,8 @@
 import { Component } from '@angular/core';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 
-import { StageKinds, TosAcceptance } from '../../../lib/staged-exp/data-model';
-import { AppStateService } from '../../services/app-state.service';
+import { StageKinds, TosAcceptance } from '../../../../lib/staged-exp/data-model';
+import { AppStateService } from '../../../services/app-state.service';
 import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({

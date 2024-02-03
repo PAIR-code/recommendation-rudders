@@ -17,8 +17,8 @@ import {
   StageKinds,
   Survey,
   SurveyQuestionKind,
-} from '../../../lib/staged-exp/data-model';
-import { AppStateService } from '../../services/app-state.service';
+} from '../../../../lib/staged-exp/data-model';
+import { AppStateService } from '../../../services/app-state.service';
 import { APPSTATE_PARTICIPANT } from 'src/lib/staged-exp/app';
 import { Participant } from 'src/lib/staged-exp/participant';
 import { SurveyCheckQuestionComponent } from './survey-check-question/survey-check-question.component';

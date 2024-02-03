@@ -13,8 +13,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioChange, MatRadioModule } from '@angular/material/radio';
 
-import { StageKinds, UserProfile } from '../../../lib/staged-exp/data-model';
-import { AppStateService } from '../../services/app-state.service';
+import { StageKinds, UserProfile } from '../../../../lib/staged-exp/data-model';
+import { AppStateService } from '../../../services/app-state.service';
 import { Participant } from 'src/lib/staged-exp/participant';
 
 @Component({
