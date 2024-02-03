@@ -38,24 +38,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 })
 export class ExperimenterViewComponent {
   public experiments: Signal<Experiment[]>;
-
-  // credential: Credential;
-
-  constructor(
-    public stateService: AppStateService,
-    // public authService: GoogleAuthService,
-  ) {
-    // const credential = this.authService.credential();
-    // if (!credential) {
-    //   throw new Error(`Not logged in, this component assumes you are logged in`);
-    // }
-    // this.credential = credential;
-
+  constructor(public stateService: AppStateService) {
     this.experiments = computed(() => {
-      console.log(this.stateService.data());
       return Object.values(this.stateService.data().experiments).sort((a, b) => {
-        console.log(a);
-        console.log(b);
         return a.name.localeCompare(b.name);
       });
     });

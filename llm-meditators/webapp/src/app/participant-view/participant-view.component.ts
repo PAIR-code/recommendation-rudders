@@ -35,7 +35,6 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class ParticipantViewComponent implements OnDestroy {
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
-  // public currentUserIdControl: FormControl<string | null>;
 
   participant: Participant;
 
@@ -48,30 +47,12 @@ export class ParticipantViewComponent implements OnDestroy {
     if (this.participant) {
       stateService.state.set({ kind: APPSTATE_PARTICIPANT, particpant: this.participant });
     }
-    // this.usersList = Object.values(this.dataService.data().experiment.participants).map(
-    //   ({ userId }) => userId,
-    // );
-
-    // this.currentUserIdControl = new FormControl<string | null>(
-    //   this.dataService.data().currentUserId,
-    // );
-    // this.currentUserIdControl.valueChanges.forEach((n) => {
-    //   if (n) {
-    //     this.dataService.setCurrentUserId(n);
-    //   }
-    // });
   }
-
-  // setCurrentUser(event: { value: string }) {
-  //   this.dataService.setCurrentUserId(event.value);
-  // }
 
   updateCurrentStageName(stageName: string) {
     if (this.participant) {
       this.participant.setViewingStage(stageName);
     }
-    // console.log('updateViewingStageName', stageName);
-    // this.dataService.setCurrentExpStageName(stageName);
   }
 
   ngOnDestroy(): void {
