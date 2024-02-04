@@ -15,13 +15,14 @@ import * as _ from 'underscore';
 import {
   AppSettings,
   AppState,
-  APPSTATE_PARTICIPANT,
+  AppStateEnum,
   initAppState,
   initialAppData,
   SavedAppData,
 } from 'src/lib/staged-exp/app';
 import { Participant } from 'src/lib/staged-exp/participant';
 import { editSignalFn } from 'src/lib/signal-tricks';
+import { assertCast } from 'src/lib/albebraic-data';
 
 // -------------------------------------------------------------------------------------
 //  The App State Service...
@@ -98,28 +99,28 @@ export class AppStateService {
     participant: Participant;
     stageData: Signal<T extends GenericExpStage<infer Kind> ? Kind : never>;
   } {
-    const appState = this.state();
-    if (appState.kind !== APPSTATE_PARTICIPANT) {
-      throw new Error(`ParticipantStageViewComponent participant state`);
-    }
+    const appState = assertCast(this.state(), AppStateEnum.Participant);
     const participant = appState.particpant;
 
     const stageData = computed(() => {
-      const stage = participant.viewingStage();
-      if (stage.kind !== stageKind) {
-        throw new Error(`incorrect stage: ${stage.kind}.`);
-      }
+      const stage = assertCast(participant.viewingStage(), stageKind);
       return stage.config as T extends GenericExpStage<infer Kind> ? Kind : never;
     });
     return { stageData, participant };
   }
 
-  validParticipant(experiment: string, user: string, stage: string): boolean {
-    return (
+  validParticipant(
+    experiment: string,
+    user: string,
+    // , stage: string
+  ): boolean {
+    const validUser =
       experiment in this.data().experiments &&
-      user in this.data().experiments[experiment].participants &&
-      stage in this.data().experiments[experiment].participants[user].stageMap
-    );
+      user in this.data().experiments[experiment].participants;
+
+    // const validStage = stage in this.data().experiments[experiment].participants[user].stageMap;
+
+    return validUser;
     //  TODO add this to make it more secure...
     //  &&
     // this.data().experiments[experiment].participants[user].accessCode === accessCode;

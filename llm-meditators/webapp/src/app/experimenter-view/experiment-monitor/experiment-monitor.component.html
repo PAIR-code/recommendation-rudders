@@ -20,6 +20,9 @@
         }
       </li>
       <li>Working on stage: {{ p.workingOnStageName }}</li>
+      <li>
+        Access Code: <span class="code">{{ this.experimentName() }}/{{ p.userId }}</span>
+      </li>
     </ul>
   }
 </div>
@@ -30,7 +33,7 @@
   <div>
     {{ stageState.name }}: {{ stageState.participants.length }}
 
-    @if (stageState.kind === StageKinds.groupChat) {
+    @if (isOfKind(stageState, StageKinds.groupChat)) {
       <mat-accordion>
         <mat-expansion-panel>
           <mat-expansion-panel-header>

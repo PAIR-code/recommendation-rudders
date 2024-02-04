@@ -42,56 +42,6 @@ $toolbar-height: 60px;
 }
 
 .content {
-  display: flex;
-  margin: 0;
-  // margin-top: $toolbar-height;
-  // padding: 10px 16px;
-  // max-width: 960px;
-  flex-wrap: wrap;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
-  flex: 1 1 auto;
-  overflow: auto;
-
-  .highlighted {
-    background-color: #ddd;
-  }
-
-  .working-on-stage {
-    .menu-item-inner {}
-  }
-
-  .active {
-    color: #D00;
-  }
-
-  .menu-item-inner {
-    display: flex;
-    align-items: center;
-
-    .ongoing-badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-left: 8px;
-      border-radius: 5px;
-      background-color: orange;
-      padding: 1px 4px;
-      line-height: 1.1rem;
-      color: #fff;
-      font-size: 12px;
-      opacity: 1;
-    }
-
-    .icon {
-      margin-left: 6px;
-
-      &.completed {
-        color: rgb(1, 133, 1);
-      }
-    }
-  }
 }
 
 .content .mat-drawer-container {
@@ -158,8 +108,10 @@ $toolbar-height: 60px;
 .error {
   color: #f00;
   background-color: #fEE;
+  padding: 0.5em;
   border-radius: 5px;
   border: 1px solid #AAA;
+  margin-bottom: 1em;
 }
 
 .content {

@@ -41,17 +41,39 @@ export function castToKind<T extends { kind: string }, K extends T['kind']>(
   return foo as T & { kind: K };
 }
 
-// Elaborate data getter that in the presense of a kind gets the right kind of data.
+// When the field "kind" is used to denote a type (a discriminated union), then this
+// returns null if the object is not of that kind, and otherwise returns the object
+// (but with the more specific type)
 export function tryCast<T extends { kind: string }, K extends T['kind']>(
   kind: K,
-  subkind: T,
+  objMaybeOfKind: T,
 ): (T & { kind: K }) | null {
-  if (subkind.kind === kind) {
-    return subkind as T & { kind: K };
+  if (objMaybeOfKind.kind === kind) {
+    return objMaybeOfKind as T & { kind: K };
   } else {
     return null;
   }
 }
+
+export function assertCast<T extends { kind: string }, K extends T['kind']>(
+  objMaybeOfKind: T,
+  kind: K,
+): T & { kind: K } {
+  if (objMaybeOfKind.kind === kind) {
+    return objMaybeOfKind as T & { kind: K };
+  } else {
+    throw new Error(`Given object with kind=${objMaybeOfKind.kind} needs to have kind=${kind}`);
+  }
+}
+
+export function isOfKind<T extends { kind: string }, K extends T['kind']>(
+  objMaybeOfKind: T,
+  kind: K,
+): objMaybeOfKind is T & { kind: K } {
+  return objMaybeOfKind.kind === kind;
+}
+
+//
 
 const foo = bar as never as FooData;
 
@@ -60,6 +82,10 @@ const test = getKindData(Foo.bar, foo);
 
 const test2 = castToKind(Foo.bar, foo);
 // typeof test2 === BarData
+
+if (isOfKind(foo, Foo.bar)) {
+  foo.data.barNumber += 1;
+}
 
 // // Elaborate data getter that in the presense of a kind gets the right kind of data.
 // export function getKindData<K extends FooData['kind'], T extends FooData & { kinds: K }>(
