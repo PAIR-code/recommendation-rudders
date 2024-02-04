@@ -61,15 +61,6 @@ export class AppHomeComponent implements AfterViewInit {
 
   public error: string = '';
 
-  public accessCode: string = '';
-  public get accessCodeValue() {
-    return this.accessCode;
-  }
-  public set accessCodeValue(s: string) {
-    this.error = '';
-    this.accessCode = s;
-  }
-
   public experiments: Signal<Experiment[]>;
 
   constructor(
@@ -92,15 +83,24 @@ export class AppHomeComponent implements AfterViewInit {
     });
   }
 
-  joinExperiment() {
+  async joinExperiment(accessCode: string) {
     this.error = '';
-    const parts = this.accessCode.split(':');
+    const parts = accessCode.split('/');
     console.log(parts);
-    if (parts.length !== 3) {
-      this.error = 'Bad access code';
-    }
+    const userid = parts.pop();
+    console.log(userid);
+    console.log(parts);
+    const experimentName = parts.join('');
+    console.log(experimentName);
 
-    const [experimentId, userId, accessCode] = parts;
+    if (!userid || !experimentName) {
+      this.error = 'Bad access code';
+      return;
+    } else {
+      console.log('navigate');
+      await this.router.navigate(['/participant', experimentName, userid]);
+      console.log('navigated');
+    }
   }
 
   ngAfterViewInit() {
@@ -113,5 +113,9 @@ export class AppHomeComponent implements AfterViewInit {
     if (this.googleButton) {
       this.authService.renderLoginButton(this.googleButton.nativeElement);
     }
+  }
+
+  clearError() {
+    this.error = '';
   }
 }

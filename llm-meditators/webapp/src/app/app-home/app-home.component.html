@@ -28,15 +28,18 @@
   }
 
   <div>
-    To join an experiment, enter your access code:
-    <mat-form-field class="full-width">
-      <mat-label>Access code</mat-label>
-      <input matInput placeholder="Write your response" [(ngModel)]="accessCodeValue" />
-    </mat-form-field>
-    <button color="primary" mat-button (click)="joinExperiment()">
-      <!-- [disabled]="!this.dataService.stageComplete()"  -->
-      <!-- <mat-icon>redo</mat-icon> -->
-      <span>Join the experiment</span>
-    </button>
+    <p>To join an experiment, enter your access code:</p>
+    <p>
+      <mat-form-field class="full-width">
+        <mat-label>Access code</mat-label>
+        <input matInput #accessCodeInput placeholder="Write your response" />
+      </mat-form-field>
+      <br />
+      <button color="primary" mat-button (click)="joinExperiment(accessCodeInput.value)">
+        <!-- [disabled]="!this.dataService.stageComplete()"  -->
+        <!-- <mat-icon>redo</mat-icon> -->
+        <span>Join the experiment</span>
+      </button>
+    </p>
   </div>
 </div>

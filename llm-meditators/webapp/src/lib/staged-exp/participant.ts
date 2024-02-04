@@ -46,7 +46,11 @@ export class Participant {
     });
 
     this.viewingStage = computed(() => {
-      return this.userData().stageMap[this.session.state().stage];
+      if (this.session.state().stage in this.userData().stageMap) {
+        return this.userData().stageMap[this.session.state().stage];
+      } else {
+        return this.userData().stageMap[this.userData().workingOnStageName];
+      }
     });
     this.workingOnStage = computed(
       () => this.userData().stageMap[this.userData().workingOnStageName],

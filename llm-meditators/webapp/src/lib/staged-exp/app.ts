@@ -58,9 +58,11 @@ export const DEFAULT_PARTICIPANT_SESSION: ParticipantSession = {
   stage: '',
 };
 
-export const APPSTATE_LANDING_PAGE = 'landing-page';
-export const APPSTATE_PARTICIPANT = 'participant';
-export const APPSTATE_EXPERIMENTER = 'experimenter';
+export enum AppStateEnum {
+  LandingPage = 'LandingPage',
+  Participant = 'Participant',
+  Experimenter = 'Experimenter',
+}
 
 // export class AppStateParticipant extends GenericAppState<
 //   ParticipantRouteParams,
@@ -100,19 +102,19 @@ export function makeRouteLinkedParticipant(
 }
 
 export interface AppStateLandingPage {
-  kind: typeof APPSTATE_LANDING_PAGE;
+  kind: AppStateEnum.LandingPage;
 }
 export interface AppStateParticipant {
-  kind: typeof APPSTATE_PARTICIPANT;
+  kind: AppStateEnum.Participant;
   particpant: Participant;
 }
 export interface AppStateExperimenter {
-  kind: typeof APPSTATE_EXPERIMENTER;
+  kind: AppStateEnum.Experimenter;
 }
 
 export type AppState = AppStateLandingPage | AppStateParticipant | AppStateExperimenter;
 
-export const initAppState: AppState = { kind: APPSTATE_LANDING_PAGE };
+export const initAppState: AppState = { kind: AppStateEnum.LandingPage };
 
 // class AppController {
 //   state: AppState;

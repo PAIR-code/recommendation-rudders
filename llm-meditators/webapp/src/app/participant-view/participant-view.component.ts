@@ -13,7 +13,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
-import { APPSTATE_PARTICIPANT, makeRouteLinkedParticipant } from 'src/lib/staged-exp/app';
+import { AppStateEnum, makeRouteLinkedParticipant } from 'src/lib/staged-exp/app';
 import { Participant } from 'src/lib/staged-exp/participant';
 import { ParticipantStageViewComponent } from './participant-stage-view/participant-stage-view.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -44,8 +44,9 @@ export class ParticipantViewComponent implements OnDestroy {
     public stateService: AppStateService,
   ) {
     this.participant = makeRouteLinkedParticipant(router, route, stateService.data);
+    // if (this.participant.viewingStage())
     if (this.participant) {
-      stateService.state.set({ kind: APPSTATE_PARTICIPANT, particpant: this.participant });
+      stateService.state.set({ kind: AppStateEnum.Participant, particpant: this.participant });
     }
   }
 

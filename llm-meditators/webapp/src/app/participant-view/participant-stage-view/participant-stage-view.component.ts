@@ -20,8 +20,9 @@ import { ExpSurveyComponent } from './exp-survey/exp-survey.component';
 import { ExpTosAndProfileComponent } from './exp-tos-and-profile/exp-tos-and-profile.component';
 import { ExpTosComponent } from './exp-tos/exp-tos.component';
 import { AppStateService } from '../../services/app-state.service';
-import { APPSTATE_PARTICIPANT } from 'src/lib/staged-exp/app';
+import { AppStateEnum } from 'src/lib/staged-exp/app';
 import { Participant } from 'src/lib/staged-exp/participant';
+import { assertCast } from 'src/lib/albebraic-data';
 
 @Component({
   selector: 'app-participant-stage-view',
@@ -41,36 +42,11 @@ import { Participant } from 'src/lib/staged-exp/participant';
 })
 export class ParticipantStageViewComponent {
   public participant: Participant;
-
-  // public everyoneReachedTheEnd: Signal<boolean>;
-  // public currentStageName: Signal<string>;
-  // public workingOnStageName: Signal<string>;
-  // public holdingForLeaderReveal: boolean = false;
-
-  public waiting: boolean = false;
-  public errorMessage?: string;
   readonly StageKinds = StageKinds;
 
   constructor(stateService: AppStateService) {
-    // this.everyoneReachedTheEnd = computed(() => {
-    //   const users = Object.values(this.stateService.data().experiment.participants);
-    //   return users.map((userData) => userData.futureStageNames.length).every((n) => n === 1);
-    // });
-    const appState = stateService.state();
-    if (appState.kind !== APPSTATE_PARTICIPANT) {
-      throw new Error(`ParticipantStageViewComponent participant state`);
-    }
+    const appState = assertCast(stateService.state(), AppStateEnum.Participant);
     this.participant = appState.particpant;
-    // this.currentStageName = computed(() => this.stateService.currentStage().name);
-    // this.workingOnStageName = computed(() => this.stateService.user().workingOnStageName);
-
-    // this.holdingForLeaderReveal =
-    //   this.currentStageName() === ExpStageNames['8. Leader reveal'] &&
-    //   !this.everyoneReachedTheEnd();
-  }
-
-  dismissError() {
-    delete this.errorMessage;
   }
 
   nextStep() {

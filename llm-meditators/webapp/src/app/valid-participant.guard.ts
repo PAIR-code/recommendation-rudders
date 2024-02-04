@@ -17,6 +17,6 @@ export const validParticipantGuard: CanActivateFn = (
   return stateService.validParticipant(
     route.params['experiment'],
     route.params['user'],
-    route.queryParams['stage'],
+    // route.queryParams['stage'],
   );
 };

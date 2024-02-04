@@ -5,6 +5,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 
 import { StageKinds, UserData, UserProfile } from 'src/lib/staged-exp/data-model';
 import { MediatorChatComponent } from '../mediator-chat/mediator-chat.component';
+import { isOfKind } from 'src/lib/albebraic-data';
 
 // TODO: generalise into a senisble class for viewing all relevant info on
 // where participants are at w.r.t. this stage.
@@ -32,6 +33,8 @@ export class ExperimentMonitorComponent {
 
   public stageStates: Signal<StageState[]>;
 
+
+  isOfKind = isOfKind;
   readonly StageKinds = StageKinds;
 
   constructor(public stateService: AppStateService) {
