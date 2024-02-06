@@ -18,7 +18,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { Participant } from 'src/lib/staged-exp/participant';
-
+import { ChatUserProfileComponent } from './chat-user-profile/chat-user-profile.component';
 @Component({
   selector: 'app-exp-chat',
   standalone: true,
@@ -26,6 +26,7 @@ import { Participant } from 'src/lib/staged-exp/participant';
     ChatUserMessageComponent,
     ChatDiscussItemsMessageComponent,
     ChatMediatorMessageComponent,
+    ChatUserProfileComponent,
     MediatorFeedbackComponent,
     MatFormFieldModule,
     FormsModule,
