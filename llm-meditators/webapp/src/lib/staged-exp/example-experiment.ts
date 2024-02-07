@@ -115,6 +115,7 @@ function groupChat(): ExpStageChatAboutItems {
     config: {
       ratingsToDiscuss: [],
       messages: [],
+      finishedChatting: false,
     },
   };
 }

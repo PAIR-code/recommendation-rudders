@@ -6,13 +6,14 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, Signal, computed } from '@angular/core';
+import { Component, Signal, computed, signal } from '@angular/core';
 import { ChatAboutItems, Message, StageKinds, UserData } from 'src/lib/staged-exp/data-model';
 import { AppStateService } from '../../../services/app-state.service';
 import { ChatUserMessageComponent } from './chat-user-message/chat-user-message.component';
 import { ChatDiscussItemsMessageComponent } from './chat-discuss-items-message/chat-discuss-items-message.component';
 import { ChatMediatorMessageComponent } from './chat-mediator-message/chat-mediator-message.component';
 import { MediatorFeedbackComponent } from './mediator-feedback/mediator-feedback.component';
+import { MatSlideToggleChange, MatSlideToggleModule} from '@angular/material/slide-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,6 +33,7 @@ import { ChatUserProfileComponent } from './chat-user-profile/chat-user-profile.
     FormsModule,
     MatButtonModule,
     MatInputModule,
+    MatSlideToggleModule,
   ],
   templateUrl: './exp-chat.component.html',
   styleUrl: './exp-chat.component.scss',
@@ -64,5 +66,11 @@ export class ExpChatComponent {
   sendMessage() {
     this.participant.sendMessage(this.message);
     this.message = '';
+  }
+
+  updateToogleValue(updatedValue: MatSlideToggleChange) {
+    this.participant.editStageData<ChatAboutItems>((d) => {
+      d.finishedChatting = updatedValue.checked;
+    });
   }
 }

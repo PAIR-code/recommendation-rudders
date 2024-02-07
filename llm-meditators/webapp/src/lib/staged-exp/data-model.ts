@@ -126,12 +126,14 @@ export type Message = UserMessage | DiscussItemsMessage | MediatorMessage;
 export interface ChatAboutItems {
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
+  finishedChatting: boolean;
 }
 
 export const getDefaultChatAboutItemsConfig = (): ChatAboutItems => {
   return {
     ratingsToDiscuss: [],
     messages: [],
+    finishedChatting: false,
   };
 };
 
@@ -145,6 +147,7 @@ export const fakeChat: ExpStageChatAboutItems = {
   config: {
     ratingsToDiscuss: [],
     messages: [],
+    finishedChatting: false,
   },
 };
 
