@@ -45,6 +45,7 @@ export class ExpChatComponent {
 
   public participant: Participant;
   public otherParticipants: Signal<UserData[]>;
+  public participantsReady: Signal<boolean>;
 
   constructor(stateService: AppStateService) {
     const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.groupChat);
@@ -61,6 +62,21 @@ export class ExpChatComponent {
       return allUsers.filter((u) => u.userId !== thisUserId);
     });
 
+    this.participantsReady = computed(() => {
+      const participantsReady: UserData[] = [];
+      if (this.stageData().finishedChatting) {
+        participantsReady.push(this.participant.userData());
+      }
+      this.otherParticipants().forEach((p) => {
+        const stage = p.stageMap[this.participant.userData().workingOnStageName].config as ChatAboutItems;
+        if (stage.finishedChatting) {
+          participantsReady.push(p);
+        }
+      });
+      return participantsReady.length === (this.otherParticipants().length + 1);
+    });
+
+
   }
 
   sendMessage() {
@@ -75,5 +91,9 @@ export class ExpChatComponent {
     this.participant.editStageData<ChatAboutItems>((d) => {
       d.finishedChatting = updatedValue.checked;
     });
+  
+    if (this.participantsReady()) {
+      this.participant.nextStep();
+    }
   }
 }
