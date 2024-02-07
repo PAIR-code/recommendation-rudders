@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { Component, Signal, computed } from '@angular/core';
-import { ChatAboutItems, Message, StageKinds } from 'src/lib/staged-exp/data-model';
+import { ChatAboutItems, Message, StageKinds, UserData } from 'src/lib/staged-exp/data-model';
 import { AppStateService } from '../../../services/app-state.service';
 import { ChatUserMessageComponent } from './chat-user-message/chat-user-message.component';
 import { ChatDiscussItemsMessageComponent } from './chat-discuss-items-message/chat-discuss-items-message.component';
@@ -42,6 +42,7 @@ export class ExpChatComponent {
   public message: string = '';
 
   public participant: Participant;
+  public otherParticipants: Signal<UserData[]>;
 
   constructor(stateService: AppStateService) {
     const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.groupChat);
@@ -51,6 +52,13 @@ export class ExpChatComponent {
     this.messages = computed(() => {
       return this.stageData().messages;
     });
+
+    this.otherParticipants = computed(() => {
+      const thisUserId = this.participant.userData().userId;
+      const allUsers = Object.values(this.participant.experiment().participants);
+      return allUsers.filter((u) => u.userId !== thisUserId);
+    });
+
   }
 
   sendMessage() {

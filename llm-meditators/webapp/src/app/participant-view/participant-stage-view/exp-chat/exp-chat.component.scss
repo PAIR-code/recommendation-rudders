@@ -5,3 +5,31 @@
     //justify-content: center;
     //padding: 20px;
     }
+
+.container {
+    display: flex;
+    flex-flow: row wrap;
+    //padding: 10px;
+    justify-content: flex-start;
+    }
+
+.profile {
+    display: flex;
+    flex-flow: column wrap;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    }
+
+.avatar {
+    border-radius: 50%;
+    width: 40px;
+    }
+
+.chat-members {
+    width: 100%;
+    margin-bottom: 20px;
+    }
+
+.discussion {
+    }
