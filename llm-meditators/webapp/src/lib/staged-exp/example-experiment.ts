@@ -116,6 +116,7 @@ function groupChat(): ExpStageChatAboutItems {
       ratingsToDiscuss: [],
       messages: [],
       finishedChatting: false,
+      isSilent: true,
     },
   };
 }

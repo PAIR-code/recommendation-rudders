@@ -127,6 +127,7 @@ export interface ChatAboutItems {
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
   finishedChatting: boolean;
+  isSilent: boolean;
 }
 
 export const getDefaultChatAboutItemsConfig = (): ChatAboutItems => {
@@ -134,6 +135,7 @@ export const getDefaultChatAboutItemsConfig = (): ChatAboutItems => {
     ratingsToDiscuss: [],
     messages: [],
     finishedChatting: false,
+    isSilent: true,
   };
 };
 
@@ -148,6 +150,7 @@ export const fakeChat: ExpStageChatAboutItems = {
     ratingsToDiscuss: [],
     messages: [],
     finishedChatting: false,
+    isSilent: true,
   },
 };
 
