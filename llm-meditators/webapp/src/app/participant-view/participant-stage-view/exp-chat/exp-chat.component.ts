@@ -43,6 +43,7 @@ export class ExpChatComponent {
 
   public participant: Participant;
   public otherParticipants: Signal<UserData[]>;
+  public everyoneReachedTheChat: Signal<boolean>;
 
   constructor(stateService: AppStateService) {
     const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.groupChat);
@@ -57,6 +58,11 @@ export class ExpChatComponent {
       const thisUserId = this.participant.userData().userId;
       const allUsers = Object.values(this.participant.experiment().participants);
       return allUsers.filter((u) => u.userId !== thisUserId);
+    });
+
+    this.everyoneReachedTheChat = computed(() => {
+      const users = Object.values(this.participant.experiment().participants);
+      return users.map((userData) => userData.workingOnStageName).every((n) => n === this.participant.userData().workingOnStageName);
     });
 
   }
