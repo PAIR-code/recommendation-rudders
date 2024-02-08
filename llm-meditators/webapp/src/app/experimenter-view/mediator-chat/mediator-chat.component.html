@@ -8,12 +8,57 @@
       } @else if (message.messageType === 'mediatorMessage') {
         <app-chat-mediator-message [message]="message"></app-chat-mediator-message>
       } @else if (message.messageType === 'discussItemsMessage') {
-        <app-chat-discuss-items-message></app-chat-discuss-items-message>
+        <app-chat-discuss-items-message [discussItemsMessage]="message"></app-chat-discuss-items-message>
       } @else {
         <div></div>
       }
     </div>
   }
+</div>
+
+<div class="message-form">
+  <!-- select pair of items --> 
+  <mat-form-field>
+    <mat-label>Item 1</mat-label>
+    <mat-select (selectionChange)="updateItemPair($event, 1)">
+      @for (item of items(); track item) {
+        @if (item != itemPair.item2){
+          <mat-option [value]="item">
+            <div class="item-pair">
+              <img src="{{item.imageUrl}}" alt="{{item.name}}" width="20px" /> {{item.name}}
+            </div>
+          </mat-option>
+        }
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Item 2</mat-label>
+    <mat-select (selectionChange)="updateItemPair($event, 2)">
+      @for (item of items(); track item) {
+        @if (item != itemPair.item1){
+          <mat-option [value]="item">
+            <div class="item-pair">
+              <img src="{{item.imageUrl}}" alt="{{item.name}}" width="20px" /> {{item.name}}
+            </div>
+          </mat-option>
+        }
+      }
+    </mat-select>
+  </mat-form-field>
+
+  
+  <mat-form-field class="full-width">
+    <mat-label>Instructions to send</mat-label>
+    <input matInput placeholder="Write your response" [(ngModel)]="instructions" />
+  </mat-form-field>
+  
+
+  <button color="primary" mat-button (click)="sendRatingToDiscuss()">
+    <!-- <mat-icon>redo</mat-icon> -->
+    <span>Send</span>
+  </button>
 </div>
 
 <div class="message-form">

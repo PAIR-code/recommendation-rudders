@@ -105,7 +105,8 @@ export const fakeEmptyMessage: UserMessage = {
 export interface DiscussItemsMessage {
   messageType: 'discussItemsMessage';
   timestamp: number;
-  itemRatingToDiscuss: ItemRating;
+  // itemRatingToDiscuss: ItemRating;
+  itemPair: ItemPair;
   text: string;
 }
 
@@ -126,12 +127,14 @@ export type Message = UserMessage | DiscussItemsMessage | MediatorMessage;
 export interface ChatAboutItems {
   ratingsToDiscuss: ItemPair[];
   messages: Message[];
+  items: Item[];
 }
 
 export const getDefaultChatAboutItemsConfig = (): ChatAboutItems => {
   return {
     ratingsToDiscuss: [],
     messages: [],
+    items: [],
   };
 };
 
@@ -145,6 +148,7 @@ export const fakeChat: ExpStageChatAboutItems = {
   config: {
     ratingsToDiscuss: [],
     messages: [],
+    items: [],
   },
 };
 

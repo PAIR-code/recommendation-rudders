@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { DiscussItemsMessage } from 'src/lib/staged-exp/data-model';
 
 @Component({
   selector: 'app-chat-discuss-items-message',
@@ -8,5 +9,5 @@ import { Component } from '@angular/core';
   styleUrl: './chat-discuss-items-message.component.scss'
 })
 export class ChatDiscussItemsMessageComponent {
-
+  @Input() discussItemsMessage!: DiscussItemsMessage;
 }

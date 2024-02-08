@@ -33,7 +33,7 @@
           } @else if (message.messageType === 'mediatorMessage') {
             <app-chat-mediator-message [message]="message"></app-chat-mediator-message>
           } @else if (message.messageType === 'discussItemsMessage') {
-            <app-chat-discuss-items-message></app-chat-discuss-items-message>
+            <app-chat-discuss-items-message [discussItemsMessage]="message"></app-chat-discuss-items-message>
           } @else {
             <div></div>
           }

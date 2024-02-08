@@ -14,9 +14,11 @@ import { Participant } from './participant';
 import { Session } from '../session';
 import {
   ChatAboutItems,
+  DiscussItemsMessage,
   ExpDataKinds,
   ExpStage,
   Experiment,
+  ItemPair,
   MediatorMessage,
   UserData,
 } from './data-model';
@@ -281,6 +283,38 @@ export function sendMediatorGroupMessage(
           timestamp: new Date().valueOf(),
         };
         stageData.messages.push(mediatorMessage);
+      },
+      { skipSetting: true },
+    );
+  }
+  if (options && options.withoutSetting) {
+    return;
+  }
+  appData.set({ ...appData() });
+}
+
+export function sendMediatorGroupRatingToDiscuss(
+  appData: WritableSignal<SavedAppData>,
+  experimentName: string,
+  to: { stageName: string; itemPair: ItemPair; message: string},
+  options?: { withoutSetting: boolean },
+): void {
+  const experiment = appData().experiments[experimentName];
+
+  for (const u of Object.values(experiment.participants)) {
+    editParticipantStage<ChatAboutItems>(
+      appData,
+      { experiment: experimentName, id: u.userId },
+      to.stageName,
+      (stageData) => {
+        stageData.ratingsToDiscuss.push(to.itemPair);
+        const discussItemsMessage: DiscussItemsMessage = {
+          messageType: 'discussItemsMessage',
+          itemPair: to.itemPair,
+          text: to.message,
+          timestamp: new Date().valueOf(),
+        };
+        stageData.messages.push(discussItemsMessage);
       },
       { skipSetting: true },
     );
