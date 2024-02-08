@@ -10,4 +10,12 @@ import { DiscussItemsMessage } from 'src/lib/staged-exp/data-model';
 })
 export class ChatDiscussItemsMessageComponent {
   @Input() discussItemsMessage!: DiscussItemsMessage;
+
+  dateStrOfTimestamp(timestamp: number): string {
+    const date = new Date(timestamp);
+    return (
+      `${date.getFullYear()} - ${date.getMonth()} - ${date.getDate()}:` +
+      ` ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+    );
+  }
 }
