@@ -22,16 +22,6 @@
 }
 
 @else{
-
-  <b>Your discussion is now focussing on selecting the best item between the following items</b> 
-  <div class="item-pair"> 
-    <img src="{{ currentRatingsToDiscuss().item1.imageUrl }}" alt="{{ currentRatingsToDiscuss().item1.name }}" width="20px" /> 
-    <span>{{ currentRatingsToDiscuss().item1.name }}</span> 
-    <span class="vs">vs</span> 
-    <img src="{{ currentRatingsToDiscuss().item2.imageUrl }}" alt="{{ currentRatingsToDiscuss().item2.name }}" width="20px" /> 
-    <span>{{ currentRatingsToDiscuss().item2.name }}</span>
-  </div>
-
   <div class="discussion"> 
     <b>Discussion</b> 
 
@@ -61,6 +51,20 @@
         <!-- <mat-icon>redo</mat-icon> -->
         <span>Send</span>
       </button>
+    </div>
+  </div>
+
+  <b>Your discussion is now focussing on selecting the best item between the following items</b> 
+  <div class="flex-container">
+    <div class="item-pair-displays"> 
+      <div class="item-pair-item">
+        <img src="{{ currentRatingsToDiscuss().item1.imageUrl }}" alt="{{ currentRatingsToDiscuss().item1.name }}" width="20px" /> 
+        <span>{{ currentRatingsToDiscuss().item1.name }}</span> 
+      </div>
+      <div class="item-pair-item">
+        <img src="{{ currentRatingsToDiscuss().item2.imageUrl }}" alt="{{ currentRatingsToDiscuss().item2.name }}" width="20px" /> 
+        <span>{{ currentRatingsToDiscuss().item2.name }}</span>
+      </div>
     </div>
   </div>
 }
