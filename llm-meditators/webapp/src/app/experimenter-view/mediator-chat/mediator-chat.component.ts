@@ -2,6 +2,8 @@ import { Component, Input, Signal, WritableSignal, computed, signal } from '@ang
 import {
   ChatAboutItems,
   ExpStageChatAboutItems,
+  Item,
+  ItemPair,
   Message,
   UserData,
   fakeChat,
@@ -15,7 +17,8 @@ import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { sendMediatorGroupMessage } from 'src/lib/staged-exp/app';
+import { sendMediatorGroupMessage, sendMediatorGroupRatingToDiscuss } from 'src/lib/staged-exp/app';
+import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 
 @Component({
   selector: 'app-mediator-chat',
@@ -29,6 +32,7 @@ import { sendMediatorGroupMessage } from 'src/lib/staged-exp/app';
     FormsModule,
     MatButtonModule,
     MatInputModule,
+    MatSelectModule,
   ],
   templateUrl: './mediator-chat.component.html',
   styleUrl: './mediator-chat.component.scss',
@@ -47,6 +51,10 @@ export class MediatorChatComponent {
   public messages: Signal<Message[]>;
   public message: string = '';
 
+  public items: Signal<Item[]>;
+  public itemPair: ItemPair;
+  public instructions: string = '';
+
   constructor(private appStateService: AppStateService) {
     this.messages = computed(() => {
       if (this.roomName() === '' || !this.experiment || !this.participants) {
@@ -58,6 +66,17 @@ export class MediatorChatComponent {
       const chat = participant0.stageMap[this.roomName()].config as ChatAboutItems;
       return chat.messages;
     });
+
+    this.items = computed(() => {
+      if (this.roomName() === '' || !this.experiment || !this.participants) {
+        return [];
+      }
+      const participant0 = this.participants()[0];
+      const chat = participant0.stageMap[this.roomName()].config as ChatAboutItems;
+      return chat.items;
+    });
+
+    this.itemPair = {item1: this.items()[0], item2: this.items()[1]};
   }
 
   sendMessage() {
@@ -70,4 +89,27 @@ export class MediatorChatComponent {
     });
     this.message = '';
   }
+
+  updateItemPair(updatedValue: MatSelectChange, i: number) {
+    if (i === 1) {
+      this.itemPair.item1 = updatedValue.value;
+    } else if (i === 2) {
+      this.itemPair.item2 = updatedValue.value;
+    }
+    else {
+      throw new Error('Only two items in one pair of item');
+    }
+  }
+
+  sendRatingToDiscuss() {
+    if (!this.experiment) {
+      throw new Error('Tried to send a RatingToDiscuss without knowing the experiment');
+    }
+    sendMediatorGroupRatingToDiscuss(this.appStateService.data, this.experiment(), {
+      stageName: this.roomName(),
+      itemPair: this.itemPair,
+      message: this.instructions,
+    });
+  }
+
 }

@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { Component, Signal, computed } from '@angular/core';
-import { ChatAboutItems, Message, StageKinds, UserData } from 'src/lib/staged-exp/data-model';
+import { ChatAboutItems, Item, ItemPair, Message, StageKinds, UserData } from 'src/lib/staged-exp/data-model';
 import { AppStateService } from '../../../services/app-state.service';
 import { ChatUserMessageComponent } from './chat-user-message/chat-user-message.component';
 import { ChatDiscussItemsMessageComponent } from './chat-discuss-items-message/chat-discuss-items-message.component';
@@ -44,6 +44,8 @@ export class ExpChatComponent {
   public participant: Participant;
   public otherParticipants: Signal<UserData[]>;
   public everyoneReachedTheChat: Signal<boolean>;
+  public ratingsToDiscuss: Signal<ItemPair[]>;
+  public currentRatingsToDiscuss: Signal<ItemPair>;
 
   constructor(stateService: AppStateService) {
     const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.groupChat);
@@ -63,6 +65,15 @@ export class ExpChatComponent {
     this.everyoneReachedTheChat = computed(() => {
       const users = Object.values(this.participant.experiment().participants);
       return users.map((userData) => userData.workingOnStageName).every((n) => n === this.participant.userData().workingOnStageName);
+    });
+
+    this.ratingsToDiscuss = computed(() => {
+      return this.stageData().ratingsToDiscuss;
+    });
+
+    this.currentRatingsToDiscuss = computed(() => {
+      // last item in the array
+      return this.ratingsToDiscuss()[this.ratingsToDiscuss().length - 1];
     });
 
   }
