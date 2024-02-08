@@ -2,15 +2,17 @@
   <b>Other chat members </b>
   <div class="container">
     @for (user of this.otherParticipants(); track user.userId) {
-      <div class="profile">
-        <img class="avatar" src={{user.profile.avatarUrl}} >
-        <div class="name">
-          {{user.profile.name}}
+      @if (user.workingOnStageName === this.participant.userData().workingOnStageName) {
+        <div class="profile">
+          <img class="avatar" src={{user.profile.avatarUrl}} >
+          <div class="name">
+            {{user.profile.name}}
+          </div>
+          <div class="pronoun">
+            ({{ user.profile.pronouns }})
+          </div>
         </div>
-        <div class="pronoun">
-          ({{ user.profile.pronouns }})
-        </div>
-      </div>
+      }
     }
   </div>
 </div>
