@@ -22,6 +22,16 @@
 }
 
 @else{
+
+  <b>Your discussion is now focussing on selecting the best item between the following items</b> 
+  <div class="item-pair"> 
+    <img src="{{ currentRatingsToDiscuss().item1.imageUrl }}" alt="{{ currentRatingsToDiscuss().item1.name }}" width="20px" /> 
+    <span>{{ currentRatingsToDiscuss().item1.name }}</span> 
+    <span class="vs">vs</span> 
+    <img src="{{ currentRatingsToDiscuss().item2.imageUrl }}" alt="{{ currentRatingsToDiscuss().item2.name }}" width="20px" /> 
+    <span>{{ currentRatingsToDiscuss().item2.name }}</span>
+  </div>
+
   <div class="discussion"> 
     <b>Discussion</b> 
 
