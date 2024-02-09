@@ -52,8 +52,9 @@ export class MediatorChatComponent {
   public message: string = '';
 
   public items: Signal<Item[]>;
-  public itemPair: ItemPair;
+  public itemPair: Signal<ItemPair>;
   public instructions: string = '';
+
 
   constructor(private appStateService: AppStateService) {
     this.messages = computed(() => {
@@ -76,7 +77,10 @@ export class MediatorChatComponent {
       return chat.items;
     });
 
-    this.itemPair = {item1: this.items()[0], item2: this.items()[1]};
+    this.itemPair = computed(() => {
+      return {item1: this.items()[0], item2: this.items()[1]};
+    });
+
   }
 
   sendMessage() {
@@ -92,9 +96,9 @@ export class MediatorChatComponent {
 
   updateItemPair(updatedValue: MatSelectChange, i: number) {
     if (i === 1) {
-      this.itemPair.item1 = updatedValue.value;
+      this.itemPair().item1 = updatedValue.value;
     } else if (i === 2) {
-      this.itemPair.item2 = updatedValue.value;
+      this.itemPair().item2 = updatedValue.value;
     }
     else {
       throw new Error('Only two items in one pair of item');
@@ -107,7 +111,7 @@ export class MediatorChatComponent {
     }
     sendMediatorGroupRatingToDiscuss(this.appStateService.data, this.experiment(), {
       stageName: this.roomName(),
-      itemPair: this.itemPair,
+      itemPair: this.itemPair(),
       message: this.instructions,
     });
   }
