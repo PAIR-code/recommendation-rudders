@@ -19,7 +19,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { Participant } from 'src/lib/staged-exp/participant';
 import { ChatUserProfileComponent } from './chat-user-profile/chat-user-profile.component';
-import {ScrollingModule} from '@angular/cdk/scrolling';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 @Component({
   selector: 'app-exp-chat',
   standalone: true,
