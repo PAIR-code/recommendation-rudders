@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { Component, Signal, computed } from '@angular/core';
-import { ChatAboutItems, Item, ItemPair, Message, StageKinds, UserData } from 'src/lib/staged-exp/data-model';
+import { ChatAboutItems, ItemPair, Message, StageKinds, UserData } from 'src/lib/staged-exp/data-model';
 import { AppStateService } from '../../../services/app-state.service';
 import { ChatUserMessageComponent } from './chat-user-message/chat-user-message.component';
 import { ChatDiscussItemsMessageComponent } from './chat-discuss-items-message/chat-discuss-items-message.component';
@@ -19,6 +19,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { Participant } from 'src/lib/staged-exp/participant';
 import { ChatUserProfileComponent } from './chat-user-profile/chat-user-profile.component';
+import {ScrollingModule} from '@angular/cdk/scrolling';
 @Component({
   selector: 'app-exp-chat',
   standalone: true,
@@ -32,6 +33,7 @@ import { ChatUserProfileComponent } from './chat-user-profile/chat-user-profile.
     FormsModule,
     MatButtonModule,
     MatInputModule,
+    ScrollingModule,
   ],
   templateUrl: './exp-chat.component.html',
   styleUrl: './exp-chat.component.scss',
