@@ -1,5 +1,10 @@
 # Llm Mediators
 
+## Initial setup
+1. Download `npm`. Install Angular with `npm install -g @angular/cli`.
+1. Copy `./src/environments/gcloud_env.template.ts` to `./src/environments/gcloud_env.ts`.
+1. Contact a member of the team directly for access to the API key values.
+
 ## Development server
 
 Run `npm run start` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
