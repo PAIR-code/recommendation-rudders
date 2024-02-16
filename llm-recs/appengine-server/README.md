@@ -10,9 +10,9 @@
 1. All further commands assume you have installed gcloud command, and set your
    project:
 
-```sh
-gcloud config set project ${PROJECT_ID}
-```
+   ```sh
+   gcloud config set project ${PROJECT_ID}
+   ```
 
 1. You will need to setup an API key that has access to the sheets API, and from
    the domain that this applications runs from. For local development
@@ -32,11 +32,11 @@ gcloud config set project ${PROJECT_ID}
 1. Enable the Vertex AI Platform APIs and Sheets APIs. You can do this with the
    command:
 
-```sh
-gcloud services enable sheets.googleapis.com
-gcloud services enable aiplatform.googleapis.com
-gcloud services enable drive.googleapis.com
-```
+   ```sh
+   gcloud services enable sheets.googleapis.com
+   gcloud services enable aiplatform.googleapis.com
+   gcloud services enable drive.googleapis.com
+   ```
 
 1. You need to create, or have an existing AppEngine setup for your cloud
    project too. It can be enabled in the web UI at
@@ -47,19 +47,19 @@ gcloud services enable drive.googleapis.com
 1. The AppEngine service account needs to have permission to make prediction
    requests. You can give this permission using:
 
-```sh
-gcloud iam service-accounts add-iam-policy-binding \
-    ${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com \
-    --member=${SERVICE_ACCOUNT_NAME}@appspot.gserviceaccount.com \
-    --role=serviceAccount:roles/aiplatform.user
-```
+   ```sh
+   gcloud iam service-accounts add-iam-policy-binding \
+      ${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com \
+      --member=${SERVICE_ACCOUNT_NAME}@appspot.gserviceaccount.com \
+      --role=serviceAccount:roles/aiplatform.user
+   ```
 
 1. The following create a service account key locally [not cuyrrently used]
 
-```sh
-gcloud iam service-accounts keys create .config/key.json \
-  --iam-account=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
-```
+   ```sh
+   gcloud iam service-accounts keys create .config/key.json \
+   --iam-account=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+   ```
 
 Note: this gives a little more than just the strict prediction ability. You can
 make a custom role if you want it to be more constrained. But in practice,
