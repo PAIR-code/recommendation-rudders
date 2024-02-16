@@ -45,7 +45,7 @@
    in the next step.
 
 1. The AppEngine service account needs to have permission to make prediction
-   requests. You can give this permission using:
+   requests. You can give this permission using: [TODO: fix this command]
 
    ```sh
    gcloud iam service-accounts add-iam-policy-binding \
@@ -54,10 +54,10 @@
       --role=serviceAccount:roles/aiplatform.user
    ```
 
-1. The following create a service account key locally [not cuyrrently used]
+1. The following create a service account key locally [TODO: not cuyrrently used]
 
    ```sh
-   gcloud iam service-accounts keys create .config/key.json \
+   gcloud iam service-accounts keys create ./.config/key.json \
    --iam-account=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
    ```
 
