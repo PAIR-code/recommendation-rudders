@@ -52,6 +52,14 @@
         <span>Send</span>
       </button>
     </div>
+    <div>
+      <mat-slide-toggle 
+        [checked]="this.stageData().readyToEndChat === true"
+        (change)="updateToogleValue($event)"
+      >
+      I'm done with chatting and ready to move on
+      </mat-slide-toggle>
+    </div>
   </div>
 
   @if (currentRatingsToDiscuss()){
