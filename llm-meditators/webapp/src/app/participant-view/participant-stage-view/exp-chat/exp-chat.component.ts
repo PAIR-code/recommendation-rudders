@@ -110,6 +110,9 @@ export class ExpChatComponent {
   sendMessage() {
     this.participant.sendMessage(this.message);
     this.message = '';
+    if (this.stageData().isSilent) {
+      this.stageData().isSilent = false;
+    }
   }
 
   updateToogleValue(updatedValue: MatSlideToggleChange) {
