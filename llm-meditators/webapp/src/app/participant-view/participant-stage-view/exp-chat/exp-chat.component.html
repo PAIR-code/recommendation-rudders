@@ -45,9 +45,11 @@
       <app-chat-user-profile [profile]="participant.userData().profile"></app-chat-user-profile>
       <mat-form-field class="full-width">
         <mat-label>Message to send</mat-label>
-        <input matInput placeholder="Write your message" [(ngModel)]="message" />
+        <input matInput placeholder="Write your message" [(ngModel)]="message"
+        [disabled]="this.stageData().readyToEndChat === true" />
       </mat-form-field>
-      <button color="primary" mat-button (click)="sendMessage()">
+      <button color="primary" mat-button (click)="sendMessage()"
+      [disabled]="this.stageData().readyToEndChat === true">
         <!-- <mat-icon>redo</mat-icon> -->
         <span>Send</span>
       </button>
