@@ -19,6 +19,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { sendMediatorGroupMessage, sendMediatorGroupRatingToDiscuss } from 'src/lib/staged-exp/app';
 import { MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { preparePalm2Request, sendPalm2Request } from 'src/lib/text-templates/llm_vertexapi_palm2';
+import { VertexApiService } from 'src/app/services/vertex-api.service';
+import { FewShotTemplate } from 'src/lib/text-templates/fewshot_template';
+import { nv, template } from 'src/lib/text-templates/template';
 
 @Component({
   selector: 'app-mediator-chat',
@@ -56,7 +60,7 @@ export class MediatorChatComponent {
   public instructions: string = '';
 
 
-  constructor(private appStateService: AppStateService) {
+  constructor(private appStateService: AppStateService, private llmService: VertexApiService) {
     this.messages = computed(() => {
       if (this.roomName() === '' || !this.experiment || !this.participants) {
         return [];
@@ -115,5 +119,77 @@ export class MediatorChatComponent {
       message: this.instructions,
     });
   }
+
+  async sendLLMMessage() {
+    //const prompt = `Hello word`;
+    // TODO Add messages to the prompt
+    const nPropertyValuePerLineTempl = new FewShotTemplate(template
+      `${nv('property')}: "${nv('value')}"`,
+      '\n');
+    const userAndMessageList = [
+      { 
+        property: 'Username',
+        value: nv('username'),
+      },
+      { 
+        property: 'Message',
+        value: nv('message'),
+      }
+    ];
+    const userMessageTempl = nPropertyValuePerLineTempl.apply(userAndMessageList);
+    // expect(userMessageTempl.escaped).toEqual(
+    //   `Username: "{{username}}"
+    //    Message: "{{message}}"`);
+
+    const nMediationExamplesTempl = new FewShotTemplate(
+      userMessageTempl, '\n\n');
+
+    const mediationTempl = template
+      `Given the following discussion:
+      
+${nv('conversation')}
+      
+What would you say to mediate the discussion?`;
+
+    // Create empty list in conversation
+    const conversation: { username: string; message: string; }[] = [];
+    // Add messages from this.messages() to the conversation
+    this.messages().forEach((m) => {
+      if (m.messageType === 'userMessage') {
+        conversation.push({
+          username: m.fromProfile.name,
+          message: m.text,
+        });
+      }
+      else if (m.messageType === 'discussItemsMessage') {
+        conversation.push({
+          username: 'Mediator',
+          message: m.text,
+        });
+      }
+      else if (m.messageType === 'mediatorMessage') {
+        conversation.push({
+          username: 'Mediator',
+          message: m.text,
+        });
+      }
+    });
+
+    const mediationWithMessages = mediationTempl.substs({
+      conversation: nMediationExamplesTempl.apply(conversation).escaped
+    });
+
+    const prompt = mediationWithMessages.escaped;
+
+    console.log(prompt);
+    const request = preparePalm2Request(prompt);
+    const response = await sendPalm2Request(
+      this.llmService.projectId, this.llmService.accessToken, request);
+    // console.log(JSON.stringify(response));
+    // console.log(response.predictions[0].content);
+    // Send message to chat
+    this.message = response.predictions[0].content;
+    this.sendMessage();
+  };
 
 }
