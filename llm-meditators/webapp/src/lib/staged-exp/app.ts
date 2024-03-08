@@ -159,6 +159,15 @@ export function addExperiment(name: string, stages: ExpStage[], appData: SavedAp
   appData.experiments[experiment.name] = experiment;
 }
 
+export function deleteExperiment(name: string, appData: SavedAppData) {
+  if (name in appData.experiments) {
+    delete appData.experiments[name];
+  } else {
+    console.log(
+      "Experiment " + name + " is not found: " + appData.experiments);
+  }
+}
+
 // export function initialAppData(): SavedAppData {
 //   const experiment = initialExperimentSetup(3);
 //   const experiments: { [name: string]: Experiment } = {};
