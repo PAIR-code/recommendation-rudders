@@ -129,6 +129,7 @@ export interface ChatAboutItems {
   messages: Message[];
   items: Item[];
   readyToEndChat: boolean;
+  // TODO(cjqian): This needs to be a per-participant value.
   isSilent: boolean;
 }
 
@@ -357,6 +358,7 @@ export interface UserData {
   // Their appearance.
   profile: UserProfile;
   stageMap: { [stageName: string]: ExpStage };
+  allowedStageProgressionMap: { [stageName: string]: boolean };
   completedStageNames: string[]; // current stage is the very last one.
   workingOnStageName: string;
   futureStageNames: string[];

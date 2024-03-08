@@ -86,8 +86,16 @@ export class ExpChatComponent {
           participantsReady.push(p);
         }
       });
-      return participantsReady.length === (this.otherParticipants().length + 1);
+      const isReady = participantsReady.length === (this.otherParticipants().length + 1);
 
+      // Allow "Next" to be pushed.
+      if (isReady) {
+        const allUsers = Object.values(this.participant.experiment().participants);
+        for (const user of allUsers) {
+            user.allowedStageProgressionMap[user.workingOnStageName] = true;
+        }
+      }
+      return isReady;
     });
 
     effect(() => {
@@ -107,12 +115,14 @@ export class ExpChatComponent {
 
   }
 
+  isSilent() {
+    return (this.stageData().isSilent !== false);
+  }
+
   sendMessage() {
     this.participant.sendMessage(this.message);
     this.message = '';
-    if (this.stageData().isSilent) {
-      this.stageData().isSilent = false;
-    }
+    this.stageData().isSilent = false;
   }
 
   updateToogleValue(updatedValue: MatSlideToggleChange) {
