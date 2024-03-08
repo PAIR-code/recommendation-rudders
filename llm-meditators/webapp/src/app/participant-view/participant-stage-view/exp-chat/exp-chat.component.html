@@ -57,7 +57,7 @@
     <div>
       <mat-slide-toggle 
         [checked]="this.stageData().readyToEndChat === true"
-        [disabled]="this.stageData().isSilent === true"
+        [disabled]="this.isSilent()"
         (change)="updateToogleValue($event)"
       >
       I'm done with chatting and ready to move on
