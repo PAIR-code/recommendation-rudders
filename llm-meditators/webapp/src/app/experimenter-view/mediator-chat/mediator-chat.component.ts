@@ -59,6 +59,11 @@ export class MediatorChatComponent {
   public itemPair: Signal<ItemPair>;
   public instructions: string = '';
 
+  public defaultPrefix: string = 'You are a mediator assistant guiding a conversation whose goal is to discuss and decide the best item to survive a sinking yacht lost in the South Pacific.'
+  public defaultSuffix: string = 'What is the best message to send to the chat participants at this stage of the discussion to keep it constructive, unbiased, and civil? Just write the message without the username. Do not use quotes.';
+  public prefix: string = this.defaultPrefix;
+  public suffix: string = this.defaultSuffix;
+
 
   constructor(private appStateService: AppStateService, private llmService: VertexApiService) {
     this.messages = computed(() => {
@@ -145,11 +150,11 @@ export class MediatorChatComponent {
       userMessageTempl, '\n\n');
 
     const mediationTempl = template
-      `Given the following discussion:
+      `${this.prefix}
       
 ${nv('conversation')}
       
-What would you say to mediate the discussion?`;
+${this.suffix}`;
 
     // Create empty list in conversation
     const conversation: { username: string; message: string; }[] = [];
