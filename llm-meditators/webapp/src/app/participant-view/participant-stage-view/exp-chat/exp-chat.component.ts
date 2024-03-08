@@ -6,13 +6,14 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { Component, Signal, computed } from '@angular/core';
-import { ChatAboutItems, Item, ItemPair, Message, StageKinds, UserData } from 'src/lib/staged-exp/data-model';
+import { Component, Signal, computed, effect } from '@angular/core';
+import { ChatAboutItems, ExpStageChatAboutItems, Item, ItemPair, Message, StageKinds, UserData } from 'src/lib/staged-exp/data-model';
 import { AppStateService } from '../../../services/app-state.service';
 import { ChatUserMessageComponent } from './chat-user-message/chat-user-message.component';
 import { ChatDiscussItemsMessageComponent } from './chat-discuss-items-message/chat-discuss-items-message.component';
 import { ChatMediatorMessageComponent } from './chat-mediator-message/chat-mediator-message.component';
 import { MediatorFeedbackComponent } from './mediator-feedback/mediator-feedback.component';
+import { MatSlideToggleChange, MatSlideToggleModule} from '@angular/material/slide-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,6 +33,7 @@ import { ChatUserProfileComponent } from './chat-user-profile/chat-user-profile.
     FormsModule,
     MatButtonModule,
     MatInputModule,
+    MatSlideToggleModule,
   ],
   templateUrl: './exp-chat.component.html',
   styleUrl: './exp-chat.component.scss',
@@ -44,6 +46,7 @@ export class ExpChatComponent {
   public participant: Participant;
   public otherParticipants: Signal<UserData[]>;
   public everyoneReachedTheChat: Signal<boolean>;
+  public everyoneFinishedTheChat: Signal<boolean>;
   public ratingsToDiscuss: Signal<ItemPair[]>;
   public currentRatingsToDiscuss: Signal<ItemPair>;
 
@@ -67,6 +70,32 @@ export class ExpChatComponent {
       return users.map((userData) => userData.workingOnStageName).every((n) => n === this.participant.userData().workingOnStageName);
     });
 
+    this.everyoneFinishedTheChat = computed(() => {
+      // const users = Object.values(this.participant.experiment().participants);
+      // return users.every((userData) => {
+      //   const otherUserChatStage = userData.stageMap[this.stageData.name] as ExpStageChatAboutItems;
+      //   return otherUserChatStage.config.readyToEndChat;        
+      // });
+      const participantsReady: UserData[] = [];
+      if (this.stageData().readyToEndChat) {
+        participantsReady.push(this.participant.userData());
+      }
+      this.otherParticipants().forEach((p) => {
+        const stage = p.stageMap[this.participant.userData().workingOnStageName].config as ChatAboutItems;
+        if (stage.readyToEndChat) {
+          participantsReady.push(p);
+        }
+      });
+      return participantsReady.length === (this.otherParticipants().length + 1);
+
+    });
+
+    effect(() => {
+      if(this.everyoneFinishedTheChat()) {
+        this.participant.nextStep();
+      }
+    }, { allowSignalWrites: true });
+
     this.ratingsToDiscuss = computed(() => {
       return this.stageData().ratingsToDiscuss;
     });
@@ -81,5 +110,15 @@ export class ExpChatComponent {
   sendMessage() {
     this.participant.sendMessage(this.message);
     this.message = '';
+    if (this.stageData().isSilent) {
+      this.stageData().isSilent = false;
+    }
+  }
+
+  updateToogleValue(updatedValue: MatSlideToggleChange) {
+    this.participant.editStageData<ChatAboutItems>((d) => {
+      d.readyToEndChat = updatedValue.checked;
+    });
+    // console.log('this.everyoneFinishedTheChat()', this.everyoneFinishedTheChat());
   }
 }

@@ -39,6 +39,7 @@ summary: ['
 `;
 
   const request = preparePalm2Request(prompt);
+  request.parameters.stopSequences = [];
   request.parameters.stopSequences.push(`']`);
   const response = await sendPalm2Request(
     args.project, args.accessToken, request);
