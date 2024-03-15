@@ -25,6 +25,7 @@ import {
   ScaleQuestion,
   SurveyQuestionKind,
   StageKinds,
+  ExpStageTosAcceptance,
 } from './data-model';
 
 import * as items from './items';
@@ -34,17 +35,18 @@ const fakeNameGenConfig: UniqueNamesGenConfig = {
   dictionaries: [starWars],
 };
 
-// TODO: not sure this does anything for us...
 export enum ExpStageNames {
-  '1. Agree to the experiment and set your profile' = '1. Agree to the experiment and set your profile',
-  '2. Initial leadership survey' = '2. Initial leadership survey',
-  '3. Group discussion' = '3. Group discussion',
-  '4. Post-chat survey' = '4. Post-chat survey',
-  '5. Post-discussion leadership survey' = '5. Post-discussion leadership survey',
-  '6. Vote for the leader' = '6. Vote for the leader',
-  '7. Post-discussion work' = '7. Post-discussion work',
-  '8. Leader reveal' = '8. Leader reveal',
-  '9. final satisfaction survey' = '9. final satisfaction survey',
+  TOS_ACCEPTANCE = 'Accept to the experiment terms of service',
+  PROFILE_SETUP = 'Set up your profile',
+  TOS_AND_PROFILE_SETUP = 'Agree to the experiment and set your profile',
+  PRE_LEADERSHIP_SURVEY = 'Initial leadership survey',
+  GROUP_DISCUSSION = 'Group discussion',
+  POST_CHAT_SURVEY = 'Post-chat survey',
+  POST_LEADERSHIP_SURVEY = 'Post-discussion leadership survey',
+  LEADER_VOTE = 'Vote for the leader',
+  POST_CHAT_WORK = 'Post-discussion work',
+  LEADER_REVEAL = 'Leader reveal',
+  SATISFACTION_SURVEY = 'Final satisfaction survey',
 }
 
 // -------------------------------------------------------------------------------------
@@ -54,7 +56,7 @@ export enum ExpStageNames {
 function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
   return {
     kind: StageKinds.acceptTosAndSetProfile,
-    name: ExpStageNames['1. Agree to the experiment and set your profile'],
+    name: ExpStageNames.TOS_AND_PROFILE_SETUP,
     config: {
       pronouns: '',
       avatarUrl: '',
@@ -101,7 +103,7 @@ const initialWantToLeadQuestion: ScaleQuestion = {
 function initialWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: StageKinds.takeSurvey,
-    name: ExpStageNames['2. Initial leadership survey'],
+    name: ExpStageNames.PRE_LEADERSHIP_SURVEY,
     config: {
       questions: [initialItemRatingsQuestion, initialWantToLeadQuestion],
     },
@@ -111,7 +113,7 @@ function initialWantToLeadSurvey(): ExpStageSurvey {
 function groupChat(): ExpStageChatAboutItems {
   return {
     kind: StageKinds.groupChat,
-    name: ExpStageNames['3. Group discussion'],
+    name: ExpStageNames.GROUP_DISCUSSION,
     config: {
       ratingsToDiscuss: [],
       messages: [],
@@ -135,7 +137,7 @@ Also indicate your overall feeling about the chat.`,
 function chatDiscussionSurvey(): ExpStageSurvey {
   return {
     kind: StageKinds.takeSurvey,
-    name: ExpStageNames['4. Post-chat survey'],
+    name: ExpStageNames.POST_CHAT_SURVEY,
     config: {
       questions: [chatDiscussionQuestion],
     },
@@ -154,7 +156,7 @@ const postChatWantToLeadQuestion: ScaleQuestion = {
 function postChatWantToLeadSurvey(): ExpStageSurvey {
   return {
     kind: StageKinds.takeSurvey,
-    name: ExpStageNames['5. Post-discussion leadership survey'],
+    name: ExpStageNames.POST_LEADERSHIP_SURVEY,
     config: {
       questions: [postChatWantToLeadQuestion],
     },
@@ -164,7 +166,7 @@ function postChatWantToLeadSurvey(): ExpStageSurvey {
 function leaderVoting(): ExpStageVotes {
   return {
     kind: StageKinds.voteForLeader,
-    name: ExpStageNames['6. Vote for the leader'],
+    name: ExpStageNames.LEADER_VOTE,
     config: {},
     // userAcceptance: Date,
   };
@@ -184,7 +186,7 @@ const finalItemRatingsQuestion: RatingQuestion = {
 function postChatWork(): ExpStageSurvey {
   return {
     kind: StageKinds.takeSurvey,
-    name: '7. Post-discussion work',
+    name: ExpStageNames.POST_CHAT_WORK,
     config: {
       questions: [finalItemRatingsQuestion],
     },
@@ -195,9 +197,9 @@ function postChatWork(): ExpStageSurvey {
 function leaderReveal(): ExpStageVoteReveal {
   return {
     kind: StageKinds.revealVoted,
-    name: ExpStageNames['8. Leader reveal'],
+    name: ExpStageNames.LEADER_REVEAL,
     config: {
-      pendingVoteStageName: ExpStageNames['6. Vote for the leader'],
+      pendingVoteStageName: ExpStageNames.LEADER_VOTE,
       revealTimestamp: null,
     },
   };
@@ -216,7 +218,7 @@ Also indicate your overall feeling about the experience.`,
 function finalSatisfactionSurvey(): ExpStageSurvey {
   return {
     kind: StageKinds.takeSurvey,
-    name: '9. final satisfaction survey',
+    name: ExpStageNames.SATISFACTION_SURVEY,
     config: {
       questions: [finalSatisfactionQuestion],
     },

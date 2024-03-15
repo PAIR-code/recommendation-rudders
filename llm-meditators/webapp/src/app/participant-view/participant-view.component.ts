@@ -37,7 +37,7 @@ export class ParticipantViewComponent implements OnDestroy {
   @ViewChild('googleButton') googleButton!: ElementRef<HTMLElement>;
 
   participant: Participant;
-
+  ORDERED_STAGE_MAP: string[];
   constructor(
     private route: ActivatedRoute,
     public router: Router,
@@ -48,8 +48,17 @@ export class ParticipantViewComponent implements OnDestroy {
     if (this.participant) {
       stateService.state.set({ kind: AppStateEnum.Participant, particpant: this.participant });
     }
+
+    const userData = this.participant.userData();
+    this.ORDERED_STAGE_MAP = userData.completedStageNames.concat([userData.workingOnStageName], userData.futureStageNames);
   }
 
+  getStageIndex(stageName: string) {
+    if (this.participant) {
+      return this.ORDERED_STAGE_MAP.indexOf(stageName) + 1;
+    }
+    return '';
+  }
   updateCurrentStageName(stageName: string) {
     if (this.participant) {
       this.participant.setViewingStage(stageName);
