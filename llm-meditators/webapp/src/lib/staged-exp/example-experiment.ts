@@ -15,6 +15,7 @@ import {
   Experiment,
   ExpStage,
   ExpStageSurvey,
+  ExpStageUserProfile,
   ExpStageVotes,
   ExpStageChatAboutItems,
   //ExpStageItemRatings,
@@ -36,7 +37,7 @@ const fakeNameGenConfig: UniqueNamesGenConfig = {
 };
 
 export enum ExpStageNames {
-  TOS_ACCEPTANCE = 'Accept to the experiment terms of service',
+  TOS_ACCEPTANCE = 'Accept the experiment terms of service',
   PROFILE_SETUP = 'Set up your profile',
   TOS_AND_PROFILE_SETUP = 'Agree to the experiment and set your profile',
   PRE_LEADERSHIP_SURVEY = 'Initial leadership survey',
@@ -53,6 +54,17 @@ export enum ExpStageNames {
 //  Initial Experiment Setup
 // -------------------------------------------------------------------------------------
 
+function acceptTos(): ExpStageTosAcceptance {
+  return {
+    kind: StageKinds.acceptTos,
+    name: ExpStageNames.TOS_ACCEPTANCE,
+    config: {
+      tosLines: [],
+      acceptedTosTimestamp: null,
+    },
+  };
+}
+
 function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
   return {
     kind: StageKinds.acceptTosAndSetProfile,
@@ -66,6 +78,20 @@ function acceptTosAndSetProfile(): ExpStageTosAndUserProfile {
     },
   };
 }
+
+
+function setProfile(): ExpStageUserProfile {
+  return {
+    kind: StageKinds.setProfile,
+    name: ExpStageNames.PROFILE_SETUP,
+    config: {
+      pronouns: '',
+      avatarUrl: '',
+      name: '',
+    },
+  };
+}
+
 
 // function initialWork(): ExpStageItemRatings {
 //   return {
@@ -267,7 +293,9 @@ export function initUserData(stages: ExpStage[]): UserData {
 
 export function makeStages() {
   return [
-    acceptTosAndSetProfile(),
+    acceptTos(),
+    setProfile(),
+    // acceptTosAndSetProfile(),
     //initialWork(),
     initialWantToLeadSurvey(),
     groupChat(),

@@ -42,7 +42,7 @@ enum Pronouns {
 export class ExpTosAndProfileComponent {
   public participant: Participant;
   public stageData: Signal<TosAndUserProfile>;
-
+  private tosIsChecked: boolean;
   readonly Pronouns = Pronouns;
 
   constructor(stateService: AppStateService) {
@@ -51,11 +51,14 @@ export class ExpTosAndProfileComponent {
     );
     this.stageData = stageData;
     this.participant = participant;
+    this.tosIsChecked = false;
   }
 
   canProceedToNextStep(user: UserData) {
-    // TODO(cjqian): Make sure TOS is accepted as well.
-    return (user.profile.avatarUrl !== '') && (user.profile.name !== '') && (user.profile.pronouns !== '');
+    return (user.profile.avatarUrl !== '') && 
+      (user.profile.name !== '') && 
+      (user.profile.pronouns !== '') &&
+      this.tosIsChecked;
   }
 
   isOtherPronoun(s: string) {
@@ -65,7 +68,10 @@ export class ExpTosAndProfileComponent {
   updateCheckboxValue(updatedValue: MatCheckboxChange) {
     this.participant.editStageData<TosAndUserProfile>((d) => {
       d.acceptedTosTimestamp = updatedValue.checked ? new Date() : null;
+      this.tosIsChecked = updatedValue.checked;
     });
+
+    this.updateProceedToNextStep();
   }
 
   updateName(name: string) {
@@ -96,12 +102,19 @@ export class ExpTosAndProfileComponent {
     this.updateUserProfile();
   }
 
+  updateProceedToNextStep() {
+    this.participant.edit((user) => {
+      user.allowedStageProgressionMap[user.workingOnStageName] = this.canProceedToNextStep(user);
+    })
+  }
+
   updateUserProfile() {
     this.participant.edit((user) => {
       user.profile.avatarUrl = this.stageData().avatarUrl;
       user.profile.name = this.stageData().name;
       user.profile.pronouns = this.stageData().pronouns;
-      user.allowedStageProgressionMap[user.workingOnStageName] = this.canProceedToNextStep(user);
     });
+
+    this.updateProceedToNextStep();
   }
 }

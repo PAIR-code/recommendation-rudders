@@ -56,28 +56,34 @@ export class ExpProfileComponent {
   }
 
   updateName(updatedValue: string) {
-    console.log('updateName', updatedValue);
     this.participant.editStageData<UserProfile>((p) => {
       p.name = updatedValue;
       this.participant.setProfile(p);
     });
+    this.updateStageProgression();
   }
 
   updatePronouns(updatedValue: MatRadioChange) {
-    console.log('updatePronouns', updatedValue);
     if (updatedValue.value !== this.participant.userData().profile.pronouns) {
       this.participant.editStageData<UserProfile>((p) => {
         p.pronouns = updatedValue.value;
         this.participant.setProfile(p);
       });
     }
+    this.updateStageProgression();
   }
 
   updateAvatarUrl(updatedValue: MatRadioChange) {
-    console.log('updateAvatarUrl', updatedValue);
     this.participant.editStageData<UserProfile>((p) => {
       p.avatarUrl = updatedValue.value;
       this.participant.setProfile(p);
+    });
+    this.updateStageProgression();
+  }
+
+  updateStageProgression() {
+    this.participant.edit((user) => {
+      user.allowedStageProgressionMap[user.workingOnStageName] = this.isComplete();
     });
   }
 }
