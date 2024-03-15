@@ -100,8 +100,8 @@ function setProfile(): ExpStageUserProfile {
 //     complete: false,
 //     config: {
 //       ratings: [
-//         { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
-//         { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
+//         { item1: items.compass, item2: items.blanket, choice: null, confidence: null },
+//         { item1: items.compass, item2: items.lighter, choice: null, confidence: null },
 //       ],
 //     },
 //     // userAcceptance: Date,
@@ -111,10 +111,10 @@ const initialItemRatingsQuestion: RatingQuestion = {
   kind: SurveyQuestionKind.RATING,
   id: uniqueId(),
   questionText: 'Rate the items by how helpful they would be for survival.',
-  rating: { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+  rating: { item1: items.compass, item2: items.blanket, choice: null, confidence: null },
   // ratings: [
-  //   { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
-  //   { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
+  //   { item1: items.compass, item2: items.blanket, choice: null, confidence: null },
+  //   { item1: items.compass, item2: items.lighter, choice: null, confidence: null },
   // ],
 };
 
@@ -143,7 +143,7 @@ function groupChat(): ExpStageChatAboutItems {
     config: {
       ratingsToDiscuss: [],
       messages: [],
-      items: [items.compas, items.blanket, items.lighter],
+      items: [items.compass, items.blanket, items.lighter],
       readyToEndChat: false,
       isSilent: true,
     },
@@ -202,10 +202,10 @@ const finalItemRatingsQuestion: RatingQuestion = {
   kind: SurveyQuestionKind.RATING,
   id: uniqueId(),
   questionText: 'Please rating the following accoring to which is best for survival',
-  rating: { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
+  rating: { item1: items.compass, item2: items.blanket, choice: null, confidence: null },
   // ratings: [
-  //   { item1: items.compas, item2: items.blanket, choice: null, confidence: null },
-  //   { item1: items.compas, item2: items.lighter, choice: null, confidence: null },
+  //   { item1: items.compass, item2: items.blanket, choice: null, confidence: null },
+  //   { item1: items.compass, item2: items.lighter, choice: null, confidence: null },
   // ],
 };
 

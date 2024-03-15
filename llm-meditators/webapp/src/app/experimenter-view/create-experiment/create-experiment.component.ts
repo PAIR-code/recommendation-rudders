@@ -25,6 +25,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
 
 import { LocalService } from 'src/app/services/local.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -80,6 +81,7 @@ export class CreateExperimentComponent {
   constructor(
     private appStateService: AppStateService,
     private localStore: LocalService,
+    public router: Router
   ) {
     // new stuff
     const existingStages = this.localStore.getData(EXISTING_STAGES_KEY) as ExpStage[];
@@ -260,6 +262,9 @@ export class CreateExperimentComponent {
     this.appStateService.editData((data) =>
       addExperiment(this.newExperimentName, this.existingStages as ExpStage[], data),
     );
+
+    // Redirect to the new experiment.
+    this.router.navigate(['/experimenter', 'experiment', this.newExperimentName]);
     // console.log(this.localStore.getData(EXISTING_STAGES_KEY));
     // this.appStateService.addExperiment()
     // this.appStateService.reset(this.localStore.getData(EXISTING_STAGES_KEY) as ExpStage[]);
