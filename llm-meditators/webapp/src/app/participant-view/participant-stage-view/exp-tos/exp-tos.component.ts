@@ -27,6 +27,7 @@ export class ExpTosComponent {
   constructor(stateService: AppStateService) {
     const { participant, stageData } = stateService.getParticipantAndStage(StageKinds.acceptTos);
     this.stageData = stageData();
+    
     this.participant = participant;
   }
 
@@ -34,9 +35,18 @@ export class ExpTosComponent {
     const checked = updatedValue.checked;
     if (checked) {
       this.stageData.acceptedTosTimestamp = new Date();
+      this.updateStageProgression(true);
+
     } else {
       this.stageData.acceptedTosTimestamp = null;
+      this.updateStageProgression(false);
     }
     this.participant.editStageData(() => this.stageData);
+  }
+
+  updateStageProgression(canProceed: boolean) {
+    this.participant.edit((user) => {
+      user.allowedStageProgressionMap[user.workingOnStageName] = canProceed;
+    });
   }
 }

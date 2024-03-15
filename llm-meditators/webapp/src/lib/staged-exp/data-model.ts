@@ -12,7 +12,7 @@ import { uniqueId } from 'lodash';
 export enum StageKinds {
   acceptTos = 'acceptTos',
   setProfile = 'setProfile',
-  acceptTosAndSetProfile = 'acceptTodAndSetProfile',
+  acceptTosAndSetProfile = 'acceptTosAndSetProfile',
   groupChat = 'groupChat',
   voteForLeader = 'voteForLeader',
   revealVoted = 'leaderReveal',
@@ -179,6 +179,24 @@ export interface ExpStageVotes extends GenericExpStage<Votes> {
 }
 
 // -------------------------------------------------------------------------------------
+export interface UserProfile {
+  pronouns: string;
+  avatarUrl: string;
+  name: string;
+}
+
+export const getDefaulUserProfileConfig = (): UserProfile => {
+  return {
+    pronouns: '',
+    avatarUrl: '',
+    name: '',
+  };
+};
+
+export interface ExpStageUserProfile extends GenericExpStage<UserProfile> {
+  kind: StageKinds.setProfile;
+}
+
 export interface TosAndUserProfile {
   pronouns: string;
   avatarUrl: string;
@@ -307,6 +325,7 @@ export interface ExpStageSurvey extends GenericExpStage<Survey> {
 // -------------------------------------------------------------------------------------
 export interface TosAcceptance {
   acceptedTosTimestamp: Date | null;
+  tosLines: string[];
 }
 
 export interface ExpStageTosAcceptance extends GenericExpStage<TosAcceptance> {
@@ -342,6 +361,7 @@ export type ExpDataKinds =
 
 export type ExpStage =
   | ExpStageTosAcceptance
+  | ExpStageUserProfile
   | ExpStageTosAndUserProfile
   | ExpStageSurvey
   | ExpStageUserProfile
@@ -352,7 +372,7 @@ export type ExpStage =
 
 // -------------------------------------------------------------------------------------
 export interface UserData {
-  // immutale properties.
+  // immutable properties.
   readonly accessCode: string;
   readonly userId: string;
   // Their appearance.

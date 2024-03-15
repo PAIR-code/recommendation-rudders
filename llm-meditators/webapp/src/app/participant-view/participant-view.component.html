@@ -12,6 +12,7 @@
   <mat-sidenav-container>
     <mat-sidenav #sidenav mode="side" opened="true">
       <mat-nav-list class="menu-buttons">
+        <!-- Previous stages. -->
         @for (stageName of participant.userData().completedStageNames; track stageName) {
           <mat-list-item
             matListItemTitle
@@ -23,11 +24,12 @@
           >
             <!-- (click)="updateCurrentStageName(stageName)" -->
             <div class="menu-item-inner">
-              {{ stageName }}
+              {{ getStageIndex(stageName) }}. {{ stageName }}
               <mat-icon class="icon completed" fontIcon="check"></mat-icon>
             </div>
           </mat-list-item>
         }
+        <!-- Current stage. -->
         <mat-list-item
           matListItemTitle
           [routerLink]="['./']"
@@ -42,11 +44,12 @@
           "
         >
           <div class="menu-item-inner">
-            {{ participant.workingOnStage().name }}
+            {{ getStageIndex(participant.workingOnStage().name) }}. {{ participant.workingOnStage().name }}
             <div class="ongoing-badge">ongoing</div>
           </div>
         </mat-list-item>
-        @for (stageName of participant.userData().futureStageNames; track stageName) {
+        <!-- Future stages. -->
+        @for (stageName of participant.userData().futureStageNames; track stageName; let i = $index) {
           <mat-list-item
             [disabled]="true"
             [activated]="false"
@@ -54,7 +57,7 @@
             ariaCurrentWhenActive="page"
             class="menu-item future-stage"
           >
-            {{ stageName }}
+            {{ getStageIndex(stageName) }}. {{ stageName }}
           </mat-list-item>
         }
       </mat-nav-list>
