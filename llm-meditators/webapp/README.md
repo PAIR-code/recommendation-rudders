@@ -54,3 +54,11 @@ Note: for some reason, assets (images) are not rendered correctly when the app i
 Here is a [quick video tutorial](https://mail.google.com/mail/u/0/#inbox/QgrcJHsTfQgVhDSJBNQBGTzQNLwzGBhqxbv?projector=1) on how to use the app.
 
 More info on the deployment on Github-pages [there](https://angular.io/guide/deployment#deploy-to-github-pages).
+
+How to update the deployed app with the most recent version from https://github.com/PAIR-code/recommendation-rudders/? 
+1. Add the remote repository from https://github.com/PAIR-code/recommendation-rudders/ 
+2. Fetch the remote repository
+3. Merge the remote repository with the local repository
+4. Run `ng build --output-path docs --base-href /recommendation-rudders/`
+5. Commit and push
+
