@@ -81,7 +81,27 @@
 </div>
 
 <div>
-  <h4> Send automatic mediating intervention to the chat </h4>
+  <h4> Send automatic mediating intervention to the chat. 
+    The prompt will be made of: 
+    <ol>
+      <li>
+          <b>A prefix</b> - default: {{this.defaultPrefix}}
+      </li>
+      <li>
+        <b>The current discussion</b> - e.g.: <br>Username: "John Doe"<br> Message: "I think..."
+      </li>
+      <li>
+        <b>A suffix</b> - default: {{this.defaultSuffix}}
+    </ol>
+  </h4>
+  <mat-form-field class="full-width">
+    <mat-label>Write a custom prefix</mat-label>
+    <input matInput placeholder="Write your prefix" [(ngModel)]="prefix" />
+  </mat-form-field>
+  <mat-form-field class="full-width">
+    <mat-label>Write a custom suffix</mat-label>
+    <input matInput placeholder="Write your suffix" [(ngModel)]="suffix" />
+  </mat-form-field>
   <button color="primary" mat-button (click)="sendLLMMessage()">
     <span>Send</span>
   </button>
