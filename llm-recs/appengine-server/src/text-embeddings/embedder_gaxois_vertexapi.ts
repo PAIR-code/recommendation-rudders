@@ -6,8 +6,8 @@
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
 
-import { AuthClient } from "google-auth-library";
-import { Embedder, EmbedResponse as EmbedResponse } from "./embedder";
+import { AuthClient } from 'google-auth-library';
+import { Embedder, EmbedResponse as EmbedResponse } from './embedder';
 
 /*
 Google Cloud Vertex Embedding API
@@ -17,10 +17,10 @@ See: https://cloud.google.com/vertex-ai/docs/generative-ai/embeddings/get-text-e
 Uses Google-auth-client so that it handles refreshing tokens for API use.
 */
 
-export interface EmbedRequestParams { };
+export interface EmbedRequestParams {}
 
 export interface EmbedRequest {
-  instances: { content: string }[]
+  instances: { content: string }[];
 }
 
 export interface VertexEmbedding {
@@ -31,11 +31,11 @@ export interface VertexEmbedding {
         token_count: number;
       };
       values: number[];
-    }
+    };
   }[];
   metadata: {
     billableCharacterCount: number;
-  }
+  };
 }
 
 export interface VertexEmbedError {
@@ -44,12 +44,13 @@ export interface VertexEmbedError {
     details: unknown[];
     message: string;
     status: string;
-  }
+  };
 }
 
 export type VertexEmbedResponse = VertexEmbedding | VertexEmbedError;
 
-function isErrorResponse(response: VertexEmbedResponse
+function isErrorResponse(
+  response: VertexEmbedResponse
 ): response is VertexEmbedError {
   if ((response as VertexEmbedError).error) {
     return true;
@@ -57,7 +58,8 @@ function isErrorResponse(response: VertexEmbedResponse
   return false;
 }
 
-export function prepareEmbedRequest(text: string,
+export function prepareEmbedRequest(
+  text: string,
   options?: EmbedRequestParams
 ): EmbedRequest {
   return {
@@ -85,21 +87,21 @@ export async function sendEmbedRequest(
   projectId: string,
   client: AuthClient,
   req: EmbedRequest,
-  modelId = 'textembedding-gecko', // e.g. textembedding-gecko embedding model
-  apiEndpoint = 'us-central1-aiplatform.googleapis.com',
+  modelId = 'text-embedding-004', // e.g. textembedding-gecko embedding model
+  location = 'us-central1'
 ): Promise<VertexEmbedResponse> {
   return await postDataToLLM(
     // TODO: it may be that the url part 'us-central1' has to match
     // apiEndpoint.
-    `https://${apiEndpoint}/v1/projects/${projectId}/locations/us-central1/publishers/google/models/${modelId}:predict`,
+    `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${modelId}:predict`,
     client,
     req
   );
 }
 
 interface EmbedApiOptions {
-  modelId: string,
-  apiEndpoint: string,
+  modelId: string;
+  apiEndpoint: string;
 }
 
 export class VertexEmbedder implements Embedder<EmbedApiOptions> {
@@ -109,24 +111,19 @@ export class VertexEmbedder implements Embedder<EmbedApiOptions> {
     apiEndpoint: 'us-central1-aiplatform.googleapis.com',
   };
 
-  constructor(
-    public client: AuthClient,
-    public projectId: string,
-  ) {
+  constructor(public client: AuthClient, public projectId: string) {
     this.name = `VertexEmbedder:` + this.defaultOptions.modelId;
   }
 
-  async embed(
-    query: string, params?: EmbedApiOptions
-  ): Promise<EmbedResponse> {
-
+  async embed(query: string, params?: EmbedApiOptions): Promise<EmbedResponse> {
     const apiRequest = prepareEmbedRequest(query);
     const apiResponse = await sendEmbedRequest(
       this.projectId,
       this.client,
       apiRequest,
       params ? params.modelId : this.defaultOptions.modelId,
-      params ? params.apiEndpoint : this.defaultOptions.apiEndpoint);
+      params ? params.apiEndpoint : this.defaultOptions.apiEndpoint
+    );
     if (isErrorResponse(apiResponse)) {
       return { error: apiResponse.error.message };
     }

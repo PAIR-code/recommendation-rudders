@@ -5,25 +5,35 @@
  * Use of this source code is governed by an Apache2 license that can be
  * found in the LICENSE file and http://www.apache.org/licenses/LICENSE-2.0
 ==============================================================================*/
-import { Template, escapeStr, template, nv, unEscapeStr } from '../text-templates/template';
-import { FewShotTemplate } from '../text-templates/fewshot_template';
+import {
+  Template,
+  escapeStr,
+  template,
+  nv,
+  unEscapeStr,
+  FewShotTemplate,
+} from 'ts-llmt';
 
 interface Experience {
   experience: string;
-  aboutEntity: string,
-  likedOrDisliked: string,
+  aboutEntity: string;
+  likedOrDisliked: string;
   characteristics: string[];
 }
 
 interface ExperienceTemplEntry {
   experience: string;
-  aboutEntity: string,
-  likedOrDisliked: string,
+  aboutEntity: string;
+  likedOrDisliked: string;
   characteristics: string;
 }
 
-export const characteristicsTempl = new FewShotTemplate(template`<like-or-dislike-phrase>${nv('characteristic')}</like-or-dislike-phrase>`,
-  '\n  ');
+export const characteristicsTempl = new FewShotTemplate(
+  template`<like-or-dislike-phrase>${nv(
+    'characteristic'
+  )}</like-or-dislike-phrase>`,
+  '\n  '
+);
 
 const criteriaPoints: Experience[] = [
   {
@@ -34,35 +44,42 @@ const criteriaPoints: Experience[] = [
       'Peaceful',
       'Tons of old growth trees and benches',
       'Great for walking, jogging, picnic, or just sitting and relaxing',
-      'Like a mini version of Central Park in New York'
-    ]
+      'Like a mini version of Central Park in New York',
+    ],
   },
   {
     experience: 'Spirited Away: breathtakingly beautiful.',
     aboutEntity: 'Spirited Away',
     likedOrDisliked: 'Liked',
-    characteristics: ['Visually stunning', 'Great story', 'Heartwarming']
+    characteristics: ['Visually stunning', 'Great story', 'Heartwarming'],
   },
 ];
-
 
 const experienceTemplEntries: ExperienceTemplEntry[] = criteriaPoints.map(
   (item) => {
     const { experience, aboutEntity, likedOrDisliked } = item;
     const characteristics = characteristicsTempl.apply(
-      item.characteristics.map(s => { return { characteristic: s }; })
+      item.characteristics.map((s) => {
+        return { characteristic: s };
+      })
     ).escaped;
     return {
-      experience, aboutEntity, likedOrDisliked, characteristics
+      experience,
+      aboutEntity,
+      likedOrDisliked,
+      characteristics,
     };
-  })
+  }
+);
 
-const itemExperienceTempl = template`<short-experience-description>${nv('experience')}</short-experience-description>
+const itemExperienceTempl = template`<short-experience-description>${nv(
+  'experience'
+)}</short-experience-description>
 <entity-name>${nv('aboutEntity')}</entity-name>
 <liked-or-disliked>${nv('likedOrDisliked')}</liked-or-disliked>
 <what-there-is-to-like-or-dislike-about-entity>
   ${nv('characteristics')}
-</what-there-is-to-like-or-dislike-about-entity>`
+</what-there-is-to-like-or-dislike-about-entity>`;
 
 const itemExperiencesTempl = new FewShotTemplate(itemExperienceTempl, '\n\n');
 
@@ -73,7 +90,9 @@ ${nv('pastExperiences')}
 ${itemExperienceTempl}`;
 
 // Example usage.
-const pastFewShotItemExperiences = itemExperiencesTempl.apply(experienceTemplEntries);
+const pastFewShotItemExperiences = itemExperiencesTempl.apply(
+  experienceTemplEntries
+);
 
 export const expInterpTempl = itemInterpreterTempl.substs({
   pastExperiences: pastFewShotItemExperiences.escaped,
