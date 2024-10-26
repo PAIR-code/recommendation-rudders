@@ -7,7 +7,7 @@
 ==============================================================================*/
 
 import { Inject, Injectable } from '@angular/core';
-import { VertexPalm2LLM } from '../../lib/text-templates/llm_vertexapi_palm2';
+import { VertexGeminiLLM } from 'ts-llmt/dist/llm_vertexapi_gemini_1_5_authtoken';
 import { VertexEmbedder } from 'src/lib/text-embeddings/embedder_vertexapi';
 
 // TODO: Unclear to me if this is needed or helpful...
@@ -15,22 +15,22 @@ import { VertexEmbedder } from 'src/lib/text-embeddings/embedder_vertexapi';
 // The value of having a service here is that the same LLM object can be used
 // throughout the app.
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class VertexApiService {
-  public llm: VertexPalm2LLM;
+  public llm: VertexGeminiLLM;
   public embedder: VertexEmbedder;
 
   constructor() {
     const project = localStorage.getItem('projectId') || 'no project set';
     const token = localStorage.getItem('accessToken') || 'no access token set';
 
-    this.llm = new VertexPalm2LLM(project, token);
+    this.llm = new VertexGeminiLLM(project, token);
     this.embedder = new VertexEmbedder(project, token);
   }
 
   set accessToken(token: string) {
-    console.log(`accessToken update ${token}.`)
+    console.log(`accessToken update ${token}.`);
     this.llm.accessToken = token;
     localStorage.setItem('accessToken', token);
   }
@@ -39,7 +39,7 @@ export class VertexApiService {
   }
 
   set projectId(project: string) {
-    console.log(`projectId update ${project}.`)
+    console.log(`projectId update ${project}.`);
     this.llm.projectId = project;
     localStorage.setItem('projectId', project);
   }
