@@ -23,7 +23,7 @@
     "rxjs": "~7.8.0",
     "ts-llmt": "^1.1.0",
     "tslib": "^2.3.0",
-    "underscore": "^1.13.6",
+    "underscore": "^1.13.8",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {
