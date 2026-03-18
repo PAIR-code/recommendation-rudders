@@ -49,5 +49,16 @@
     "ts-node": "^10.9.1",
     "typescript": "~5.2.2",
     "yargs": "^17.7.2"
+  },
+  "overrides": {
+    "minimatch": "^5.1.6",
+    "qs": "^6.13.0",
+    "axios": "^1.7.4",
+    "ignore-walk": {
+      "minimatch": "^9.0.5"
+    },
+    "@tufjs/models": {
+      "minimatch": "^9.0.5"
+    }
   }
 }
